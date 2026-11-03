@@ -7,18 +7,18 @@ Tasks are ordered so each builds on the previous. Complete them in order. Each t
 ## Phase 1 — Core Library
 
 ### Task 1 — Shared types
-- [ ] Create `src/types/index.ts` with all interfaces from design.md: `Receipt`, `ReceiptKind`, `WaybackResult`, `GitHubRepoMeta`, `Commit`, `RevivalSpec`, `StaleDep`, `RevivalStep`, `ResurrectResponse`, `Result<T>`, `ErrorCode`.
-- [ ] Ensure no runtime code — types only.
+- [x] Create `src/types/index.ts` with all interfaces from design.md: `Receipt`, `ReceiptKind`, `WaybackResult`, `GitHubRepoMeta`, `Commit`, `RevivalSpec`, `StaleDep`, `RevivalStep`, `ResurrectResponse`, `Result<T>`, `ErrorCode`.
+- [x] Ensure no runtime code — types only.
 - **Refs:** US-04, US-02, US-03, US-05
 
 ---
 
 ### Task 2 — Receipt crypto (`src/lib/receipts/crypto.ts`)
-- [ ] Implement `generateKeyPair(): Promise<{ privateKey: CryptoKey; publicKey: CryptoKey }>` using `crypto.subtle.generateKey('Ed25519', true, ['sign', 'verify'])`.
-- [ ] Implement `exportPublicKey(publicKey: CryptoKey): Promise<string>` — base64url, no padding.
-- [ ] Implement `sign(data: Uint8Array, privateKey: CryptoKey): Promise<string>` — returns base64url signature.
-- [ ] Implement `verify(data: Uint8Array, signature: string, publicKey: CryptoKey): Promise<boolean>`.
-- [ ] Write `src/lib/receipts/crypto.test.ts` with fast-check property-based tests:
+- [x] Implement `generateKeyPair(): Promise<{ privateKey: CryptoKey; publicKey: CryptoKey }>` using `crypto.subtle.generateKey('Ed25519', true, ['sign', 'verify'])`.
+- [x] Implement `exportPublicKey(publicKey: CryptoKey): Promise<string>` — base64url, no padding.
+- [x] Implement `sign(data: Uint8Array, privateKey: CryptoKey): Promise<string>` — returns base64url signature.
+- [x] Implement `verify(data: Uint8Array, signature: string, publicKey: CryptoKey): Promise<boolean>`.
+- [x] Write `src/lib/receipts/crypto.test.ts` with fast-check property-based tests:
   - Sign→verify round-trip holds for arbitrary byte arrays.
   - Tampered data fails verification.
 - **Refs:** US-04 (AC-1, AC-2, AC-6)
@@ -26,23 +26,23 @@ Tasks are ordered so each builds on the previous. Complete them in order. Each t
 ---
 
 ### Task 3 — Receipt chain (`src/lib/receipts/chain.ts`)
-- [ ] Implement `canonicalJson(obj: Record<string, unknown>): Uint8Array` — sorted keys, no extra whitespace, UTF-8.
-- [ ] Implement `sha256hex(data: Uint8Array): Promise<string>` using `crypto.subtle.digest`.
-- [ ] Implement `buildReceipt(prev: Receipt | null, kind: ReceiptKind, url: string, responseBody: Uint8Array, privateKey: CryptoKey): Promise<Receipt>` following the canonical JSON hashing spec in design.md.
-- [ ] Implement `verifyChain(receipts: Receipt[], publicKey: CryptoKey): Promise<{ valid: boolean; brokenAt?: number }>` — checks prevHash linkage, hash consistency, and signature on each receipt.
-- [ ] Write `src/lib/receipts/chain.test.ts` with fast-check property-based tests covering all six correctness properties from design.md.
+- [x] Implement `canonicalJson(obj: Record<string, unknown>): Uint8Array` — sorted keys, no extra whitespace, UTF-8.
+- [x] Implement `sha256hex(data: Uint8Array): Promise<string>` using `crypto.subtle.digest`.
+- [x] Implement `buildReceipt(prev: Receipt | null, kind: ReceiptKind, url: string, responseBody: Uint8Array, privateKey: CryptoKey): Promise<Receipt>` following the canonical JSON hashing spec in design.md.
+- [x] Implement `verifyChain(receipts: Receipt[], publicKey: CryptoKey): Promise<{ valid: boolean; brokenAt?: number }>` — checks prevHash linkage, hash consistency, and signature on each receipt.
+- [x] Write `src/lib/receipts/chain.test.ts` with fast-check property-based tests covering all six correctness properties from design.md.
 - **Refs:** US-04 (AC-2, AC-4, AC-5, AC-6)
 
 ---
 
 ### Task 4 — Wayback Machine client (`src/lib/wayback/client.ts`)
-- [ ] Implement `fetchWaybackSnapshot(url: string): Promise<Result<WaybackResult>>`.
+- [x] Implement `fetchWaybackSnapshot(url: string): Promise<Result<WaybackResult>>`.
   - Call `https://archive.org/wayback/available?url=<url>` with `AbortSignal.timeout(10_000)`.
   - Parse the `archived_snapshots.closest` field.
   - Return `{ ok: false, code: 'WAYBACK_NO_SNAPSHOT' }` when `available` is false.
   - Return `{ ok: false, code: 'NETWORK_TIMEOUT' }` on timeout.
   - Return `{ ok: false, code: 'HTTP_ERROR' }` on non-2xx.
-- [ ] Write `src/lib/wayback/client.test.ts` — unit tests with mocked `fetch` covering: snapshot found, no snapshot, timeout, HTTP error.
+- [x] Write `src/lib/wayback/client.test.ts` — unit tests with mocked `fetch` covering: snapshot found, no snapshot, timeout, HTTP error.
 - **Refs:** US-02 (AC-1, AC-3, AC-4)
 
 ---
