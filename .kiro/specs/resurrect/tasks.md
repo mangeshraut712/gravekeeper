@@ -48,26 +48,26 @@ Tasks are ordered so each builds on the previous. Complete them in order. Each t
 ---
 
 ### Task 5 — GitHub client (`src/lib/github/client.ts`)
-- [ ] Implement `fetchRepoMeta(owner: string, repo: string): Promise<Result<GitHubRepoMeta>>`.
+- [x] Implement `fetchRepoMeta(owner: string, repo: string): Promise<Result<GitHubRepoMeta>>`.
   - Call `https://api.github.com/repos/<owner>/<repo>`.
   - Set `Authorization: Bearer <GITHUB_TOKEN>` header when env var is present.
   - Map 404 → `GITHUB_NOT_FOUND`, 403 → `GITHUB_RATE_LIMIT`.
-- [ ] Implement `fetchCommits(owner: string, repo: string, perPage?: number): Promise<Result<Commit[]>>`.
+- [x] Implement `fetchCommits(owner: string, repo: string, perPage?: number): Promise<Result<Commit[]>>`.
   - Call `/repos/<owner>/<repo>/commits?per_page=20`.
   - Extract `sha`, first line of `commit.message`, `commit.author.date`, `commit.author.name`.
-- [ ] Implement `parseGitHubUrl(url: string): { owner: string; repo: string } | null` — validates and parses `https://github.com/<owner>/<repo>` pattern.
-- [ ] Write `src/lib/github/client.test.ts` — unit tests with mocked `fetch`.
+- [x] Implement `parseGitHubUrl(url: string): { owner: string; repo: string } | null` — validates and parses `https://github.com/<owner>/<repo>` pattern.
+- [x] Write `src/lib/github/client.test.ts` — unit tests with mocked `fetch`.
 - **Refs:** US-03 (AC-1–6), US-01 (AC-2)
 
 ---
 
 ### Task 6 — Revival Spec generator (`src/lib/spec/generator.ts`)
-- [ ] Implement `generateRevivalSpec(meta: GitHubRepoMeta, commits: Commit[]): RevivalSpec`.
+- [x] Implement `generateRevivalSpec(meta: GitHubRepoMeta, commits: Commit[]): RevivalSpec`.
   - Detect language from GitHub `language` field.
   - Flag `archivedByGitHub: true` repos.
   - Generate at least three default revival steps (update README, check dependencies, add revival notice).
   - Set `generatedAt` to current UTC ISO timestamp.
-- [ ] Write `src/lib/spec/generator.test.ts` — unit tests for various repo shapes (archived, no language, recent commits).
+- [x] Write `src/lib/spec/generator.test.ts` — unit tests for various repo shapes (archived, no language, recent commits).
 - **Refs:** US-05 (AC-1–4)
 
 ---
