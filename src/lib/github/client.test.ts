@@ -10,6 +10,7 @@ import {
   fetchCommits,
   fetchRepoMeta,
   parseGitHubUrl,
+  createFork,
 } from './client';
 
 // ---------------------------------------------------------------------------
@@ -338,5 +339,70 @@ describe('fetchCommits', () => {
 
     const [url] = vi.mocked(fetch).mock.calls[0];
     expect(String(url)).toContain('per_page=20');
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+// createFork
+// ---------------------------------------------------------------------------
+
+describe('createFork', () => {
+  const ORIGINAL_TOKEN = process.env['GITHUB_TOKEN'];
+
+  afterEach(() => {
+    if (ORIGINAL_TOKEN === undefined) {
+      delete process.env['GITHUB_TOKEN'];
+    } else {
+      process.env['GITHUB_TOKEN'] = ORIGINAL_TOKEN;
+    }
+    vi.restoreAllMocks();
+  });
+
+  it('returns FORK_FAILED when GITHUB_TOKEN is unset', async () => {
+    delete process.env['GITHUB_TOKEN'];
+    const result = await createFork('owner', 'repo');
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe('FORK_FAILED');
+    }
+  });
+
+  it('returns forkUrl on success', async () => {
+    process.env['GITHUB_TOKEN'] = 'test-token';
+    const body = { html_url: 'https://github.com/me/repo' };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 202,
+      text: vi.fn().mockResolvedValue(JSON.stringify(body)),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await createFork('owner', 'repo');
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.forkUrl).toBe('https://github.com/me/repo');
+    }
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.github.com/repos/owner/repo/forks',
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('maps 404 to GITHUB_NOT_FOUND', async () => {
+    process.env['GITHUB_TOKEN'] = 'test-token';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        text: vi.fn().mockResolvedValue('{"message":"Not Found"}'),
+      }),
+    );
+    const result = await createFork('missing', 'repo');
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe('GITHUB_NOT_FOUND');
+    }
   });
 });

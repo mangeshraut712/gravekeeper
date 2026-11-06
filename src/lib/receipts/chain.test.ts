@@ -303,3 +303,40 @@ describe('buildReceipt — property: seq monotonicity', () => {
     );
   });
 });
+
+
+// ---------------------------------------------------------------------------
+// Extra — canonical JSON UTF-8 round-trip / parse stability
+// ---------------------------------------------------------------------------
+
+describe('canonicalJson — property: UTF-8 round-trip', () => {
+  it('decoding then JSON.parse yields the same values with sorted key order', () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          seq: fc.nat({ max: 20 }),
+          kind: fcKind,
+          url: fcUrl,
+          fetchedAt: fc.constant('2026-11-06T00:00:00.000Z'),
+          contentSha256: fc.stringMatching(/^[a-f0-9]{64}$/),
+          prevHash: fc.option(fc.stringMatching(/^[a-f0-9]{64}$/), { nil: null }),
+        }),
+        (obj) => {
+          const bytes = canonicalJson(obj as Record<string, unknown>);
+          const parsed = JSON.parse(new TextDecoder().decode(bytes)) as Record<
+            string,
+            unknown
+          >;
+          // Values match
+          expect(parsed).toEqual(obj);
+          // Keys are sorted
+          expect(Object.keys(parsed)).toEqual(Object.keys(parsed).sort());
+          // Second canonicalisation is identical
+          expect(Array.from(canonicalJson(parsed))).toEqual(Array.from(bytes));
+        },
+      ),
+      { numRuns: 50 },
+    );
+  });
+});
+

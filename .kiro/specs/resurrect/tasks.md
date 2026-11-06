@@ -75,7 +75,7 @@ Tasks are ordered so each builds on the previous. Complete them in order. Each t
 ## Phase 2 — API Routes
 
 ### Task 7 — Resurrect route handler (`src/app/api/resurrect/route.ts`)
-- [ ] Implement `POST /api/resurrect`:
+- [x] Implement `POST /api/resurrect`:
   - Parse and validate `{ url: string }` from request JSON body. Return 400 on invalid input.
   - Determine if URL is a GitHub repo URL using `parseGitHubUrl`.
   - Generate an Ed25519 key pair.
@@ -88,7 +88,7 @@ Tasks are ordered so each builds on the previous. Complete them in order. Each t
 ---
 
 ### Task 8 — Fork route handler (`src/app/api/fork/route.ts`)
-- [ ] Implement `POST /api/fork`:
+- [x] Implement `POST /api/fork`:
   - Validate `{ owner: string, repo: string }` request body.
   - Return 503 `{ error: '...', code: 'FORK_FAILED' }` if `GITHUB_TOKEN` is not set.
   - Call `POST https://api.github.com/repos/<owner>/<repo>/forks`.

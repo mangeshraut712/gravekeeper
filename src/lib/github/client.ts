@@ -290,3 +290,101 @@ export async function fetchCommits(
 
   return { ok: true, data: commits };
 }
+
+
+// ---------------------------------------------------------------------------
+// createFork
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a fork of a GitHub repository for the authenticated user.
+ *
+ * Requires `GITHUB_TOKEN` in the environment. Returns `FORK_FAILED` when the
+ * token is missing or the GitHub API rejects the request.
+ *
+ * @param owner - Upstream repository owner login.
+ * @param repo  - Upstream repository name.
+ */
+export async function createFork(
+  owner: string,
+  repo: string,
+): Promise<Result<{ forkUrl: string; rawBody: string }>> {
+  const token =
+    typeof process !== 'undefined' ? process.env['GITHUB_TOKEN'] : undefined;
+  if (!token) {
+    return {
+      ok: false,
+      error: 'GITHUB_TOKEN is not set. Fork creation requires authentication.',
+      code: 'FORK_FAILED',
+    };
+  }
+
+  const apiUrl = `${GITHUB_API_BASE}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/forks`;
+
+  let response: Response;
+  try {
+    response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: baseHeaders(),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+  } catch (err) {
+    return fetchError(err) as Result<{ forkUrl: string; rawBody: string }>;
+  }
+
+  let rawBody = '';
+  try {
+    rawBody = await response.text();
+  } catch {
+    return {
+      ok: false,
+      error: 'Failed to read GitHub fork response body.',
+      code: 'PARSE_ERROR',
+    };
+  }
+
+  if (response.status === 404) {
+    return {
+      ok: false,
+      error: `Repository ${owner}/${repo} not found on GitHub.`,
+      code: 'GITHUB_NOT_FOUND',
+    };
+  }
+
+  if (response.status === 403 || response.status === 429) {
+    return {
+      ok: false,
+      error: 'GitHub API rate limit or permission error while forking.',
+      code: 'GITHUB_RATE_LIMIT',
+    };
+  }
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      error: `GitHub fork API returned HTTP ${response.status}: ${rawBody.slice(0, 200)}`,
+      code: 'FORK_FAILED',
+    };
+  }
+
+  let body: { html_url?: string };
+  try {
+    body = JSON.parse(rawBody) as { html_url?: string };
+  } catch {
+    return {
+      ok: false,
+      error: 'Failed to parse GitHub fork response as JSON.',
+      code: 'PARSE_ERROR',
+    };
+  }
+
+  if (!body.html_url) {
+    return {
+      ok: false,
+      error: 'GitHub fork response did not include html_url.',
+      code: 'FORK_FAILED',
+    };
+  }
+
+  return { ok: true, data: { forkUrl: body.html_url, rawBody } };
+}
