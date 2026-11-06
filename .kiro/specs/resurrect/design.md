@@ -291,3 +291,22 @@ fc.property(
 | `FogOverlay` | Client | Absolutely-positioned fog CSS animation; `motion-reduce:hidden` |
 | `ReceiptChainViewer` | Client | Expandable list of receipts; "Export JSON" button triggering file download |
 | `RevivalSpecPanel` | Client | Accordion of revival steps; lists stale deps with badges |
+
+---
+
+## Bundled restoration (added after the checklist milestone)
+
+The generic revival checklist does not rewrite source. The Lantern Hill demo does.
+
+`POST /api/resurrect` checks `isFixtureUrl` before any network call. For `https://fixtures.gravekeeper.dev/lantern-hill/` it loads the original MIT-licensed fixture in `src/lib/restore/fixture.ts`, runs `restoreDeadHtml()`, and returns `restoration` plus two receipts:
+
+| seq | kind | body hashed |
+|---|---|---|
+| 0 | `fixture` | before HTML |
+| 1 | `restoration` | after HTML |
+
+Other URLs leave `restoration: null` and keep the Wayback / GitHub path.
+
+`buildReceiptExport()` writes `{ gravekeeper: "receipt-export", version: 1, publicKey, receipts, artifacts }`. `verifyReceiptExport()` recomputes the chain and, when artifacts are present, the content hashes. The browser calls that function directly. `POST /api/verify` is the same check over HTTP.
+
+The fixture is original demo content. It is not a copy of a third-party site.

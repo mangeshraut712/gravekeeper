@@ -24,6 +24,7 @@ Countless open-source repositories and websites go dark — maintainers move on,
 - Analyse the retrieved data to detect the original tech stack (language, framework, dependency versions).
 - Identify outdated or abandoned dependencies by comparing against known current versions.
 - Generate a structured Revival Spec: detected stack, what is stale, recommended replacements, and ordered revival steps.
+- For the bundled Lantern Hill fixture, also emit a concrete restored HTML document (semantic HTML5) rather than only a checklist. The fixture is original demo content under the repository MIT license. Live GitHub repositories still receive the checklist, not a rewritten tree.
 
 ### 4 — Fork Creation
 - Optionally create a revived GitHub fork of the repository using the authenticated GitHub API.
@@ -39,7 +40,7 @@ Countless open-source repositories and websites go dark — maintainers move on,
 
 - No user accounts or persistent server-side storage (receipts live in the client session and are exportable).
 - No bulk/batch processing in v1.
-- No automatic code rewriting beyond README and revival notice.
+- Automatic rewriting is limited to the bundled Lantern Hill HTML fixture. Live repositories receive a revival checklist and receipts.
 
 ## Success Criteria
 
