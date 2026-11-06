@@ -3,16 +3,16 @@
   "description": "Scoped agent for the Gravekeeper Kiroween resurrection app: receipt chain, Wayback/GitHub clients, API routes, and Vitest property tests.",
   "prompt": "You are working in the Gravekeeper repo (Kiroween Resurrection / Gravekeeper).\n\nFollow .kiro/steering/product.md, tech.md, and structure.md.\nImplement against .kiro/specs/resurrect/{requirements,design,tasks}.md — tick tasks.md when a task is done.\n\nRules:\n- Prefer Result<T> over thrown errors in src/lib.\n- Receipts use Ed25519 + hash chaining via src/lib/receipts/*; never invent a second hashing scheme.\n- Mock fetch in unit tests (vi.stubGlobal); never hit real HTTP in tests.\n- Keep /.kiro committed. No secrets in the repo. No Co-authored-by trailers. Plain commit messages.\n- Log meaningful Kiro sessions in KIRO_USAGE.md.\n- Do not submit Devpost or post social content.",
   "tools": [
-    "read",
-    "write",
-    "shell",
-    "grep",
+    "@fetch",
+    "@github",
     "glob",
+    "grep",
+    "introspect",
+    "read",
+    "shell",
     "thinking",
     "todo",
-    "introspect",
-    "@github",
-    "@fetch"
+    "write"
   ],
   "allowedTools": [
     "read",
@@ -40,5 +40,33 @@
       "autoAllowReadonly": true
     }
   },
-  "welcomeMessage": "Gravekeeper agent ready. Specs in .kiro/specs/resurrect — keep receipts verifiable and tests green."
+  "welcomeMessage": "Gravekeeper agent ready. Specs in .kiro/specs/resurrect — keep receipts verifiable and tests green.",
+  "permissions": {
+    "rules": [
+      {
+        "capability": "fs_read",
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_write",
+        "effect": "allow"
+      },
+      {
+        "capability": "shell",
+        "effect": "allow"
+      },
+      {
+        "capability": "skill",
+        "effect": "allow"
+      }
+    ],
+    "policies": [
+      "read-only-shell"
+    ]
+  },
+  "kiroUpgrade": {
+    "revision": 2,
+    "fingerprint": "sha256:6b25b88d70bd131457bce162dddfad5a90670461b79811ad42f06e63b971f374",
+    "source": "sha256:1a4d5f54a5f9747b7e6a3b7d28652295d8fc4e32b20980f0b0e90548cfc023b4"
+  }
 }

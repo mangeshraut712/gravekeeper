@@ -560,6 +560,9 @@ export default function Gravekeeper() {
               their history, make a revival plan, and keep a verifiable trail of
               what you found.
             </p>
+            <Link href="/restoration" className={`${button} mt-6`}>
+              Try a real restoration <span aria-hidden="true">→</span>
+            </Link>
           </div>
           <Graveyard />
         </section>

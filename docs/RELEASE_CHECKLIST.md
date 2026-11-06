@@ -16,7 +16,7 @@
 - Public free-tier hosting with no GitHub write token, no server fork secret, provider abuse limits, and no paid overages.
 - Smoke-test the exact deployed version and keep judges' access free through Jan 29, 2027 at 1 PM PST.
 - Add real screenshots and the verified live application URL.
-- Demonstrate a small licensed restoration end-to-end to strengthen the intended Resurrection category fit, or review category choice.
+- Licensed restoration demo exists (/restoration, `npm run demo:verify`); still needs a browser pass and real screenshots.
 - Public YouTube demo under 3 minutes, showing the real working app on its intended device.
 - Final English submission text, public repository and all assets, recognized license, root .kiro directory, and accurate Kiro usage explanation.
 - Disclose any incorporated pre-existing work and rights/licenses.

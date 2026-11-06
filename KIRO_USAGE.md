@@ -93,3 +93,12 @@ Validation and release status are tracked in `docs/RELEASE_CHECKLIST.md`. Hook/M
 A second bounded read-only Kiro review checked the fixes. It found no remaining release-blocking/high-impact issue in the source it read. It did not run tests, and its test reads were truncated, so this is a source review rather than independent test execution. Its remaining 403-versus-404 concern was addressed afterward: non-rate-limit 403s now use the same public-not-found result; actual rate limits are identified by headers or HTTP 429. Cancellation and that error distinction have explicit regressions.
 
 The second review reported **1.076201503814262 credits**. Total for both reviews: approximately **1.9215 credits**. These are provider-reported credit entries, not token estimates or WBM records.
+
+## Nov 7, 2026 — Resurrection case 001 (licensed end-to-end restoration)
+
+No Kiro CLI session was run for this work (no new Kiro credits used); it was done in a Kiro IDE agent session with the repo's steering loaded, so it is not evidence of Kiro CLI, hook, or MCP execution.
+
+- Found an uncommitted restoration prototype in the working tree: pinned MIT `esrever` source, an `Intl.Segmenter` reimplementation, 12 fixtures, an offline hash-checking verifier, a `/restoration` page, and tests. Kept and finished it rather than rewriting.
+- Finished: the page linked `/restoration-kit.zip`, which did not exist. Added `scripts/build-restoration-kit.sh` (`npm run demo:kit`), generated the zip, and verified it runs offline from an unzipped copy (12/12). Added `third_party/esrever/README.md` attribution.
+- Removed stray `.bak` agent files left by a Kiro config upgrade; the upgraded `.kiro/agents/*.json` (permissions blocks) are committed.
+- Updated README with how to run and demo the restoration. Category stays Resurrection.

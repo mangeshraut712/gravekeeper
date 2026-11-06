@@ -12,6 +12,22 @@ Gravekeeper is a digital-archaeology workbench for public websites and forgotten
 - Ed25519 signatures, SHA-256 receipt links, and included evidence payloads. Browser and offline verification use the same implementation.
 - A GitHub fork link that lets the visitor review and confirm using their own account. The app never forks through the visitor's browser using a shared operator token.
 
+## Restoration demo (Resurrection case 001)
+
+A small, end-to-end, licensed restoration lives at http://localhost:3000/restoration (linked from the home page).
+
+- **Before:** the unmodified `esrever` string reverser by Mathias Bynens and contributors (MIT), pinned to commit `14b34013` under `third_party/esrever/upstream/`. It splits emoji sequences, flags, and skin tones.
+- **After:** `src/lib/restoration/reverse.mts`, an original `Intl.Segmenter`-based `reverse()` written for this project.
+- **Proof:** 12 explicit fixtures. Original: 4/12. Restored: 12/12.
+
+```sh
+npm run demo:verify    # exit 0: pinned source hash matches, restored version passes 12/12
+npm run demo:baseline  # exit 1: the unchanged original fails the same contract
+npm run demo:kit       # rebuild public/restoration-kit.zip (offline, Node 22.18+, no install)
+```
+
+Scope: one curated function, not an automatic repair of arbitrary repositories. Results follow the runtime's Unicode data. The report is reproducible local execution, not a signed attestation.
+
 ## Run locally
 
 Use Node.js 22.18+ (Node 24 tested) and npm.

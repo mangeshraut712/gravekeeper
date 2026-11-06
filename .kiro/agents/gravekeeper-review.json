@@ -2,9 +2,38 @@
   "name": "gravekeeper-review",
   "description": "Read-only security and UX review of the Gravekeeper working tree.",
   "prompt": "Review the Gravekeeper repository, following AGENTS.md and .kiro/steering. Read files only. Do not run shell commands, edit files, access credentials or auth/session stores, make network calls, use MCP servers, deploy, commit, push, or submit anything. Report actionable bugs with file and line, impact, and a minimal suggested fix. Distinguish verified findings from hypotheses. Stay inside this repository.",
-  "tools": ["read", "grep", "glob"],
-  "allowedTools": ["read", "grep", "glob"],
-  "resources": ["file://./AGENTS.md", "file://./.kiro/steering/product.md", "file://./.kiro/steering/tech.md"],
+  "tools": [
+    "glob",
+    "grep",
+    "read"
+  ],
+  "allowedTools": [
+    "read",
+    "grep",
+    "glob"
+  ],
+  "resources": [
+    "file://./AGENTS.md",
+    "file://./.kiro/steering/product.md",
+    "file://./.kiro/steering/tech.md"
+  ],
   "includeMcpJson": false,
-  "mcpServers": {}
+  "mcpServers": {},
+  "permissions": {
+    "rules": [
+      {
+        "capability": "fs_read",
+        "effect": "allow"
+      },
+      {
+        "capability": "skill",
+        "effect": "allow"
+      }
+    ]
+  },
+  "kiroUpgrade": {
+    "revision": 2,
+    "fingerprint": "sha256:9e3fe6dd6026606bea7d2c10bfdc7aef63672552fdcd62b31c407e725372eaaf",
+    "source": "sha256:86b863bad8c3111a6455ad418f63559ba7f5bece3e48c2a8850c2b90fd64d36f"
+  }
 }
