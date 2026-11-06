@@ -102,3 +102,7 @@ No Kiro CLI session was run for this work (no new Kiro credits used); it was don
 - Finished: the page linked `/restoration-kit.zip`, which did not exist. Added `scripts/build-restoration-kit.sh` (`npm run demo:kit`), generated the zip, and verified it runs offline from an unzipped copy (12/12). Added `third_party/esrever/README.md` attribution.
 - Removed stray `.bak` agent files left by a Kiro config upgrade; the upgraded `.kiro/agents/*.json` (permissions blocks) are committed.
 - Updated README with how to run and demo the restoration. Category stays Resurrection.
+
+## Nov 7, 2026 — Release-check pass (Kiro IDE agent session)
+
+No Kiro CLI session, hook, or MCP execution, and no new Kiro credits. Product code unchanged. Ran tests (170 passing), lint, typecheck, production build, and `demo:verify` at f80bc4c, and recorded that in `docs/RELEASE_CHECKLIST.md`. Rebuilding the kit zip yields a byte-different file (timestamps only), so the committed zip was left as is.

@@ -6,6 +6,7 @@
 - Operator fork authentication is fail-closed; public UI uses GitHub's native fork flow.
 - Receipt evidence and displayed response data are verified against their digests.
 - A read-only Kiro CLI review identified actionable bugs, which were addressed with regressions.
+- On Nov 7, 2026 at commit f80bc4c (working tree clean): `npm test` (170 tests, 13 files), `npm run lint`, `tsc --noEmit`, `npm run build`, and `npm run demo:verify` all passed locally. Re-run on the final release commit.
 - Safari rendered the production app and completed a real Atom lookup with archive, metadata, plan, and receipts. Unsafe URL submission was rejected.
 
 ## Required before publishing
