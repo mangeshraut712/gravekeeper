@@ -26,6 +26,21 @@ export async function exportPublicKey(publicKey: CryptoKey): Promise<string> {
 }
 
 /**
+ * Import a raw Ed25519 public key from the base64url form produced by
+ * `exportPublicKey`. Used to verify an exported receipt chain offline.
+ */
+export async function importPublicKey(b64url: string): Promise<CryptoKey> {
+  const bytes = base64UrlToUint8Array(b64url);
+  return globalThis.crypto.subtle.importKey(
+    'raw',
+    bytes as BufferSource,
+    { name: 'Ed25519' } as KeyAlgorithm,
+    true,
+    ['verify'],
+  );
+}
+
+/**
  * Sign a byte array with an Ed25519 private key.
  * Returns the signature as a base64url string (no padding).
  */

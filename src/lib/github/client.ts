@@ -8,9 +8,10 @@
  * All functions return a typed Result<T> — never throw.
  */
 
-import type { Commit, GitHubRepoMeta, Result } from '@/types/index';
+import type { Commit, GitHubRepoMeta, Result } from "@/types/index";
+import { normalizePublicUrl, isGitHubRepository } from "@/shared/url";
 
-const GITHUB_API_BASE = 'https://api.github.com';
+const GITHUB_API_BASE = "https://api.github.com";
 const TIMEOUT_MS = 10_000;
 
 // ---------------------------------------------------------------------------
@@ -20,7 +21,7 @@ const TIMEOUT_MS = 10_000;
 /** Build the Authorization header when GITHUB_TOKEN env var is present. */
 function authHeaders(): Record<string, string> {
   const token =
-    typeof process !== 'undefined' ? process.env['GITHUB_TOKEN'] : undefined;
+    typeof process !== "undefined" ? process.env["GITHUB_TOKEN"] : undefined;
   if (token) {
     return { Authorization: `Bearer ${token}` };
   }
@@ -30,8 +31,8 @@ function authHeaders(): Record<string, string> {
 /** Base headers for all GitHub API requests. */
 function baseHeaders(): Record<string, string> {
   return {
-    Accept: 'application/vnd.github+json',
-    'X-GitHub-Api-Version': '2022-11-28',
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
     ...authHeaders(),
   };
 }
@@ -40,18 +41,18 @@ function baseHeaders(): Record<string, string> {
 function fetchError(err: unknown): Result<never> {
   if (
     err instanceof DOMException &&
-    (err.name === 'TimeoutError' || err.name === 'AbortError')
+    (err.name === "TimeoutError" || err.name === "AbortError")
   ) {
     return {
       ok: false,
-      error: 'GitHub API request timed out after 10 seconds.',
-      code: 'NETWORK_TIMEOUT',
+      error: "GitHub API request timed out after 10 seconds.",
+      code: "NETWORK_TIMEOUT",
     };
   }
   return {
     ok: false,
-    error: err instanceof Error ? err.message : 'Network error',
-    code: 'NETWORK_TIMEOUT',
+    error: err instanceof Error ? err.message : "Network error",
+    code: "NETWORK_TIMEOUT",
   };
 }
 
@@ -73,21 +74,24 @@ function fetchError(err: unknown): Result<never> {
 export function parseGitHubUrl(
   url: string,
 ): { owner: string; repo: string } | null {
+  const normalized = normalizePublicUrl(url);
+  if (!normalized) return null;
   let parsed: URL;
   try {
-    parsed = new URL(url);
+    parsed = new URL(normalized);
   } catch {
     return null;
   }
 
-  if (parsed.hostname !== 'github.com') {
+  if (parsed.hostname !== "github.com") {
     return null;
   }
 
   // pathname is like "/owner/repo" or "/owner/repo/" or "/owner/repo.git"
   const parts = parsed.pathname
-    .replace(/\.git$/, '')
-    .split('/')
+    .replace(/\/$/, "")
+    .replace(/\.git$/, "")
+    .split("/")
     .filter(Boolean);
 
   if (parts.length !== 2) {
@@ -95,7 +99,7 @@ export function parseGitHubUrl(
   }
 
   const [owner, repo] = parts;
-  if (!owner || !repo) {
+  if (!owner || !repo || !isGitHubRepository(owner, repo)) {
     return null;
   }
 
@@ -107,6 +111,7 @@ export function parseGitHubUrl(
 // ---------------------------------------------------------------------------
 
 type GitHubRepoApiResponse = {
+  private?: boolean;
   name: string;
   full_name: string;
   owner: { login: string };
@@ -149,6 +154,7 @@ type GitHubCommitApiEntry = {
 export async function fetchRepoMeta(
   owner: string,
   repo: string,
+  signal?: AbortSignal,
 ): Promise<Result<GitHubRepoMeta & { language: string | null }>> {
   const apiUrl = `${GITHUB_API_BASE}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
 
@@ -156,25 +162,34 @@ export async function fetchRepoMeta(
   try {
     response = await fetch(apiUrl, {
       headers: baseHeaders(),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT_MS)])
+        : AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (err) {
-    return fetchError(err) as Result<GitHubRepoMeta & { language: string | null }>;
+    return fetchError(err) as Result<
+      GitHubRepoMeta & { language: string | null }
+    >;
   }
 
-  if (response.status === 404) {
+  if (
+    response.status === 404 ||
+    (response.status === 403 &&
+      response.headers?.get("x-ratelimit-remaining") !== "0" &&
+      !response.headers?.get("retry-after"))
+  ) {
     return {
       ok: false,
-      error: `Repository ${owner}/${repo} not found on GitHub.`,
-      code: 'GITHUB_NOT_FOUND',
+      error: "Public repository not found.",
+      code: "GITHUB_NOT_FOUND",
     };
   }
 
   if (response.status === 403 || response.status === 429) {
     return {
       ok: false,
-      error: 'GitHub API rate limit exceeded. Provide a GITHUB_TOKEN to raise the limit.',
-      code: 'GITHUB_RATE_LIMIT',
+      error: "GitHub API rate limit exceeded. Please retry later.",
+      code: "GITHUB_RATE_LIMIT",
     };
   }
 
@@ -182,7 +197,7 @@ export async function fetchRepoMeta(
     return {
       ok: false,
       error: `GitHub API returned HTTP ${response.status}`,
-      code: 'HTTP_ERROR',
+      code: "HTTP_ERROR",
     };
   }
 
@@ -192,8 +207,37 @@ export async function fetchRepoMeta(
   } catch {
     return {
       ok: false,
-      error: 'Failed to parse GitHub API response as JSON.',
-      code: 'PARSE_ERROR',
+      error: "Failed to parse GitHub API response as JSON.",
+      code: "PARSE_ERROR",
+    };
+  }
+
+  if (
+    !body ||
+    typeof body !== "object" ||
+    typeof body.name !== "string" ||
+    typeof body.full_name !== "string" ||
+    typeof body.stargazers_count !== "number" ||
+    typeof body.forks_count !== "number" ||
+    typeof body.open_issues_count !== "number" ||
+    typeof body.pushed_at !== "string" ||
+    typeof body.default_branch !== "string" ||
+    typeof body.archived !== "boolean" ||
+    (body.description !== null && typeof body.description !== "string") ||
+    (body.language !== null && typeof body.language !== "string")
+  ) {
+    return {
+      ok: false,
+      error: "Invalid GitHub metadata response.",
+      code: "PARSE_ERROR",
+    };
+  }
+
+  if (body.private) {
+    return {
+      ok: false,
+      error: "Public repository not found.",
+      code: "GITHUB_NOT_FOUND",
     };
   }
 
@@ -230,6 +274,7 @@ export async function fetchCommits(
   owner: string,
   repo: string,
   perPage = 20,
+  signal?: AbortSignal,
 ): Promise<Result<Commit[]>> {
   const apiUrl =
     `${GITHUB_API_BASE}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits` +
@@ -239,25 +284,32 @@ export async function fetchCommits(
   try {
     response = await fetch(apiUrl, {
       headers: baseHeaders(),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT_MS)])
+        : AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (err) {
     return fetchError(err) as Result<Commit[]>;
   }
 
-  if (response.status === 404) {
+  if (
+    response.status === 404 ||
+    (response.status === 403 &&
+      response.headers?.get("x-ratelimit-remaining") !== "0" &&
+      !response.headers?.get("retry-after"))
+  ) {
     return {
       ok: false,
-      error: `Repository ${owner}/${repo} not found on GitHub.`,
-      code: 'GITHUB_NOT_FOUND',
+      error: "Public repository not found.",
+      code: "GITHUB_NOT_FOUND",
     };
   }
 
   if (response.status === 403 || response.status === 429) {
     return {
       ok: false,
-      error: 'GitHub API rate limit exceeded.',
-      code: 'GITHUB_RATE_LIMIT',
+      error: "GitHub API rate limit exceeded.",
+      code: "GITHUB_RATE_LIMIT",
     };
   }
 
@@ -265,7 +317,7 @@ export async function fetchCommits(
     return {
       ok: false,
       error: `GitHub API returned HTTP ${response.status}`,
-      code: 'HTTP_ERROR',
+      code: "HTTP_ERROR",
     };
   }
 
@@ -275,22 +327,41 @@ export async function fetchCommits(
   } catch {
     return {
       ok: false,
-      error: 'Failed to parse GitHub commits response as JSON.',
-      code: 'PARSE_ERROR',
+      error: "Failed to parse GitHub commits response as JSON.",
+      code: "PARSE_ERROR",
     };
   }
 
+  if (
+    !Array.isArray(body) ||
+    !body.every(
+      (entry) =>
+        entry &&
+        typeof entry.sha === "string" &&
+        entry.commit &&
+        typeof entry.commit.message === "string" &&
+        (entry.commit.author === null ||
+          (entry.commit.author &&
+            typeof entry.commit.author.date === "string" &&
+            typeof entry.commit.author.name === "string")),
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Invalid GitHub commits response.",
+      code: "PARSE_ERROR",
+    };
+  }
   const commits: Commit[] = body.map((entry) => ({
     sha: entry.sha,
     // Only take the first line of the commit message
-    message: entry.commit.message.split('\n')[0] ?? '',
-    authorDate: entry.commit.author?.date ?? '',
-    authorName: entry.commit.author?.name ?? 'Unknown',
+    message: entry.commit.message.split("\n")[0] ?? "",
+    authorDate: entry.commit.author?.date ?? "",
+    authorName: entry.commit.author?.name ?? "Unknown",
   }));
 
   return { ok: true, data: commits };
 }
-
 
 // ---------------------------------------------------------------------------
 // createFork
@@ -310,12 +381,12 @@ export async function createFork(
   repo: string,
 ): Promise<Result<{ forkUrl: string; rawBody: string }>> {
   const token =
-    typeof process !== 'undefined' ? process.env['GITHUB_TOKEN'] : undefined;
+    typeof process !== "undefined" ? process.env["GITHUB_TOKEN"] : undefined;
   if (!token) {
     return {
       ok: false,
-      error: 'GITHUB_TOKEN is not set. Fork creation requires authentication.',
-      code: 'FORK_FAILED',
+      error: "GITHUB_TOKEN is not set. Fork creation requires authentication.",
+      code: "FORK_FAILED",
     };
   }
 
@@ -324,7 +395,7 @@ export async function createFork(
   let response: Response;
   try {
     response = await fetch(apiUrl, {
-      method: 'POST',
+      method: "POST",
       headers: baseHeaders(),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
@@ -332,30 +403,30 @@ export async function createFork(
     return fetchError(err) as Result<{ forkUrl: string; rawBody: string }>;
   }
 
-  let rawBody = '';
+  let rawBody = "";
   try {
     rawBody = await response.text();
   } catch {
     return {
       ok: false,
-      error: 'Failed to read GitHub fork response body.',
-      code: 'PARSE_ERROR',
+      error: "Failed to read GitHub fork response body.",
+      code: "PARSE_ERROR",
     };
   }
 
   if (response.status === 404) {
     return {
       ok: false,
-      error: `Repository ${owner}/${repo} not found on GitHub.`,
-      code: 'GITHUB_NOT_FOUND',
+      error: "Public repository not found.",
+      code: "GITHUB_NOT_FOUND",
     };
   }
 
   if (response.status === 403 || response.status === 429) {
     return {
       ok: false,
-      error: 'GitHub API rate limit or permission error while forking.',
-      code: 'GITHUB_RATE_LIMIT',
+      error: "GitHub API rate limit or permission error while forking.",
+      code: "GITHUB_RATE_LIMIT",
     };
   }
 
@@ -363,7 +434,7 @@ export async function createFork(
     return {
       ok: false,
       error: `GitHub fork API returned HTTP ${response.status}: ${rawBody.slice(0, 200)}`,
-      code: 'FORK_FAILED',
+      code: "FORK_FAILED",
     };
   }
 
@@ -373,16 +444,16 @@ export async function createFork(
   } catch {
     return {
       ok: false,
-      error: 'Failed to parse GitHub fork response as JSON.',
-      code: 'PARSE_ERROR',
+      error: "Failed to parse GitHub fork response as JSON.",
+      code: "PARSE_ERROR",
     };
   }
 
   if (!body.html_url) {
     return {
       ok: false,
-      error: 'GitHub fork response did not include html_url.',
-      code: 'FORK_FAILED',
+      error: "GitHub fork response did not include html_url.",
+      code: "FORK_FAILED",
     };
   }
 

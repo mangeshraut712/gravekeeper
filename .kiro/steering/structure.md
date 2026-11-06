@@ -14,10 +14,15 @@ gravekeeper/
 │   │   └── api/
 │   │       ├── resurrect/
 │   │       │   └── route.ts        # POST /api/resurrect — main orchestration endpoint
-│   │       └── fork/
-│   │           └── route.ts        # POST /api/fork — GitHub fork creation
+│   │       ├── fork/
+│   │       │   └── route.ts        # POST operator-only GitHub fork creation
+│   │       └── verify/
+│   │           └── route.ts        # POST /api/verify — receipt export check
+│   │   ├── fixtures/lantern-hill/  # CSP-protected before/after HTML
+│   │   └── lantern-hill/           # Sandbox previews and signed fixture receipts
 │   │
-│   ├── lib/                         # Pure server-side business logic (no React)
+│   ├── lib/                         # Business logic (no React). Receipt verify is isomorphic so the browser can check a chain.
+│   │   ├── restore/                 # Lantern Hill fixture, HTML restoration, HTML responses
 │   │   ├── wayback/
 │   │   │   ├── client.ts           # fetchWaybackSnapshot(url) → WaybackResult
 │   │   │   └── client.test.ts      # Unit tests (mocked fetch)
@@ -35,11 +40,9 @@ gravekeeper/
 │   │       └── generator.test.ts
 │   │
 │   ├── components/                  # Shared UI components
-│   │   ├── TombstoneCard.tsx        # Server Component — displays a receipt result
-│   │   ├── FogOverlay.tsx           # Client Component — CSS fog animation
-│   │   ├── SearchForm.tsx           # Client Component — controlled input + submit
-│   │   ├── ReceiptChainViewer.tsx   # Client Component — expandable receipt list
-│   │   └── RevivalSpecPanel.tsx     # Client Component — modernisation spec display
+│   │   ├── Gravekeeper.tsx          # Search, results, proof and revival checklist
+│   │   ├── RestorationDemo.tsx      # Licensed esrever restoration
+│   │   └── LanternHillProof.tsx     # Verify/download fixture receipts
 │   │
 │   └── types/
 │       └── index.ts                 # Shared TypeScript types (Receipt, RevivalSpec, etc.)
@@ -66,7 +69,7 @@ gravekeeper/
 
 ### `src/lib/` — business logic
 
-- All modules under `src/lib/` are **server-only**. Add `import 'server-only'` at the top of each `lib` file once the package is installed.
+- Upstream clients and server orchestration are server-only. The pure Web Crypto receipt modules are intentionally shared with the browser and offline verifier; never add server credentials or environment reads there. `src/client/proof.ts` is browser-safe. Explicit relative `.ts` imports in this crypto path support Node native TypeScript execution for the offline verifier.
 - No React imports. No `'use client'` directive. Pure TypeScript functions.
 - Each sub-module exports a clear public surface: named exports only, no default exports.
 - Tests colocate as `<module>.test.ts` alongside the source file.

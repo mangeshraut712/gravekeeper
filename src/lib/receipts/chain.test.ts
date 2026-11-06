@@ -1,27 +1,29 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import * as fc from 'fast-check';
-import { canonicalJson, sha256hex, buildReceipt, verifyChain } from './chain';
-import { generateKeyPair } from './crypto';
-import type { Receipt, ReceiptKind } from '@/types/index';
+import { describe, it, expect, beforeAll } from "vitest";
+import * as fc from "fast-check";
+import { canonicalJson, sha256hex, buildReceipt, verifyChain } from "./chain";
+import { generateKeyPair } from "./crypto";
+import type { Receipt, ReceiptKind } from "@/types/index";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 const ALL_KINDS: ReceiptKind[] = [
-  'wayback',
-  'wayback-miss',
-  'github-meta',
-  'github-commits',
-  'spec',
-  'fork',
+  "wayback",
+  "wayback-miss",
+  "github-meta",
+  "github-commits",
+  "spec",
+  "fork",
 ];
 
 /** Arbitrary for ReceiptKind values */
 const fcKind = fc.constantFrom(...ALL_KINDS);
 
 /** Arbitrary for non-empty URL-like strings (fast-check webUrl can be slow) */
-const fcUrl = fc.stringMatching(/^[a-z0-9]{4,40}$/).map((s: string) => `https://${s}.example.com`);
+const fcUrl = fc
+  .stringMatching(/^[a-z0-9]{4,40}$/)
+  .map((s: string) => `https://${s}.example.com`);
 
 /**
  * Build a chain of receipts from a list of (kind, url) descriptors.
@@ -71,28 +73,28 @@ beforeAll(async () => {
 // Unit smoke tests
 // ---------------------------------------------------------------------------
 
-describe('canonicalJson', () => {
-  it('produces valid UTF-8 JSON', () => {
+describe("canonicalJson", () => {
+  it("produces valid UTF-8 JSON", () => {
     const bytes = canonicalJson({ b: 2, a: 1 });
     const json = new TextDecoder().decode(bytes);
     expect(JSON.parse(json)).toEqual({ a: 1, b: 2 });
   });
 
-  it('sorts keys lexicographically', () => {
-    const bytes = canonicalJson({ z: 'last', a: 'first', m: 'mid' });
+  it("sorts keys lexicographically", () => {
+    const bytes = canonicalJson({ z: "last", a: "first", m: "mid" });
     const json = new TextDecoder().decode(bytes);
     expect(json).toBe('{"a":"first","m":"mid","z":"last"}');
   });
 });
 
-describe('sha256hex', () => {
-  it('returns a 64-char lowercase hex string', async () => {
-    const hex = await sha256hex(new TextEncoder().encode('hello'));
+describe("sha256hex", () => {
+  it("returns a 64-char lowercase hex string", async () => {
+    const hex = await sha256hex(new TextEncoder().encode("hello"));
     expect(hex).toMatch(/^[0-9a-f]{64}$/);
   });
 
-  it('is deterministic', async () => {
-    const data = new TextEncoder().encode('gravekeeper');
+  it("is deterministic", async () => {
+    const data = new TextEncoder().encode("gravekeeper");
     expect(await sha256hex(data)).toBe(await sha256hex(data));
   });
 });
@@ -101,8 +103,8 @@ describe('sha256hex', () => {
 // Property 1 — Determinism of canonicalJson
 // ---------------------------------------------------------------------------
 
-describe('canonicalJson — property: determinism', () => {
-  it('produces the same bytes regardless of original key insertion order', () => {
+describe("canonicalJson — property: determinism", () => {
+  it("produces the same bytes regardless of original key insertion order", () => {
     fc.assert(
       fc.property(
         fc.record({
@@ -127,14 +129,14 @@ describe('canonicalJson — property: determinism', () => {
 // Property 2 — Chain integrity (prevHash linkage)
 // ---------------------------------------------------------------------------
 
-describe('verifyChain — property: chain integrity', () => {
-  it('any chain built by buildChain passes verifyChain', async () => {
+describe("verifyChain — property: chain integrity", () => {
+  it("any chain built by buildChain passes verifyChain", async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.array(
-          fc.record({ kind: fcKind, url: fcUrl }),
-          { minLength: 1, maxLength: 8 },
-        ),
+        fc.array(fc.record({ kind: fcKind, url: fcUrl }), {
+          minLength: 1,
+          maxLength: 8,
+        }),
         async (inputs) => {
           const chain = await buildChain(inputs, privateKey);
           const result = await verifyChain(chain, publicKey);
@@ -151,19 +153,25 @@ describe('verifyChain — property: chain integrity', () => {
 // Property 3 — Hash consistency
 // ---------------------------------------------------------------------------
 
-describe('buildReceipt — property: hash consistency', () => {
-  it('each receipt\'s hash matches sha256hex(canonicalJson(unsigned fields))', async () => {
+describe("buildReceipt — property: hash consistency", () => {
+  it("each receipt's hash matches sha256hex(canonicalJson(unsigned fields))", async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.array(
-          fc.record({ kind: fcKind, url: fcUrl }),
-          { minLength: 1, maxLength: 6 },
-        ),
+        fc.array(fc.record({ kind: fcKind, url: fcUrl }), {
+          minLength: 1,
+          maxLength: 6,
+        }),
         async (inputs) => {
           const chain = await buildChain(inputs, privateKey);
           for (const r of chain) {
-            const { hash: _h, signature: _s, ...unsigned } = r;
-            const canonical = canonicalJson(unsigned as Record<string, unknown>);
+            const unsigned = Object.fromEntries(
+              Object.entries(r).filter(
+                ([key]) => key !== "hash" && key !== "signature",
+              ),
+            );
+            const canonical = canonicalJson(
+              unsigned as Record<string, unknown>,
+            );
             const expected = await sha256hex(canonical);
             expect(r.hash).toBe(expected);
           }
@@ -178,14 +186,14 @@ describe('buildReceipt — property: hash consistency', () => {
 // Property 4 — Signature round-trip
 // ---------------------------------------------------------------------------
 
-describe('verifyChain — property: signature round-trip', () => {
-  it('a freshly built chain always passes signature verification', async () => {
+describe("verifyChain — property: signature round-trip", () => {
+  it("a freshly built chain always passes signature verification", async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.array(
-          fc.record({ kind: fcKind, url: fcUrl }),
-          { minLength: 1, maxLength: 5 },
-        ),
+        fc.array(fc.record({ kind: fcKind, url: fcUrl }), {
+          minLength: 1,
+          maxLength: 5,
+        }),
         async (inputs) => {
           // Use a fresh key pair so each run is independent
           const kp = await generateKeyPair();
@@ -203,14 +211,14 @@ describe('verifyChain — property: signature round-trip', () => {
 // Property 5 — Tamper detection
 // ---------------------------------------------------------------------------
 
-describe('verifyChain — property: tamper detection', () => {
-  it('mutating a field on any receipt causes verifyChain to return false', async () => {
+describe("verifyChain — property: tamper detection", () => {
+  it("mutating a field on any receipt causes verifyChain to return false", async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.array(
-          fc.record({ kind: fcKind, url: fcUrl }),
-          { minLength: 2, maxLength: 6 },
-        ),
+        fc.array(fc.record({ kind: fcKind, url: fcUrl }), {
+          minLength: 2,
+          maxLength: 6,
+        }),
         fc.nat(),
         fc.string({ minLength: 1, maxLength: 30 }),
         async (inputs, idxSeed, mutation) => {
@@ -230,20 +238,20 @@ describe('verifyChain — property: tamper detection', () => {
     );
   });
 
-  it('mutating hash directly causes verifyChain to return false', async () => {
+  it("mutating hash directly causes verifyChain to return false", async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.array(
-          fc.record({ kind: fcKind, url: fcUrl }),
-          { minLength: 1, maxLength: 4 },
-        ),
+        fc.array(fc.record({ kind: fcKind, url: fcUrl }), {
+          minLength: 1,
+          maxLength: 4,
+        }),
         fc.nat(),
         async (inputs, idxSeed) => {
           const chain = await buildChain(inputs, privateKey);
           const idx = idxSeed % chain.length;
 
           const tampered: Receipt[] = chain.map((r, i) =>
-            i === idx ? { ...r, hash: '0'.repeat(64) } : r,
+            i === idx ? { ...r, hash: "0".repeat(64) } : r,
           );
 
           const result = await verifyChain(tampered, publicKey);
@@ -259,14 +267,14 @@ describe('verifyChain — property: tamper detection', () => {
 // Property 6 — Seq monotonicity
 // ---------------------------------------------------------------------------
 
-describe('buildReceipt — property: seq monotonicity', () => {
-  it('receipts[i].seq === i for all i in a valid chain', async () => {
+describe("buildReceipt — property: seq monotonicity", () => {
+  it("receipts[i].seq === i for all i in a valid chain", async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.array(
-          fc.record({ kind: fcKind, url: fcUrl }),
-          { minLength: 1, maxLength: 10 },
-        ),
+        fc.array(fc.record({ kind: fcKind, url: fcUrl }), {
+          minLength: 1,
+          maxLength: 10,
+        }),
         async (inputs) => {
           const chain = await buildChain(inputs, privateKey);
           chain.forEach((r, i) => {
@@ -278,13 +286,13 @@ describe('buildReceipt — property: seq monotonicity', () => {
     );
   });
 
-  it('a chain with mismatched seq fails verifyChain', async () => {
+  it("a chain with mismatched seq fails verifyChain", async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.array(
-          fc.record({ kind: fcKind, url: fcUrl }),
-          { minLength: 2, maxLength: 6 },
-        ),
+        fc.array(fc.record({ kind: fcKind, url: fcUrl }), {
+          minLength: 2,
+          maxLength: 6,
+        }),
         fc.nat(),
         async (inputs, idxSeed) => {
           const chain = await buildChain(inputs, privateKey);
@@ -304,22 +312,23 @@ describe('buildReceipt — property: seq monotonicity', () => {
   });
 });
 
-
 // ---------------------------------------------------------------------------
 // Extra — canonical JSON UTF-8 round-trip / parse stability
 // ---------------------------------------------------------------------------
 
-describe('canonicalJson — property: UTF-8 round-trip', () => {
-  it('decoding then JSON.parse yields the same values with sorted key order', () => {
+describe("canonicalJson — property: UTF-8 round-trip", () => {
+  it("decoding then JSON.parse yields the same values with sorted key order", () => {
     fc.assert(
       fc.property(
         fc.record({
           seq: fc.nat({ max: 20 }),
           kind: fcKind,
           url: fcUrl,
-          fetchedAt: fc.constant('2026-11-06T00:00:00.000Z'),
+          fetchedAt: fc.constant("2026-11-06T00:00:00.000Z"),
           contentSha256: fc.stringMatching(/^[a-f0-9]{64}$/),
-          prevHash: fc.option(fc.stringMatching(/^[a-f0-9]{64}$/), { nil: null }),
+          prevHash: fc.option(fc.stringMatching(/^[a-f0-9]{64}$/), {
+            nil: null,
+          }),
         }),
         (obj) => {
           const bytes = canonicalJson(obj as Record<string, unknown>);
@@ -339,4 +348,3 @@ describe('canonicalJson — property: UTF-8 round-trip', () => {
     );
   });
 });
-

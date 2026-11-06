@@ -100,21 +100,24 @@ Tasks are ordered so each builds on the previous. Complete them in order. Each t
 
 ## Phase 3 — UI
 
+Implementation note (Nov 6, 2026 UTC): the UI is consolidated in `src/components/Gravekeeper.tsx`; the page remains a Server Component. Browser proof helpers are in `src/client/proof.ts`. Public forking intentionally uses GitHub's own confirmation page rather than the operator API. See `docs/RELEASE_CHECKLIST.md` for remaining release gates.
+
+
 ### Task 9 — Shared types & Vitest config
-- [ ] Create `vitest.config.mts` with `tsconfigPaths()` plugin and `environment: 'node'` (lib tests are server-only; no jsdom needed for phase 1–2 tests).
-- [ ] Verify `npm run test` runs all existing tests green.
+- [x] Existing `vitest.config.mts` resolves the `@/` alias and uses `environment: 'node'`; no additional paths plugin is needed.
+- [x] Verify `npm run test` runs all existing tests green.
 - **Refs:** all
 
 ---
 
 ### Task 10 — SearchForm component (`src/components/SearchForm.tsx`)
 - [ ] `'use client'` Client Component.
-- [ ] Controlled text input + submit button.
-- [ ] Client-side URL validation (display inline error, no network call on invalid).
-- [ ] Calls `POST /api/resurrect`, tracks loading state, surfaces API errors.
-- [ ] Dispatches result to parent via `onResult` callback prop.
-- [ ] Disabled state while loading (US-01 AC-5).
-- [ ] `aria-live="polite"` region for error messages (US-07 AC-5).
+- [x] Controlled text input + submit button.
+- [x] Client-side URL validation (display inline error, no network call on invalid).
+- [x] Calls `POST /api/resurrect`, tracks loading state, surfaces API errors.
+- [x] Result state is owned by the client wrapper; no prop callback needed.
+- [x] Disabled state while loading (US-01 AC-5).
+- [x] Polite `role="status"` region for errors and lookup progress (US-07 AC-5).
 - **Refs:** US-01, US-07
 
 ---
@@ -123,16 +126,16 @@ Tasks are ordered so each builds on the previous. Complete them in order. Each t
 - [ ] Server Component (accepts serialisable props, no client state).
 - [ ] Displays: repo/URL name as epitaph, last push date, Wayback snapshot date, "R.I.P." motif.
 - [ ] Gothic card styling via Tailwind utility classes.
-- [ ] Proper heading hierarchy; all decorative SVGs `aria-hidden`.
+- [x] Proper heading hierarchy; all decorative SVGs `aria-hidden`.
 - **Refs:** US-02, US-03, US-07
 
 ---
 
 ### Task 12 — ReceiptChainViewer component (`src/components/ReceiptChainViewer.tsx`)
 - [ ] `'use client'` Client Component.
-- [ ] Expandable/collapsible list of receipts showing `seq`, `kind`, `fetchedAt`, `hash` (truncated).
-- [ ] "Export Receipt Chain" button — triggers JSON file download using `URL.createObjectURL`.
-- [ ] Keyboard-operable accordion (Enter/Space to toggle).
+- [x] Expandable/collapsible native details show sequence, kind, fetchedAt, hash and payload digest.
+- [x] "Export Receipt Chain" button — triggers JSON file download using `URL.createObjectURL`.
+- [x] Keyboard-operable accordion (Enter/Space to toggle).
 - **Refs:** US-04 (AC-3), US-07 (AC-1)
 
 ---
@@ -140,7 +143,7 @@ Tasks are ordered so each builds on the previous. Complete them in order. Each t
 ### Task 13 — RevivalSpecPanel component (`src/components/RevivalSpecPanel.tsx`)
 - [ ] `'use client'` Client Component.
 - [ ] Accordion displaying detected stack, stale deps (with badges), and ordered revival steps.
-- [ ] "Create Revived Fork" button — calls `POST /api/fork`; disabled with tooltip when no token (US-06 AC-3).
+- [x] Public fork link opens GitHub for explicit confirmation using the visitor account. Operator POST requires a separate secret and is disabled by default.
 - [ ] `motion-reduce:` variants on all animated elements.
 - **Refs:** US-05, US-06, US-07
 
@@ -156,10 +159,10 @@ Tasks are ordered so each builds on the previous. Complete them in order. Each t
 ---
 
 ### Task 15 — Home page assembly (`src/app/page.tsx`)
-- [ ] Server Component page.
+- [x] Server Component page.
 - [ ] Import and compose: `FogOverlay`, `SearchForm`, `TombstoneCard`, `ReceiptChainViewer`, `RevivalSpecPanel`.
 - [ ] Manage result state via a `'use client'` wrapper if needed (or use URL search params for SSR-friendly state).
-- [ ] Haunted graveyard layout: dark background, tombstone grid, candlelight amber accents.
+- [x] Haunted graveyard layout: dark background, tombstone grid, candlelight amber accents.
 - [ ] `<title>` and Open Graph metadata via Next.js `export const metadata`.
 - **Refs:** US-01, US-07
 
@@ -176,6 +179,6 @@ Tasks are ordered so each builds on the previous. Complete them in order. Each t
 ---
 
 ### Task 17 — Final integration test
-- [ ] Write `src/__tests__/resurrect-integration.test.ts` — mock external APIs, call the route handler logic end-to-end, verify `ResurrectResponse` shape and chain validity.
-- [ ] Run `npm run build` and confirm zero TypeScript errors.
+- [x] Integration-style route tests mock upstream APIs and verify response shape, receipt chain, evidence payloads, and browser/offline proof integrity.
+- [x] Run `npm run build` and confirm zero TypeScript errors (rerun after final edits).
 - **Refs:** all

@@ -1,0 +1,154 @@
+{
+  "format": "gravekeeper-restoration-v1",
+  "source": {
+    "repository": "https://github.com/mathiasbynens/esrever",
+    "commit": "14b34013dad49106ca08c0e65919f1fc8fea5331",
+    "path": "esrever.js",
+    "gitBlobSha1": "0df77a567a8571656165c12d02acb3f92592473c",
+    "sha256": "35aed57fa67a333dec044bb138c28725ef8b2aaa228f7d5715a7319e778c8bed",
+    "url": "https://github.com/mathiasbynens/esrever/blob/14b34013dad49106ca08c0e65919f1fc8fea5331/esrever.js",
+    "license": "MIT",
+    "licenseGitBlobSha1": "a41e0a7ef970ecdd83d82cd99bda97b22077bc62",
+    "status": "Dormant default branch; not marked archived by GitHub when checked on 2026-11-06."
+  },
+  "runtime": {
+    "node": "v24.22.0",
+    "icu": "78.3",
+    "unicode": "17.0"
+  },
+  "fingerprints": {
+    "restoredSha256": "15de2b129a1818c0ab237f931e97dc3b39fe560f9b483a9c59a339e6878ab0ae",
+    "fixturesSha256": "0b68e231abce9c55f76a2c4171a3086d05ff997add2daf73588ed92b67f73e55",
+    "verifierSha256": "4dc7ac7a36dc554e67ee7ff2f475342e841e9f4a3c4c8c1eacedfe63a4d1b354"
+  },
+  "summary": {
+    "total": 12,
+    "beforePassed": 4,
+    "afterPassed": 12,
+    "improvements": 8
+  },
+  "results": [
+    {
+      "id": "ascii",
+      "label": "ASCII compatibility",
+      "input": "ghost",
+      "expected": "tsohg",
+      "before": "tsohg",
+      "after": "tsohg",
+      "beforePassed": true,
+      "afterPassed": true
+    },
+    {
+      "id": "empty",
+      "label": "Empty string",
+      "input": "",
+      "expected": "",
+      "before": "",
+      "after": "",
+      "beforePassed": true,
+      "afterPassed": true
+    },
+    {
+      "id": "combining",
+      "label": "Combining mark compatibility",
+      "input": "mañana",
+      "expected": "anañam",
+      "before": "anañam",
+      "after": "anañam",
+      "beforePassed": true,
+      "afterPassed": true
+    },
+    {
+      "id": "astral",
+      "label": "Astral symbol compatibility",
+      "input": "A𝌆B",
+      "expected": "B𝌆A",
+      "before": "B𝌆A",
+      "after": "B𝌆A",
+      "beforePassed": true,
+      "afterPassed": true
+    },
+    {
+      "id": "profession",
+      "label": "Joined emoji",
+      "input": "👩‍💻!",
+      "expected": "!👩‍💻",
+      "before": "!💻‍👩",
+      "after": "!👩‍💻",
+      "beforePassed": false,
+      "afterPassed": true
+    },
+    {
+      "id": "family",
+      "label": "Family emoji",
+      "input": "👨‍👩‍👧‍👦!",
+      "expected": "!👨‍👩‍👧‍👦",
+      "before": "!👦‍👧‍👩‍👨",
+      "after": "!👨‍👩‍👧‍👦",
+      "beforePassed": false,
+      "afterPassed": true
+    },
+    {
+      "id": "flag",
+      "label": "Country flag",
+      "input": "🇮🇳!",
+      "expected": "!🇮🇳",
+      "before": "!🇳🇮",
+      "after": "!🇮🇳",
+      "beforePassed": false,
+      "afterPassed": true
+    },
+    {
+      "id": "skin-tone",
+      "label": "Skin-tone modifier",
+      "input": "👍🏽!",
+      "expected": "!👍🏽",
+      "before": "!🏽👍",
+      "after": "!👍🏽",
+      "beforePassed": false,
+      "afterPassed": true
+    },
+    {
+      "id": "devanagari",
+      "label": "Devanagari vowel sign",
+      "input": "कि!",
+      "expected": "!कि",
+      "before": "!िक",
+      "after": "!कि",
+      "beforePassed": false,
+      "afterPassed": true
+    },
+    {
+      "id": "keycap",
+      "label": "Keycap emoji",
+      "input": "1️⃣!",
+      "expected": "!1️⃣",
+      "before": "!️⃣1",
+      "after": "!1️⃣",
+      "beforePassed": false,
+      "afterPassed": true
+    },
+    {
+      "id": "variation",
+      "label": "Emoji presentation selector",
+      "input": "✈️!",
+      "expected": "!✈️",
+      "before": "!️✈",
+      "after": "!✈️",
+      "beforePassed": false,
+      "afterPassed": true
+    },
+    {
+      "id": "line-ending",
+      "label": "CRLF line ending",
+      "input": "A\r\nB",
+      "expected": "B\r\nA",
+      "before": "B\n\rA",
+      "after": "B\r\nA",
+      "beforePassed": false,
+      "afterPassed": true
+    }
+  ],
+  "scope": "A curated modernization of the reverse API, not a full package revival or automated arbitrary-repository repair. Counts describe these fixtures only.",
+  "trust": "Reproducible local execution, not a signed attestation. Compare pinned upstream bytes with GitHub independently. A report alone does not prove it was executed honestly."
+}

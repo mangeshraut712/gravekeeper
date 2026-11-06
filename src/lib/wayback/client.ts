@@ -38,13 +38,14 @@ const TIMEOUT_MS = 10_000;
  */
 export async function fetchWaybackSnapshot(
   url: string,
+  signal?: AbortSignal,
 ): Promise<Result<WaybackResult>> {
   const apiUrl = `${WAYBACK_API_BASE}?url=${encodeURIComponent(url)}`;
 
   let response: Response;
   try {
     response = await fetch(apiUrl, {
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT_MS)]) : AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (err) {
     // AbortSignal.timeout() causes a DOMException with name 'TimeoutError',
@@ -86,7 +87,7 @@ export async function fetchWaybackSnapshot(
     };
   }
 
-  const closest = body.archived_snapshots?.closest;
+  const closest = body?.archived_snapshots?.closest;
 
   if (!closest || !closest.available) {
     return {
@@ -94,6 +95,11 @@ export async function fetchWaybackSnapshot(
       error: 'No archived snapshot found for the given URL.',
       code: 'WAYBACK_NO_SNAPSHOT',
     };
+  }
+
+  if (typeof closest.url !== 'string' || typeof closest.timestamp !== 'string' ||
+      !/^\d{14}$/.test(closest.timestamp) || typeof closest.status !== 'string') {
+    return { ok: false, error: 'Invalid archive snapshot response.', code: 'PARSE_ERROR' };
   }
 
   const result: WaybackResult = {

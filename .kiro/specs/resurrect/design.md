@@ -291,3 +291,20 @@ fc.property(
 | `FogOverlay` | Client | Absolutely-positioned fog CSS animation; `motion-reduce:hidden` |
 | `ReceiptChainViewer` | Client | Expandable list of receipts; "Export JSON" button triggering file download |
 | `RevivalSpecPanel` | Client | Accordion of revival steps; lists stale deps with badges |
+
+---
+
+## Bundled restoration (reconciled with the workbench)
+
+The generic revival checklist does not rewrite source. A separate `/lantern-hill` page demonstrates a bounded HTML rewrite of an original MIT-licensed fixture. It preserves the existing workbench, `/api/resurrect`, and the evidence-bound `gravekeeper-proof-v1` format.
+
+`buildLanternHillDemo()` loads `src/lib/restore/fixture.ts`, runs `restoreDeadHtml()`, and signs the exact before and after HTML bytes with a fresh ephemeral Ed25519 key. No upstream request is made. Both previews are sandboxed; fixture routes also apply a restrictive CSP. The fixture URL is an identifier, not a deployed website.
+
+| seq | kind | body hashed |
+|---|---|---|
+| 0 | `fixture` | before HTML |
+| 1 | `restoration` | after HTML |
+
+`buildReceiptExport()` writes `{ gravekeeper: "receipt-export", version: 1, publicKey, receipts, artifacts }`. `verifyReceiptExport()` rejects empty/malformed chains, recomputes links and signatures, and checks hashes for included artifacts. The browser calls that function directly. `POST /api/verify` provides the same check over HTTP. This export format is separate from the existing live lookup proof.
+
+Verification means internal consistency, not authorship or historical provenance. Missing artifacts are not verified; replacing the entire file/key or removing a valid suffix is undetectable without a trusted external anchor. The HTML rewriter is scoped to the bundled fixture, not a general sanitizer or live-site rewriting service.
