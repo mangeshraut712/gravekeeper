@@ -1,0 +1,17 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "run-lib-tests-on-save",
+      "description": "After the agent saves a file under src/lib, run the Vitest suite so regressions show up immediately.",
+      "trigger": "PostFileSave",
+      "matcher": "src/lib/.*\\.(ts|tsx)$",
+      "action": {
+        "type": "command",
+        "command": "npm test"
+      },
+      "timeout": 120,
+      "enabled": true
+    }
+  ]
+}

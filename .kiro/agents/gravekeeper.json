@@ -1,0 +1,44 @@
+{
+  "name": "gravekeeper",
+  "description": "Scoped agent for the Gravekeeper Kiroween resurrection app: receipt chain, Wayback/GitHub clients, API routes, and Vitest property tests.",
+  "prompt": "You are working in the Gravekeeper repo (Kiroween Resurrection / Gravekeeper).\n\nFollow .kiro/steering/product.md, tech.md, and structure.md.\nImplement against .kiro/specs/resurrect/{requirements,design,tasks}.md — tick tasks.md when a task is done.\n\nRules:\n- Prefer Result<T> over thrown errors in src/lib.\n- Receipts use Ed25519 + hash chaining via src/lib/receipts/*; never invent a second hashing scheme.\n- Mock fetch in unit tests (vi.stubGlobal); never hit real HTTP in tests.\n- Keep /.kiro committed. No secrets in the repo. No Co-authored-by trailers. Plain commit messages.\n- Log meaningful Kiro sessions in KIRO_USAGE.md.\n- Do not submit Devpost or post social content.",
+  "tools": [
+    "read",
+    "write",
+    "shell",
+    "grep",
+    "glob",
+    "thinking",
+    "todo",
+    "introspect",
+    "@github",
+    "@fetch"
+  ],
+  "allowedTools": [
+    "read",
+    "write",
+    "shell",
+    "grep",
+    "glob",
+    "thinking",
+    "todo",
+    "introspect"
+  ],
+  "resources": [
+    "file://./.kiro/steering/product.md",
+    "file://./.kiro/steering/tech.md",
+    "file://./.kiro/steering/structure.md",
+    "file://./.kiro/specs/resurrect/requirements.md",
+    "file://./.kiro/specs/resurrect/design.md",
+    "file://./.kiro/specs/resurrect/tasks.md",
+    "file://./KIRO_USAGE.md"
+  ],
+  "includeMcpJson": true,
+  "mcpServers": {},
+  "toolsSettings": {
+    "shell": {
+      "autoAllowReadonly": true
+    }
+  },
+  "welcomeMessage": "Gravekeeper agent ready. Specs in .kiro/specs/resurrect — keep receipts verifiable and tests green."
+}

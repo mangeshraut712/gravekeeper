@@ -1,0 +1,27 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "keep-tasks-md-in-sync",
+      "description": "When implementation files change, remind the agent to tick matching checkboxes in .kiro/specs/resurrect/tasks.md.",
+      "trigger": "PostFileSave",
+      "matcher": "src/(lib|app)/.*\\.(ts|tsx)$",
+      "action": {
+        "type": "agent",
+        "prompt": "A source file under src/ was just saved. Check .kiro/specs/resurrect/tasks.md. If the saved change completes any unchecked task (or a clear sub-bullet), mark those checkboxes [x]. Do not invent new tasks. Keep the rest of the file unchanged."
+      },
+      "enabled": true
+    },
+    {
+      "name": "check-spec-drift",
+      "description": "After API or type changes, check that design.md and tasks.md still describe the shipped surface.",
+      "trigger": "PostFileSave",
+      "matcher": "src/(types|app/api)/.*\\.(ts|tsx)$",
+      "action": {
+        "type": "agent",
+        "prompt": "A types or API route file changed. Compare it to .kiro/specs/resurrect/design.md and tasks.md. If the code drifted from the written contracts (request/response shapes, ReceiptKind values, error codes), update the spec docs to match reality in plain language. Do not rewrite working code just to match an outdated sentence."
+      },
+      "enabled": true
+    }
+  ]
+}
