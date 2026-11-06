@@ -141,7 +141,7 @@ function Graveyard() {
           />
         </g>
       </svg>
-      <p className="text-center font-mono text-[10px] uppercase tracking-[.24em] text-stone-500">
+      <p className="text-center font-mono text-[10px] uppercase tracking-[.24em] text-stone-400">
         Some projects are only sleeping.
       </p>
     </div>
@@ -284,7 +284,7 @@ function Receipts({ result, url }: { result: ResurrectResponse; url: string }) {
         {result.receipts.map((receipt) => (
           <details key={receipt.seq} className="py-3">
             <summary className="cursor-pointer text-sm text-stone-200">
-              <span className="mr-3 font-mono text-xs text-stone-500">
+              <span className="mr-3 font-mono text-xs text-stone-400">
                 {String(receipt.seq + 1).padStart(2, "0")}
               </span>
               {receipt.kind}
@@ -563,6 +563,9 @@ export default function Gravekeeper() {
             <Link href="/restoration" className={`${button} mt-6`}>
               Try a real restoration <span aria-hidden="true">→</span>
             </Link>
+            <Link href="/lantern-hill" className={`${button} ml-0 mt-3 sm:ml-3`}>
+              Restore a 1999-style page <span aria-hidden="true">→</span>
+            </Link>
           </div>
           <Graveyard />
         </section>
@@ -599,7 +602,7 @@ export default function Gravekeeper() {
                 aria-invalid={Boolean(error)}
                 aria-describedby="lookup-privacy lookup-error"
                 required
-                className="min-h-12 min-w-0 flex-1 rounded-md border border-stone-600 bg-[#10140e] px-4 font-mono text-sm text-stone-100 placeholder:text-stone-500 disabled:opacity-60"
+                className="min-h-12 min-w-0 flex-1 rounded-md border border-stone-600 bg-[#10140e] px-4 font-mono text-sm text-stone-100 placeholder:text-stone-400 disabled:opacity-60"
               />
               <button
                 type="submit"
@@ -635,7 +638,7 @@ export default function Gravekeeper() {
             </p>
           </form>
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-            <span className="text-stone-500">Need a starting point?</span>
+            <span className="text-stone-400">Need a starting point?</span>
             {[
               "https://github.com/atom/atom",
               "https://github.com/facebookarchive/flux",
@@ -682,14 +685,14 @@ export default function Gravekeeper() {
           ) : (
             <div className="flex flex-col items-center rounded-xl border border-dashed border-stone-700/70 px-6 py-12 text-center">
               <Mark
-                className={`mb-4 h-10 w-10 text-stone-500 ${loading ? "motion-safe:animate-pulse" : ""}`}
+                className={`mb-4 h-10 w-10 text-stone-400 ${loading ? "motion-safe:animate-pulse" : ""}`}
               />
               <h3 className="font-serif text-xl text-stone-300">
                 {loading
                   ? "Listening for signs of life…"
                   : "Every abandoned project has a story."}
               </h3>
-              <p className="mt-2 max-w-md text-sm leading-6 text-stone-500">
+              <p className="mt-2 max-w-md text-sm leading-6 text-stone-400">
                 {loading
                   ? "Gathering evidence. A missing archive does not mean a project is gone for good."
                   : "Enter a URL above to discover its past and figure out what comes next. Your findings will appear here."}
@@ -741,7 +744,7 @@ export default function Gravekeeper() {
           </div>
         </section>
       </main>
-      <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 border-t border-stone-700/50 px-5 py-6 text-xs text-stone-500 sm:px-8">
+      <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 border-t border-stone-700/50 px-5 py-6 text-xs text-stone-400 sm:px-8">
         <p>Gravekeeper · Built for Kiroween 2026</p>
         <p>Open source. No ghosts in the fine print.</p>
       </footer>

@@ -58,6 +58,17 @@ describe('verifyReceiptExport', () => {
     expect(result.artifacts?.before).toBe(false);
   });
 
+  it('rejects an empty signed export', async () => {
+    const signed = await signedChain([]);
+    expect(await verifyReceiptExport(buildReceiptExport(signed))).toMatchObject({ valid: false, reason: 'parse' });
+  });
+
+  it('rejects malformed signatures without throwing', async () => {
+    const signed = await signedChain([{ kind: 'fixture', url: 'https://example.com/', body: 'before' }]);
+    signed.receipts[0].signature = '!not-base64!';
+    await expect(verifyReceiptExport(buildReceiptExport(signed))).resolves.toMatchObject({ valid: false, reason: 'chain' });
+  });
+
   it('rejects a file that is not an export', async () => {
     const result = await verifyReceiptExport({ hello: 'world' });
     expect(result.valid).toBe(false);

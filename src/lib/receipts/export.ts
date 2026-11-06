@@ -64,7 +64,13 @@ export async function verifyReceiptExport(input: unknown): Promise<VerifyExportR
     return { valid: false, reason: 'public-key' };
   }
 
-  const chain = await verifyChain(parsed.receipts, publicKey);
+  let chain: Awaited<ReturnType<typeof verifyChain>>;
+  try {
+    chain = await verifyChain(parsed.receipts, publicKey);
+  } catch {
+    // Invalid base64 signatures and unavailable cryptography are verification failures.
+    return { valid: false, reason: 'chain' };
+  }
   const artifacts = await checkArtifacts(parsed);
 
   if (!chain.valid) {
@@ -114,7 +120,7 @@ function parseExport(input: unknown): ReceiptExportV1 | null {
   if (record.gravekeeper !== RECEIPT_EXPORT_KIND) return null;
   if (record.version !== RECEIPT_EXPORT_VERSION) return null;
   if (typeof record.publicKey !== 'string' || record.publicKey.length === 0) return null;
-  if (!Array.isArray(record.receipts) || !record.receipts.every(isReceipt)) return null;
+  if (!Array.isArray(record.receipts) || record.receipts.length === 0 || !record.receipts.every(isReceipt)) return null;
 
   let artifacts: ReceiptExportV1['artifacts'];
   if (record.artifacts !== undefined) {

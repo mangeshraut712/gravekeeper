@@ -10,6 +10,11 @@ describe("Gravekeeper landing page", () => {
     expect(html).toContain("Internet Archive");
     expect(html).not.toContain("To get started");
     expect(html).toContain('href="/restoration"');
+    expect(html).toContain('href="/lantern-hill"');
+  });
+  it("uses readable muted text for the dark landing page", () => {
+    const html = renderToStaticMarkup(<Home />);
+    expect(html).not.toMatch(/<(?:p|span|footer)[^>]*class="[^"]*text-stone-500/);
   });
   it("starts with no fabricated results and explains receipt limitations", () => {
     const html = renderToStaticMarkup(<Home />);
