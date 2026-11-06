@@ -3,7 +3,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { POST } from './route';
+import { GET, POST } from './route';
 import { NextRequest } from 'next/server';
 import { verifyChain } from '@/lib/receipts/chain';
 
@@ -27,6 +27,27 @@ async function importPublicKey(b64url: string): Promise<CryptoKey> {
     'verify',
   ]);
 }
+
+describe('GET /api/fork', () => {
+  const ORIGINAL_TOKEN = process.env['GITHUB_TOKEN'];
+
+  afterEach(() => {
+    if (ORIGINAL_TOKEN === undefined) delete process.env['GITHUB_TOKEN'];
+    else process.env['GITHUB_TOKEN'] = ORIGINAL_TOKEN;
+  });
+
+  it('reports whether a token is configured without returning it', async () => {
+    delete process.env['GITHUB_TOKEN'];
+    const missing = await GET(new NextRequest('http://localhost/api/fork'));
+    expect(await missing.json()).toEqual({ enabled: false });
+
+    process.env['GITHUB_TOKEN'] = 'secret-token';
+    const present = await GET(new NextRequest('http://localhost/api/fork'));
+    const body = await present.json();
+    expect(body).toEqual({ enabled: true });
+    expect(JSON.stringify(body)).not.toContain('secret-token');
+  });
+});
 
 describe('POST /api/fork', () => {
   const ORIGINAL_TOKEN = process.env['GITHUB_TOKEN'];

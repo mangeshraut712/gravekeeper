@@ -101,66 +101,57 @@ Tasks are ordered so each builds on the previous. Complete them in order. Each t
 ## Phase 3 — UI
 
 ### Task 9 — Shared types & Vitest config
-- [ ] Create `vitest.config.mts` with `tsconfigPaths()` plugin and `environment: 'node'` (lib tests are server-only; no jsdom needed for phase 1–2 tests).
-- [ ] Verify `npm run test` runs all existing tests green.
+- [x] Create `vitest.config.mts` with `environment: 'node'` and the `@/` alias (the `@/` alias is mapped in the config directly; a separate `tsconfigPaths()` plugin was not required).
+- [x] Verify `npm run test` runs all existing tests green.
 - **Refs:** all
 
 ---
 
-### Task 10 — SearchForm component (`src/components/SearchForm.tsx`)
-- [ ] `'use client'` Client Component.
-- [ ] Controlled text input + submit button.
-- [ ] Client-side URL validation (display inline error, no network call on invalid).
-- [ ] Calls `POST /api/resurrect`, tracks loading state, surfaces API errors.
-- [ ] Dispatches result to parent via `onResult` callback prop.
-- [ ] Disabled state while loading (US-01 AC-5).
-- [ ] `aria-live="polite"` region for error messages (US-07 AC-5).
+### Task 10 — Search form (`src/components/ResurrectApp.tsx`)
+- [x] `'use client'` form with a controlled URL input and submit button. Shipped inside `ResurrectApp` rather than a separate `SearchForm.tsx`.
+- [x] Client-side URL validation (inline error, no request on an invalid URL).
+- [x] Calls `POST /api/resurrect`, tracks loading state, surfaces API errors.
+- [x] Disabled submit while loading (US-01 AC-5).
+- [x] `role="alert"` for errors and `role="status"` for progress (US-07 AC-5).
 - **Refs:** US-01, US-07
 
 ---
 
-### Task 11 — TombstoneCard component (`src/components/TombstoneCard.tsx`)
-- [ ] Server Component (accepts serialisable props, no client state).
-- [ ] Displays: repo/URL name as epitaph, last push date, Wayback snapshot date, "R.I.P." motif.
-- [ ] Gothic card styling via Tailwind utility classes.
-- [ ] Proper heading hierarchy; all decorative SVGs `aria-hidden`.
+### Task 11 — Result summary (inside `ResurrectApp`)
+- [x] Shows the fixture title and disclosure, or GitHub full name, stars, license, last push, and Wayback time.
+- [x] Tailwind layout on the dark product surface. Decorative flame and fog are `aria-hidden`.
 - **Refs:** US-02, US-03, US-07
 
 ---
 
-### Task 12 — ReceiptChainViewer component (`src/components/ReceiptChainViewer.tsx`)
-- [ ] `'use client'` Client Component.
-- [ ] Expandable/collapsible list of receipts showing `seq`, `kind`, `fetchedAt`, `hash` (truncated).
-- [ ] "Export Receipt Chain" button — triggers JSON file download using `URL.createObjectURL`.
-- [ ] Keyboard-operable accordion (Enter/Space to toggle).
+### Task 12 — Receipt chain (inside `ResurrectApp`)
+- [x] Expandable receipt rows (`details`/`summary`, keyboard operable) showing `seq`, `kind`, `fetchedAt`, truncated hash, full hash, and content hash.
+- [x] Export button downloads `gravekeeper-receipts.json` via `URL.createObjectURL`.
+- [x] Verify-in-browser and verify-a-file both call `verifyReceiptExport`.
 - **Refs:** US-04 (AC-3), US-07 (AC-1)
 
 ---
 
-### Task 13 — RevivalSpecPanel component (`src/components/RevivalSpecPanel.tsx`)
-- [ ] `'use client'` Client Component.
-- [ ] Accordion displaying detected stack, stale deps (with badges), and ordered revival steps.
-- [ ] "Create Revived Fork" button — calls `POST /api/fork`; disabled with tooltip when no token (US-06 AC-3).
-- [ ] `motion-reduce:` variants on all animated elements.
+### Task 13 — Revival checklist and fork (inside `ResurrectApp`)
+- [x] Ordered revival steps for a GitHub result.
+- [x] "Create revived fork" calls `POST /api/fork`. The button is disabled, with visible text and a `title`, when `GET /api/fork` reports no token (US-06 AC-3).
+- [x] `motion-reduce:` hides the fog animation.
 - **Refs:** US-05, US-06, US-07
 
 ---
 
 ### Task 14 — FogOverlay and ambient effects (`src/components/FogOverlay.tsx`)
-- [ ] `'use client'` Client Component.
-- [ ] CSS keyframe animation for drifting fog using Tailwind `@keyframes` in globals.css.
-- [ ] Hidden via `motion-reduce:hidden` (US-07 AC-3).
-- [ ] `aria-hidden="true"` (US-07 AC-2).
+- [x] Fog layer with a keyframe in `globals.css`.
+- [x] Hidden via `motion-reduce:hidden` (US-07 AC-3). The candle animation is also cancelled under `prefers-reduced-motion`.
+- [x] `aria-hidden="true"` (US-07 AC-2).
 - **Refs:** US-07
 
 ---
 
 ### Task 15 — Home page assembly (`src/app/page.tsx`)
-- [ ] Server Component page.
-- [ ] Import and compose: `FogOverlay`, `SearchForm`, `TombstoneCard`, `ReceiptChainViewer`, `RevivalSpecPanel`.
-- [ ] Manage result state via a `'use client'` wrapper if needed (or use URL search params for SSR-friendly state).
-- [ ] Haunted graveyard layout: dark background, tombstone grid, candlelight amber accents.
-- [ ] `<title>` and Open Graph metadata via Next.js `export const metadata`.
+- [x] Server page renders the client `ResurrectApp` (search, before/after, receipts, revival checklist, fog).
+- [x] Dark soil background, bone type, amber accent. Product copy, not the create-next-app starter.
+- [x] `<title>` and Open Graph metadata in `layout.tsx`.
 - **Refs:** US-01, US-07
 
 ---
@@ -176,6 +167,22 @@ Tasks are ordered so each builds on the previous. Complete them in order. Each t
 ---
 
 ### Task 17 — Final integration test
-- [ ] Write `src/__tests__/resurrect-integration.test.ts` — mock external APIs, call the route handler logic end-to-end, verify `ResurrectResponse` shape and chain validity.
-- [ ] Run `npm run build` and confirm zero TypeScript errors.
+- [x] Route tests in `src/app/api/resurrect/route.test.ts` mock external APIs, check the response shape, and `verifyChain` the GitHub path. The fixture path asserts no `fetch` and a verifiable chain. A separate `__tests__` file was not added.
+- [x] `npm run build` completes with zero TypeScript errors.
 - **Refs:** all
+
+---
+
+## Phase 5 — Concrete restoration (hand-updated; not a Kiro session)
+
+### Task 18 — Lantern Hill restoration
+- [x] Original MIT-licensed fixture and `restoreDeadHtml()`.
+- [x] `POST /api/resurrect` returns before HTML, after HTML, and `fixture` / `restoration` receipts for the fixture URL. Live lookups unchanged.
+- [x] `/fixtures/lantern-hill/before` and `/after` serve the two documents.
+- **Refs:** US-01, US-02, US-05
+
+### Task 19 — Export and offline verify
+- [x] `buildReceiptExport` / `verifyReceiptExport`, including artifact hash checks.
+- [x] `POST /api/verify`.
+- [x] Homepage export, local verify, tampered-copy verify, and file verify.
+- **Refs:** US-04

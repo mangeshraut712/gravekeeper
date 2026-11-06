@@ -20,6 +20,8 @@ import {
   fetchCommits,
 } from '@/lib/github/client';
 import { generateRevivalSpec } from '@/lib/spec/generator';
+import { isFixtureUrl, loadLanternHill } from '@/lib/restore/fixture';
+import { restoreDeadHtml } from '@/lib/restore/html';
 
 function utf8Bytes(value: unknown): Uint8Array {
   return new TextEncoder().encode(
@@ -72,6 +74,45 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   const publicKeyB64 = await exportPublicKey(publicKey);
+
+  if (isFixtureUrl(url)) {
+    const fixture = loadLanternHill();
+    const restored = restoreDeadHtml(fixture.beforeHtml, { fixtureLabel: 'Lantern Hill' });
+    const beforeReceipt = await buildReceipt(
+      null,
+      'fixture',
+      fixture.url,
+      utf8Bytes(fixture.beforeHtml),
+      privateKey,
+    );
+    const afterReceipt = await buildReceipt(
+      beforeReceipt,
+      'restoration',
+      `${fixture.url}#restored`,
+      utf8Bytes(restored.html),
+      privateKey,
+    );
+    const response: ResurrectResponse = {
+      receipts: [beforeReceipt, afterReceipt],
+      spec: null,
+      wayback: null,
+      github: null,
+      publicKey: publicKeyB64,
+      restoration: {
+        fixtureId: fixture.id,
+        title: restored.title,
+        license: fixture.license,
+        disclosure: fixture.disclosure,
+        beforeHtml: fixture.beforeHtml,
+        afterHtml: restored.html,
+        changes: restored.changes,
+        beforePath: fixture.beforePath,
+        afterPath: fixture.afterPath,
+      },
+    };
+    return Response.json(response, { status: 200 });
+  }
+
   const receipts: Receipt[] = [];
   let prev: Receipt | null = null;
 
@@ -178,6 +219,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     wayback,
     github,
     publicKey: publicKeyB64,
+    restoration: null,
   };
 
   return Response.json(response, { status: 200 });

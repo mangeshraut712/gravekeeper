@@ -1,8 +1,9 @@
 /**
- * POST /api/fork
+ * /api/fork
  *
- * Creates a GitHub fork for the authenticated user and records a Receipt of
- * kind "fork". Requires GITHUB_TOKEN; returns 503 when it is absent.
+ * GET reports whether GITHUB_TOKEN is configured.
+ * POST creates a GitHub fork and records a Receipt of kind "fork".
+ * Returns 503 when the token is absent.
  */
 
 import { NextRequest } from 'next/server';
@@ -10,6 +11,15 @@ import type { Receipt } from '@/types/index';
 import { generateKeyPair, exportPublicKey } from '@/lib/receipts/crypto';
 import { buildReceipt } from '@/lib/receipts/chain';
 import { createFork } from '@/lib/github/client';
+
+/**
+ * Reports whether fork creation is configured. Reads the request so the
+ * answer follows the process environment at request time.
+ */
+export async function GET(request: NextRequest): Promise<Response> {
+  void request.headers.get('accept');
+  return Response.json({ enabled: Boolean(process.env['GITHUB_TOKEN']) });
+}
 
 export async function POST(request: NextRequest): Promise<Response> {
   let body: unknown;

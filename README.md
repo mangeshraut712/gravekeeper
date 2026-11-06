@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gravekeeper
 
-## Getting Started
+Gravekeeper is a [Kiroween](https://kiroween.devpost.com/) **Resurrection** project. It brings a dead page back as something you can read, and it leaves a signed record of what it saw.
 
-First, run the development server:
+The obsolete technology here is the late-1990s personal homepage: layout tables, `<font>`, `<center>`, `<marquee>`, `<blink>`, a `mailto:` guestbook, and a `document.write` script. Gravekeeper restores one small example of that page into semantic HTML, and it keeps the older lookup path for live URLs.
+
+## What you can do
+
+- **Resurrect the bundled example.** Submit the Lantern Hill fixture. The app shows the 1999 page beside the restored HTML, lists each rewrite, and lets you open or download the restored document.
+- **Look up a live URL.** Any other `http` or `https` URL still goes to the Wayback Machine Availability API. A GitHub repository URL also fetches metadata and recent commits, then builds a revival checklist. That path does not rewrite someone else's source.
+- **Keep a receipt.** Every run mints an Ed25519 key and a SHA-256 hash chain. Export the chain as JSON. Verify it in the browser, or `POST` it to `/api/verify`. A changed byte fails the check.
+- **Fork, when a token is configured.** `POST /api/fork` creates a GitHub fork only if `GITHUB_TOKEN` is set. Without it the route returns 503, and the button on the page stays disabled. The Lantern Hill demo does not need a token.
+
+## Lantern Hill fixture
+
+`https://fixtures.gravekeeper.dev/lantern-hill/` is **original demo content** written for this repository. It imitates a personal homepage last updated 14 March 1999. It is not a copy of a copyrighted site, an abandoned project, or a Wayback capture. It is covered by the MIT license on this repository. See [FIXTURES.md](FIXTURES.md).
+
+The fixture path never calls the Wayback Machine or GitHub. The historical page is served at `/fixtures/lantern-hill/before`. The restored page is served at `/fixtures/lantern-hill/after`.
+
+## Run it locally
 
 ```bash
+npm install
+npm test
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The URL field is already filled with the Lantern Hill fixture.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Press **Resurrect**.
+2. Read the before frame and the restored frame. Use **Open** to view either document on its own, or **Download restored HTML**.
+3. Press **Export receipt chain** and save `gravekeeper-receipts.json`.
+4. Press **Verify this chain**. Verification runs in the browser with WebCrypto.
+5. Press **Verify a tampered copy** to see the same file fail after one field changes.
+6. To check a file from another machine, send it to the app:
 
-## Learn More
+```bash
+curl -s -X POST http://localhost:3000/api/verify \
+  -H 'content-type: application/json' \
+  --data @gravekeeper-receipts.json
+```
 
-To learn more about Next.js, take a look at the following resources:
+A live URL, for example `https://example.com`, still returns a Wayback result (or a recorded miss) and a verifiable receipt chain. A GitHub URL such as `https://github.com/owner/repo` adds repository metadata when the GitHub API responds.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run build
+npm start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`GITHUB_TOKEN` is optional. Set it only if you want higher GitHub rate limits or fork creation. Do not commit it.
 
-## Deploy on Vercel
+## Tests
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm test
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Vitest covers the receipt chain, the Lantern Hill restoration, the resurrect route (including a no-network fixture run), and `/api/verify`.
+
+## Kiro
+
+Specs, steering, hooks, MCP settings, and the gravekeeper agent live in [`.kiro/`](.kiro/). How those files were produced, and what this milestone added without a new Kiro session, is in [KIRO_USAGE.md](KIRO_USAGE.md).
+
+## License
+
+[MIT](LICENSE). Copyright (c) 2026 Mangesh Raut.

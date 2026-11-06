@@ -72,3 +72,28 @@ Total test count after both tasks: **78 tests across 5 files, all green**.
 - Tests: `route.test.ts` for both APIs + createFork unit tests; property check that a successful resurrect path yields a chain that passes `verifyChain`. Extra canonical JSON UTF-8 round-trip property in `chain.test.ts`.
 - `tasks.md` Task 7 and Task 8 checkboxes marked done.
 - Test count after this session: **92** across 7 files, all green.
+
+## Resurrection milestone (Nov 6, 2026) — restore a dead page, verify the chain, product UI
+
+### Kiro session
+
+This milestone was not produced by a Kiro session.
+
+- `kiro` and `kiro-cli` are not installed in this environment (`command -v` finds neither). No chat was started, and no Kiro credits were requested.
+- The last recorded Kiro CLI attempt is the Week 2 entry above. It hit `UsageLimitReachedError` (Request ID `77c1dc5a-83ae-4fe8-ba9c-c325432a5e65`) and wrote no project files.
+- The work followed the existing `.kiro` artifacts already in the repo:
+  - Steering: `product.md`, `tech.md`, `structure.md` (Next 16, Tailwind v4, Vitest, fast-check, Result types, no manual `useMemo`).
+  - Spec: `.kiro/specs/resurrect/` user stories US-01 (submit), US-04 (exportable receipt chain), US-07 (keyboard, reduced motion, contrast, live regions), plus the design's route and receipt model.
+  - Hooks, MCP config, and `.kiro/agents/gravekeeper.json` were left as committed. Nothing new was added under `.kiro/hooks`, `.kiro/settings`, or `.kiro/agents`. `.kiro` is still not gitignored.
+- `tasks.md` and `design.md` were updated by hand so they match the code. The new checkboxes are bookkeeping, not a claim that Kiro executed those tasks.
+- Property-based tests were extended by hand with fast-check, in the same style as the earlier receipt tests. Kiro's PBT workflow was not run.
+
+### What the code added
+
+- `src/lib/restore/` — Lantern Hill, an original MIT-licensed 1999 homepage fixture, and `restoreDeadHtml()`, which rewrites that page into semantic HTML. The fixture URL short-circuits `POST /api/resurrect` so the demo does not call Wayback or GitHub. Other URLs keep the previous live lookup.
+- Receipt kinds `fixture` and `restoration`, chained and signed with the existing Ed25519 helpers. `contentSha256` covers the before and after HTML bytes.
+- `src/lib/receipts/export.ts` plus `POST /api/verify`. The product UI also verifies in the browser with the same function, including a tampered-copy check.
+- The homepage is the Gravekeeper product (URL field, before/after, receipts, revival checklist for GitHub lookups). `page.tsx` is no longer the create-next-app starter.
+- `GET /api/fork` reports whether `GITHUB_TOKEN` is set. It does not return the token. Fork creation still returns 503 without one.
+
+Test count after this milestone: **110** passing (`npm test`). `npm run build` completes, with `/fixtures/lantern-hill/before` and `/after` prerendered.

@@ -15,6 +15,8 @@ const ALL_KINDS: ReceiptKind[] = [
   'github-commits',
   'spec',
   'fork',
+  'fixture',
+  'restoration',
 ];
 
 /** Arbitrary for ReceiptKind values */

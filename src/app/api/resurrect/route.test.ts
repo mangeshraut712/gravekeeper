@@ -6,7 +6,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from './route';
 import { NextRequest } from 'next/server';
-import { verifyChain } from '@/lib/receipts/chain';
+import { sha256hex, verifyChain } from '@/lib/receipts/chain';
+import { buildReceiptExport, verifyReceiptExport } from '@/lib/receipts/export';
+import { LANTERN_HILL_URL } from '@/lib/restore/fixture';
 import fc from 'fast-check';
 
 function jsonRequest(body: unknown): NextRequest {
@@ -132,6 +134,7 @@ describe('POST /api/resurrect', () => {
     expect(body.spec).toBeNull();
     expect(body.wayback?.available).toBe(true);
     expect(body.receipts[0].kind).toBe('wayback');
+    expect(body.restoration).toBeNull();
     expect(typeof body.publicKey).toBe('string');
 
     const pk = await importPublicKey(body.publicKey);
@@ -215,9 +218,54 @@ describe('POST /api/resurrect', () => {
           const verified = await verifyChain(body.receipts, pk);
           expect(verified.valid).toBe(true);
           expect(body.receipts.length).toBeGreaterThanOrEqual(4);
+          expect(body.restoration).toBeNull();
         },
       ),
       { numRuns: 15 },
     );
+  });
+
+  it('restores the bundled Lantern Hill fixture without calling the network', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await POST(jsonRequest({ url: `${LANTERN_HILL_URL}?demo=1` }));
+    expect(res.status).toBe(200);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const body = await res.json();
+    expect(body.wayback).toBeNull();
+    expect(body.github).toBeNull();
+    expect(body.spec).toBeNull();
+    expect(body.restoration.fixtureId).toBe('lantern-hill');
+    expect(body.restoration.license).toBe('MIT');
+    expect(body.restoration.disclosure.toLowerCase()).toContain('not a copy');
+    expect(body.restoration.beforeHtml).toContain('<marquee');
+    expect(body.restoration.afterHtml).toContain('<h1>Lantern Hill</h1>');
+    expect(body.restoration.afterHtml.toLowerCase()).not.toContain('<marquee');
+    expect(body.receipts.map((receipt: { kind: string }) => receipt.kind)).toEqual([
+      'fixture',
+      'restoration',
+    ]);
+
+    const beforeHash = await sha256hex(new TextEncoder().encode(body.restoration.beforeHtml));
+    const afterHash = await sha256hex(new TextEncoder().encode(body.restoration.afterHtml));
+    expect(body.receipts[0].contentSha256).toBe(beforeHash);
+    expect(body.receipts[1].contentSha256).toBe(afterHash);
+
+    const pk = await importPublicKey(body.publicKey);
+    expect((await verifyChain(body.receipts, pk)).valid).toBe(true);
+
+    const exported = buildReceiptExport({
+      publicKey: body.publicKey,
+      receipts: body.receipts,
+      beforeHtml: body.restoration.beforeHtml,
+      afterHtml: body.restoration.afterHtml,
+    });
+    expect((await verifyReceiptExport(exported)).valid).toBe(true);
+    exported.receipts[1] = { ...exported.receipts[1], url: 'https://example.com/tampered' };
+    const tampered = await verifyReceiptExport(exported);
+    expect(tampered.valid).toBe(false);
+    expect(tampered.reason).toBe('chain');
   });
 });

@@ -1,26 +1,92 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #14110e;
+  --foreground: #f3eee4;
+  --muted: #ddd4c6;
+  --amber: #e6a15a;
+  --moss: #b7d0b4;
+  --card: #1e1914;
+  --line: rgba(243, 238, 228, 0.16);
+  --soil: #100e0c;
+  --danger: #f0c2b8;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-amber: var(--amber);
+  --color-moss: var(--moss);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-soil: var(--soil);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-grave-sans), "Segoe UI", sans-serif;
+  --font-serif: var(--font-grave-serif), Georgia, serif;
+  --font-mono: var(--font-grave-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+@keyframes candle {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes fog-drift {
+  0% {
+    transform: translateX(-10%);
+  }
+  50% {
+    transform: translateX(10%);
+  }
+  100% {
+    transform: translateX(-10%);
+  }
+}
+
+.candle {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: #f2c078;
+  box-shadow: 0 0 12px 4px rgba(230, 161, 90, 0.7);
+  animation: candle 2.8s ease-in-out infinite;
+}
+
+.fog {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: -8%;
+  height: 46%;
+  background: radial-gradient(ellipse at center, rgba(243, 238, 228, 0.09), transparent 68%);
+  animation: fog-drift 32s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .candle,
+  .fog {
+    animation: none;
+  }
 }

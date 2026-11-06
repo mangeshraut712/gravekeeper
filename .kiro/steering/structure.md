@@ -14,10 +14,14 @@ gravekeeper/
 │   │   └── api/
 │   │       ├── resurrect/
 │   │       │   └── route.ts        # POST /api/resurrect — main orchestration endpoint
-│   │       └── fork/
-│   │           └── route.ts        # POST /api/fork — GitHub fork creation
+│   │       ├── fork/
+│   │       │   └── route.ts        # GET token flag, POST GitHub fork creation
+│   │       └── verify/
+│   │           └── route.ts        # POST /api/verify — receipt export check
+│   │   └── fixtures/lantern-hill/  # GET before and after HTML for the demo fixture
 │   │
-│   ├── lib/                         # Pure server-side business logic (no React)
+│   ├── lib/                         # Business logic (no React). Receipt verify is isomorphic so the browser can check a chain.
+│   │   ├── restore/                 # Lantern Hill fixture, HTML restoration, HTML responses
 │   │   ├── wayback/
 │   │   │   ├── client.ts           # fetchWaybackSnapshot(url) → WaybackResult
 │   │   │   └── client.test.ts      # Unit tests (mocked fetch)
@@ -35,11 +39,8 @@ gravekeeper/
 │   │       └── generator.test.ts
 │   │
 │   ├── components/                  # Shared UI components
-│   │   ├── TombstoneCard.tsx        # Server Component — displays a receipt result
-│   │   ├── FogOverlay.tsx           # Client Component — CSS fog animation
-│   │   ├── SearchForm.tsx           # Client Component — controlled input + submit
-│   │   ├── ReceiptChainViewer.tsx   # Client Component — expandable receipt list
-│   │   └── RevivalSpecPanel.tsx     # Client Component — modernisation spec display
+│   │   ├── ResurrectApp.tsx         # Client product UI: search, before/after, receipts, checklist
+│   │   └── FogOverlay.tsx           # Fog layer, hidden when reduced motion is requested
 │   │
 │   └── types/
 │       └── index.ts                 # Shared TypeScript types (Receipt, RevivalSpec, etc.)
