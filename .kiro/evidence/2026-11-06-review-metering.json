@@ -1,0 +1,49 @@
+{
+  "purpose": "Bounded read-only Gravekeeper security and correctness review",
+  "recordedAt": "2026-11-06T18:55:08.797810+00:00",
+  "source": "Kiro CLI stream-json metadata",
+  "engine": "v2",
+  "meteringUsage": [
+    {
+      "value": 0.08285475572139303,
+      "unit": "credit",
+      "unitPlural": "credits"
+    },
+    {
+      "value": 0.7624612089552238,
+      "unit": "credit",
+      "unitPlural": "credits"
+    }
+  ],
+  "reportedCreditsTotal": 0.8453159646766168,
+  "turnDurationMs": 55275,
+  "exactTokenCountsExposed": false,
+  "wbmUploadPerformed": false,
+  "scope": "Source review only; Kiro did not run tests or change files.",
+  "followupReview": {
+    "purpose": "Verify the security and proof fixes by reading source",
+    "meteringUsage": [
+      {
+        "value": 0.1706672290215589,
+        "unit": "credit",
+        "unitPlural": "credits"
+      },
+      {
+        "value": 0.4246929437810945,
+        "unit": "credit",
+        "unitPlural": "credits"
+      },
+      {
+        "value": 0.48084133101160864,
+        "unit": "credit",
+        "unitPlural": "credits"
+      }
+    ],
+    "reportedCreditsTotal": 1.076201503814262,
+    "exactTokenCountsExposed": false,
+    "conclusion": "No release-blocking/high-impact issues found in reviewed source. Reviewer did not execute tests and noted truncated test reads.",
+    "recordedAt": "2026-11-06T19:05:13.076679+00:00"
+  },
+  "reportedCreditsTotalAllReviews": 1.921517468490879,
+  "timestampSource": "Local stream log creation time, converted to UTC"
+}

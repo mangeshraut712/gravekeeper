@@ -79,6 +79,7 @@ export type RevivalSpec = {
 
 export type ResurrectResponse = {
   receipts: Receipt[];
+  evidence: { receiptSeq: number; body: unknown }[]; // Exact normalized payload hashed by each receipt
   spec: RevivalSpec | null;   // null for Wayback-only lookups
   wayback: WaybackResult | null;
   github: {

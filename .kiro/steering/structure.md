@@ -66,7 +66,7 @@ gravekeeper/
 
 ### `src/lib/` — business logic
 
-- All modules under `src/lib/` are **server-only**. Add `import 'server-only'` at the top of each `lib` file once the package is installed.
+- Upstream clients and server orchestration are server-only. The pure Web Crypto receipt modules are intentionally shared with the browser and offline verifier; never add server credentials or environment reads there. `src/client/proof.ts` is browser-safe. Explicit relative `.ts` imports in this crypto path support Node native TypeScript execution for the offline verifier.
 - No React imports. No `'use client'` directive. Pure TypeScript functions.
 - Each sub-module exports a clear public surface: named exports only, no default exports.
 - Tests colocate as `<module>.test.ts` alongside the source file.

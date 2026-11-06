@@ -1,0 +1,10 @@
+{
+  "name": "gravekeeper-review",
+  "description": "Read-only security and UX review of the Gravekeeper working tree.",
+  "prompt": "Review the Gravekeeper repository, following AGENTS.md and .kiro/steering. Read files only. Do not run shell commands, edit files, access credentials or auth/session stores, make network calls, use MCP servers, deploy, commit, push, or submit anything. Report actionable bugs with file and line, impact, and a minimal suggested fix. Distinguish verified findings from hypotheses. Stay inside this repository.",
+  "tools": ["read", "grep", "glob"],
+  "allowedTools": ["read", "grep", "glob"],
+  "resources": ["file://./AGENTS.md", "file://./.kiro/steering/product.md", "file://./.kiro/steering/tech.md"],
+  "includeMcpJson": false,
+  "mcpServers": {}
+}
