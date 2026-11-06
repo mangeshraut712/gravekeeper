@@ -106,3 +106,7 @@ No Kiro CLI session was run for this work (no new Kiro credits used); it was don
 ## Nov 7, 2026 — Release-check pass (Kiro IDE agent session)
 
 No Kiro CLI session, hook, or MCP execution, and no new Kiro credits. Product code unchanged. Ran tests (170 passing), lint, typecheck, production build, and `demo:verify` at f80bc4c, and recorded that in `docs/RELEASE_CHECKLIST.md`. Rebuilding the kit zip yields a byte-different file (timestamps only), so the committed zip was left as is.
+
+## Nov 7, 2026 — Kit drift test (Kiro IDE agent session)
+
+No Kiro CLI session and no new Kiro credits. Added `src/lib/restoration/kit.test.ts`, which unzips `public/restoration-kit.zip` and checks that each file is byte-identical to the current source (verifier, reverse.mts, fixtures, pinned upstream, both licenses). It skips if `unzip` is unavailable. Product code is unchanged. The post-save hook found no `tasks.md` item that this completes. Tests: 171 passing, lint and typecheck clean.
