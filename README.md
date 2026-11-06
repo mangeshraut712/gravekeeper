@@ -26,7 +26,13 @@ npm run demo:baseline  # exit 1: the unchanged original fails the same contract
 npm run demo:kit       # rebuild public/restoration-kit.zip (offline, Node 22.18+, no install)
 ```
 
-Scope: one curated function, not an automatic repair of arbitrary repositories. Results follow the runtime's Unicode data. The report is reproducible local execution, not a signed attestation.
+Scope: one curated function, not an automatic repair of arbitrary repositories. Results follow the runtime's Unicode data. Reversing twice or preserving grapheme count is not guaranteed for arbitrary Unicode: leading combining marks and other boundary-sensitive sequences can regroup after reversal. The report is reproducible local execution, not a signed attestation.
+
+## Original HTML fixture (Lantern Hill)
+
+Open http://localhost:3000/lantern-hill for the reconciled PR #3 fixture: an original MIT-licensed 1999-style homepage, generated semantic HTML5, sandboxed side-by-side previews, and signed before/after HTML receipts. It makes no Wayback/GitHub request. Verify and download the receipts in the page, or use `/api/verify` as described in [FIXTURES.md](FIXTURES.md).
+
+This is a curated original fixture, not recovered third-party history. The rewriter is not an HTML sanitizer. Its receipt-export format is separate from live lookup proofs. The licensed `esrever` restoration above remains the primary abandoned-software demonstration.
 
 ## Run locally
 

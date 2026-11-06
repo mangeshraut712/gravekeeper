@@ -110,3 +110,9 @@ Run in a `kiro-cli` session. No hook or MCP execution is claimed, and no credit 
 ## Nov 7, 2026 — Kit drift test (kiro-cli session)
 
 Run in a `kiro-cli` session; no credit figure is recorded. Added `src/lib/restoration/kit.test.ts`, which unzips `public/restoration-kit.zip` and checks that each file is byte-identical to the current source (verifier, reverse.mts, fixtures, pinned upstream, both licenses). It skips if `unzip` is unavailable. Product code is unchanged. The post-save hook found no `tasks.md` item that this completes. Tests: 171 passing, lint and typecheck clean.
+
+## Nov 7, 2026 IST — PR #3 reconciliation and review fixes
+
+Preserved and reconciled the existing staged Lantern Hill files with the safer workbench. This implementation and its local tests were completed outside Kiro. The original fixture now lives separately at `/lantern-hill`, without replacing live lookup or the licensed esrever demonstration. Fixed malformed-signature handling, empty receipt exports, muted-text contrast, and overly broad Unicode property-test claims.
+
+Attempted one bounded read-only `kiro-cli chat --agent gravekeeper-review --no-interactive --output-format stream-json` review. The execution environment blocked the CLI's telemetry network request before a review completed. No successful review, credit usage, token count or WBM record is claimed for this attempt. Network controls were not changed or bypassed.

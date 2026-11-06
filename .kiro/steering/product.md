@@ -21,14 +21,13 @@ Countless open-source repositories and websites go dark — maintainers move on,
 - Users can export the receipt chain as a JSON file for independent verification.
 
 ### 3 — Modernisation Spec
-- Analyse the retrieved data to detect the original tech stack (language, framework, dependency versions).
-- Identify outdated or abandoned dependencies by comparing against known current versions.
-- Generate a structured Revival Spec: detected stack, what is stale, recommended replacements, and ordered revival steps.
-- For the bundled Lantern Hill fixture, also emit a concrete restored HTML document (semantic HTML5) rather than only a checklist. The fixture is original demo content under the repository MIT license. Live GitHub repositories still receive the checklist, not a rewritten tree.
+- Use public repository metadata and recent commits to identify language, archive status and maintenance signals.
+- Generate a structured, metadata-based revival checklist. The product does not inspect dependency manifests or claim an automated dependency audit.
+- At `/lantern-hill`, emit a concrete restored HTML document from the bundled Lantern Hill fixture (semantic HTML5) rather than only a checklist. The fixture is original demo content under the repository MIT license. Live GitHub repositories still receive the checklist, not a rewritten tree.
 
 ### 4 — Fork Creation
-- Optionally create a revived GitHub fork of the repository using the authenticated GitHub API.
-- Apply a starter modernisation commit (update README, add a revival notice).
+- The public UI opens GitHub's native fork flow for the visitor to review and confirm. It never uses a shared write token.
+- An optional operator-only fork API is disabled unless a separate secret and GitHub token are configured; no starter commit is automatically applied.
 
 ## UI / Experience
 

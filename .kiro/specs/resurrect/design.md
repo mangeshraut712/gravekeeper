@@ -294,19 +294,17 @@ fc.property(
 
 ---
 
-## Bundled restoration (added after the checklist milestone)
+## Bundled restoration (reconciled with the workbench)
 
-The generic revival checklist does not rewrite source. The Lantern Hill demo does.
+The generic revival checklist does not rewrite source. A separate `/lantern-hill` page demonstrates a bounded HTML rewrite of an original MIT-licensed fixture. It preserves the existing workbench, `/api/resurrect`, and the evidence-bound `gravekeeper-proof-v1` format.
 
-`POST /api/resurrect` checks `isFixtureUrl` before any network call. For `https://fixtures.gravekeeper.dev/lantern-hill/` it loads the original MIT-licensed fixture in `src/lib/restore/fixture.ts`, runs `restoreDeadHtml()`, and returns `restoration` plus two receipts:
+`buildLanternHillDemo()` loads `src/lib/restore/fixture.ts`, runs `restoreDeadHtml()`, and signs the exact before and after HTML bytes with a fresh ephemeral Ed25519 key. No upstream request is made. Both previews are sandboxed; fixture routes also apply a restrictive CSP. The fixture URL is an identifier, not a deployed website.
 
 | seq | kind | body hashed |
 |---|---|---|
 | 0 | `fixture` | before HTML |
 | 1 | `restoration` | after HTML |
 
-Other URLs leave `restoration: null` and keep the Wayback / GitHub path.
+`buildReceiptExport()` writes `{ gravekeeper: "receipt-export", version: 1, publicKey, receipts, artifacts }`. `verifyReceiptExport()` rejects empty/malformed chains, recomputes links and signatures, and checks hashes for included artifacts. The browser calls that function directly. `POST /api/verify` provides the same check over HTTP. This export format is separate from the existing live lookup proof.
 
-`buildReceiptExport()` writes `{ gravekeeper: "receipt-export", version: 1, publicKey, receipts, artifacts }`. `verifyReceiptExport()` recomputes the chain and, when artifacts are present, the content hashes. The browser calls that function directly. `POST /api/verify` is the same check over HTTP.
-
-The fixture is original demo content. It is not a copy of a third-party site.
+Verification means internal consistency, not authorship or historical provenance. Missing artifacts are not verified; replacing the entire file/key or removing a valid suffix is undetectable without a trusted external anchor. The HTML rewriter is scoped to the bundled fixture, not a general sanitizer or live-site rewriting service.

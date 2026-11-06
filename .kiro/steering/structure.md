@@ -15,10 +15,11 @@ gravekeeper/
 │   │       ├── resurrect/
 │   │       │   └── route.ts        # POST /api/resurrect — main orchestration endpoint
 │   │       ├── fork/
-│   │       │   └── route.ts        # GET token flag, POST GitHub fork creation
+│   │       │   └── route.ts        # POST operator-only GitHub fork creation
 │   │       └── verify/
 │   │           └── route.ts        # POST /api/verify — receipt export check
-│   │   └── fixtures/lantern-hill/  # GET before and after HTML for the demo fixture
+│   │   ├── fixtures/lantern-hill/  # CSP-protected before/after HTML
+│   │   └── lantern-hill/           # Sandbox previews and signed fixture receipts
 │   │
 │   ├── lib/                         # Business logic (no React). Receipt verify is isomorphic so the browser can check a chain.
 │   │   ├── restore/                 # Lantern Hill fixture, HTML restoration, HTML responses
@@ -39,8 +40,9 @@ gravekeeper/
 │   │       └── generator.test.ts
 │   │
 │   ├── components/                  # Shared UI components
-│   │   ├── ResurrectApp.tsx         # Client product UI: search, before/after, receipts, checklist
-│   │   └── FogOverlay.tsx           # Fog layer, hidden when reduced motion is requested
+│   │   ├── Gravekeeper.tsx          # Search, results, proof and revival checklist
+│   │   ├── RestorationDemo.tsx      # Licensed esrever restoration
+│   │   └── LanternHillProof.tsx     # Verify/download fixture receipts
 │   │
 │   └── types/
 │       └── index.ts                 # Shared TypeScript types (Receipt, RevivalSpec, etc.)
