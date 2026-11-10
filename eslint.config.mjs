@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Unmodified, hash-verified MIT source retained for the restoration baseline.
+    "third_party/esrever/upstream/**",
   ]),
 ]);
 

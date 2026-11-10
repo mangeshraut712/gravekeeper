@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "demo:verify": "node scripts/verify-restoration.mts",
+    "demo:kit": "sh scripts/build-restoration-kit.sh",
+    "demo:baseline": "node scripts/verify-restoration.mts --baseline"
   },
   "dependencies": {
     "next": "16.4.4",

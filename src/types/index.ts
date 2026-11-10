@@ -6,7 +6,9 @@ export type ReceiptKind =
   | 'github-meta'
   | 'github-commits'
   | 'spec'
-  | 'fork';
+  | 'fork'
+  | 'fixture'
+  | 'restoration';
 
 export type Receipt = {
   seq: number;             // 0-based, monotonically increasing
@@ -75,10 +77,30 @@ export type RevivalSpec = {
   generatedAt: string; // ISO 8601 UTC
 };
 
+export type RestorationChange = {
+  rule: string;
+  summary: string;
+  count: number;
+};
+
+/** A concrete before/after HTML restoration, not only a checklist. */
+export type RestorationResult = {
+  fixtureId: string;
+  title: string;
+  license: string;
+  disclosure: string;
+  beforeHtml: string;
+  afterHtml: string;
+  changes: RestorationChange[];
+  beforePath: string;
+  afterPath: string;
+};
+
 // API response type
 
 export type ResurrectResponse = {
   receipts: Receipt[];
+  evidence: { receiptSeq: number; body: unknown }[]; // Exact normalized payload hashed by each receipt
   spec: RevivalSpec | null;   // null for Wayback-only lookups
   wayback: WaybackResult | null;
   github: {
@@ -86,6 +108,7 @@ export type ResurrectResponse = {
     commits: Commit[];
   } | null;
   publicKey: string;           // base64url-encoded Ed25519 public key for offline verification
+  restoration?: RestorationResult | null;
 };
 
 // Error handling

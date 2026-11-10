@@ -44,7 +44,8 @@
 
 | Name | Required | Description |
 |---|---|---|
-| `GITHUB_TOKEN` | Optional | GitHub personal access token for higher rate limits and fork creation |
+| `GITHUB_TOKEN` | Optional | Prefer unset for public demo; public-read-only credential for higher lookup limits |
+| `FORK_API_SECRET` | Optional | Separate 32+ character operator bearer secret; keep unset on public demo |
 
 Never prefix with `NEXT_PUBLIC_` — these must stay server-only.
 
@@ -60,3 +61,7 @@ npm run dev      # Turbopack dev server
 npm run build    # Production build
 npm run test     # vitest run (single-pass CI mode)
 ```
+
+## Current prototype safety
+
+Public visitors use GitHub’s own fork confirmation page. `/api/fork` is operator-only and disabled by default. Never configure write credentials on the public demo. Receipt evidence contains the exact normalized payload; the shared verifier checks payload digests as well as chain/signatures. Fresh embedded keys establish internal consistency only, not source authenticity.

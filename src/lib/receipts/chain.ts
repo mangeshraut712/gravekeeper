@@ -11,8 +11,8 @@
  * The `signature` field is Ed25519Sign(canonicalBytes, privateKey) as base64url (no padding).
  */
 
-import type { Receipt, ReceiptKind } from '@/types/index';
-import { sign, verify } from './crypto';
+import type { Receipt, ReceiptKind } from "@/types/index";
+import { sign, verify } from "./crypto.ts";
 
 // ---------------------------------------------------------------------------
 // canonicalJson
@@ -39,10 +39,13 @@ export function canonicalJson(obj: Record<string, unknown>): Uint8Array {
  * Hash a byte array with SHA-256 and return the lowercase hex digest.
  */
 export async function sha256hex(data: Uint8Array): Promise<string> {
-  const hashBuf = await globalThis.crypto.subtle.digest('SHA-256', data as BufferSource);
+  const hashBuf = await globalThis.crypto.subtle.digest(
+    "SHA-256",
+    data as BufferSource,
+  );
   return Array.from(new Uint8Array(hashBuf))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 // ---------------------------------------------------------------------------
@@ -72,12 +75,14 @@ export async function buildReceipt(
   // Compute prevHash: SHA-256 of the previous receipt's canonical JSON
   let prevHash: string | null = null;
   if (prev !== null) {
-    const prevCanonical = canonicalJson(prev as unknown as Record<string, unknown>);
+    const prevCanonical = canonicalJson(
+      prev as unknown as Record<string, unknown>,
+    );
     prevHash = await sha256hex(prevCanonical);
   }
 
   // Build the unsigned receipt (without hash and signature) to derive the hash
-  const unsigned: Omit<Receipt, 'hash' | 'signature'> = {
+  const unsigned: Omit<Receipt, "hash" | "signature"> = {
     seq,
     prevHash,
     kind,
@@ -137,7 +142,11 @@ export async function verifyChain(
     }
 
     // 3. Hash consistency — recompute over unsigned fields
-    const { hash: _h, signature: _s, ...unsigned } = r;
+    const unsigned = Object.fromEntries(
+      Object.entries(r).filter(
+        ([key]) => key !== "hash" && key !== "signature",
+      ),
+    );
     const canonicalBytes = canonicalJson(
       unsigned as unknown as Record<string, unknown>,
     );

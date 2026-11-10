@@ -1,31 +1,18 @@
-/**
- * POST /api/resurrect
- *
- * Orchestrates Wayback + (optional) GitHub lookups, builds an Ed25519
- * hash-chained receipt list, and returns a ResurrectResponse.
- *
- * Stateless: a fresh key pair is generated per request. Never throws to the
- * client — validation errors are 400; unexpected crypto failures are 500;
- * upstream misses become partial 200 responses with receipts.
- */
-
-import { NextRequest } from 'next/server';
-import type { Receipt, ResurrectResponse, RevivalSpec } from '@/types/index';
-import { generateKeyPair, exportPublicKey } from '@/lib/receipts/crypto';
-import { buildReceipt } from '@/lib/receipts/chain';
-import { fetchWaybackSnapshot } from '@/lib/wayback/client';
+/** Public, read-only lookup. Each receipt includes its exact normalized evidence. */
+import { NextRequest } from "next/server";
+import type { Receipt, ReceiptKind, ResurrectResponse } from "@/types";
+import { normalizePublicUrl } from "@/shared/url";
+import { generateKeyPair, exportPublicKey } from "@/lib/receipts/crypto";
+import { buildReceipt } from "@/lib/receipts/chain";
+import { fetchWaybackSnapshot } from "@/lib/wayback/client";
 import {
   parseGitHubUrl,
   fetchRepoMeta,
   fetchCommits,
-} from '@/lib/github/client';
-import { generateRevivalSpec } from '@/lib/spec/generator';
+} from "@/lib/github/client";
+import { generateRevivalSpec } from "@/lib/spec/generator";
 
-function utf8Bytes(value: unknown): Uint8Array {
-  return new TextEncoder().encode(
-    typeof value === 'string' ? value : JSON.stringify(value),
-  );
-}
+export const maxDuration = 30;
 
 export async function POST(request: NextRequest): Promise<Response> {
   let body: unknown;
@@ -33,152 +20,117 @@ export async function POST(request: NextRequest): Promise<Response> {
     body = await request.json();
   } catch {
     return Response.json(
-      { error: 'Request body must be valid JSON.', code: 'PARSE_ERROR' },
+      { error: "Request body must be valid JSON.", code: "PARSE_ERROR" },
       { status: 400 },
     );
   }
-
   if (
-    typeof body !== 'object' ||
+    typeof body !== "object" ||
     body === null ||
-    typeof (body as { url?: unknown }).url !== 'string'
+    typeof (body as { url?: unknown }).url !== "string"
   ) {
     return Response.json(
-      { error: 'Body must include a string "url" field.', code: 'PARSE_ERROR' },
+      { error: 'Body must include a string "url" field.', code: "PARSE_ERROR" },
       { status: 400 },
     );
   }
-
-  const url = (body as { url: string }).url.trim();
-  if (!url) {
-    return Response.json(
-      { error: 'url must be a non-empty string.', code: 'PARSE_ERROR' },
-      { status: 400 },
-    );
-  }
-
-  let privateKey: CryptoKey;
-  let publicKey: CryptoKey;
-  try {
-    ({ privateKey, publicKey } = await generateKeyPair());
-  } catch (err) {
+  const url = normalizePublicUrl((body as { url: string }).url);
+  if (!url)
     return Response.json(
       {
-        error: err instanceof Error ? err.message : 'Key generation failed',
-        code: 'CRYPTO_ERROR',
+        error:
+          "Enter a public HTTP(S) URL without credentials, query strings, or local addresses.",
+        code: "PARSE_ERROR",
+      },
+      { status: 400 },
+    );
+
+  try {
+    const { privateKey, publicKey } = await generateKeyPair();
+    const receipts: Receipt[] = [];
+    const evidence: ResurrectResponse["evidence"] = [];
+    async function record(kind: ReceiptKind, source: string, payload: unknown) {
+      const receipt = await buildReceipt(
+        receipts.at(-1) ?? null,
+        kind,
+        source,
+        new TextEncoder().encode(JSON.stringify(payload)),
+        privateKey,
+      );
+      receipts.push(receipt);
+      evidence.push({ receiptSeq: receipt.seq, body: payload });
+    }
+    const parsed = parseGitHubUrl(url);
+    // Archive and metadata are independent. Commits are read only after public metadata succeeds.
+    const [waybackResult, metaResult] = await Promise.all([
+      fetchWaybackSnapshot(url, request.signal),
+      parsed ? fetchRepoMeta(parsed.owner, parsed.repo, request.signal) : null,
+    ]);
+    if (request.signal.aborted)
+      return Response.json(
+        { error: "Lookup canceled.", code: "NETWORK_TIMEOUT" },
+        { status: 499 },
+      );
+    const wayback = waybackResult.ok ? waybackResult.data : null;
+    await record(
+      waybackResult.ok ? "wayback" : "wayback-miss",
+      url,
+      waybackResult.ok ? waybackResult.data : { code: waybackResult.code },
+    );
+    let github: ResurrectResponse["github"] = null;
+    let spec: ResurrectResponse["spec"] = null;
+    if (parsed && metaResult) {
+      const metaUrl = `https://api.github.com/repos/${parsed.owner}/${parsed.repo}`;
+      await record(
+        "github-meta",
+        metaUrl,
+        metaResult.ok ? metaResult.data : { code: metaResult.code },
+      );
+      if (metaResult.ok) {
+        const commitsResult = await fetchCommits(
+          parsed.owner,
+          parsed.repo,
+          20,
+          request.signal,
+        );
+        if (request.signal.aborted)
+          return Response.json(
+            { error: "Lookup canceled.", code: "NETWORK_TIMEOUT" },
+            { status: 499 },
+          );
+        await record(
+          "github-commits",
+          `${metaUrl}/commits?per_page=20`,
+          commitsResult.ok ? commitsResult.data : { code: commitsResult.code },
+        );
+        github = {
+          meta: metaResult.data,
+          commits: commitsResult.ok ? commitsResult.data : [],
+        };
+        if (commitsResult.ok) {
+          spec = generateRevivalSpec(metaResult.data, commitsResult.data);
+          await record("spec", url, spec);
+        }
+      }
+    }
+    const response: ResurrectResponse = {
+      receipts,
+      evidence,
+      spec,
+      wayback,
+      github,
+      publicKey: await exportPublicKey(publicKey),
+    };
+    return Response.json(response, {
+      headers: { "cache-control": "no-store" },
+    });
+  } catch {
+    return Response.json(
+      {
+        error: "Unable to complete this lookup. Please try again.",
+        code: "HTTP_ERROR",
       },
       { status: 500 },
     );
   }
-
-  const publicKeyB64 = await exportPublicKey(publicKey);
-  const receipts: Receipt[] = [];
-  let prev: Receipt | null = null;
-
-  // --- Wayback ---
-  const waybackResult = await fetchWaybackSnapshot(url);
-  let wayback: ResurrectResponse['wayback'] = null;
-
-  if (waybackResult.ok) {
-    wayback = waybackResult.data;
-    const receipt = await buildReceipt(
-      prev,
-      'wayback',
-      url,
-      utf8Bytes(waybackResult.data),
-      privateKey,
-    );
-    receipts.push(receipt);
-    prev = receipt;
-  } else {
-    const receipt = await buildReceipt(
-      prev,
-      'wayback-miss',
-      url,
-      utf8Bytes({ error: waybackResult.error, code: waybackResult.code }),
-      privateKey,
-    );
-    receipts.push(receipt);
-    prev = receipt;
-  }
-
-  // --- GitHub (optional) ---
-  const parsed = parseGitHubUrl(url);
-  let github: ResurrectResponse['github'] = null;
-  let spec: RevivalSpec | null = null;
-
-  if (parsed) {
-    const metaResult = await fetchRepoMeta(parsed.owner, parsed.repo);
-    if (metaResult.ok) {
-      const metaUrl = `https://api.github.com/repos/${parsed.owner}/${parsed.repo}`;
-      const metaReceipt = await buildReceipt(
-        prev,
-        'github-meta',
-        metaUrl,
-        utf8Bytes(metaResult.data),
-        privateKey,
-      );
-      receipts.push(metaReceipt);
-      prev = metaReceipt;
-
-      const commitsResult = await fetchCommits(parsed.owner, parsed.repo);
-      if (commitsResult.ok) {
-        const commitsUrl = `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/commits?per_page=20`;
-        const commitsReceipt = await buildReceipt(
-          prev,
-          'github-commits',
-          commitsUrl,
-          utf8Bytes(commitsResult.data),
-          privateKey,
-        );
-        receipts.push(commitsReceipt);
-        prev = commitsReceipt;
-
-        github = { meta: metaResult.data, commits: commitsResult.data };
-        spec = generateRevivalSpec(metaResult.data, commitsResult.data);
-
-        const specReceipt = await buildReceipt(
-          prev,
-          'spec',
-          url,
-          utf8Bytes(spec),
-          privateKey,
-        );
-        receipts.push(specReceipt);
-        prev = specReceipt;
-      } else {
-        // Meta succeeded but commits failed — still expose meta alone.
-        github = { meta: metaResult.data, commits: [] };
-        const missReceipt = await buildReceipt(
-          prev,
-          'github-commits',
-          `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/commits`,
-          utf8Bytes({ error: commitsResult.error, code: commitsResult.code }),
-          privateKey,
-        );
-        receipts.push(missReceipt);
-        prev = missReceipt;
-      }
-    } else {
-      const missReceipt = await buildReceipt(
-        prev,
-        'github-meta',
-        `https://api.github.com/repos/${parsed.owner}/${parsed.repo}`,
-        utf8Bytes({ error: metaResult.error, code: metaResult.code }),
-        privateKey,
-      );
-      receipts.push(missReceipt);
-      prev = missReceipt;
-    }
-  }
-
-  const response: ResurrectResponse = {
-    receipts,
-    spec,
-    wayback,
-    github,
-    publicKey: publicKeyB64,
-  };
-
-  return Response.json(response, { status: 200 });
 }

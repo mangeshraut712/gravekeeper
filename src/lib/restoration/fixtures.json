@@ -1,0 +1,74 @@
+[
+  {
+    "id": "ascii",
+    "label": "ASCII compatibility",
+    "input": "ghost",
+    "expected": "tsohg"
+  },
+  {
+    "id": "empty",
+    "label": "Empty string",
+    "input": "",
+    "expected": ""
+  },
+  {
+    "id": "combining",
+    "label": "Combining mark compatibility",
+    "input": "mañana",
+    "expected": "anañam"
+  },
+  {
+    "id": "astral",
+    "label": "Astral symbol compatibility",
+    "input": "A𝌆B",
+    "expected": "B𝌆A"
+  },
+  {
+    "id": "profession",
+    "label": "Joined emoji",
+    "input": "👩‍💻!",
+    "expected": "!👩‍💻"
+  },
+  {
+    "id": "family",
+    "label": "Family emoji",
+    "input": "👨‍👩‍👧‍👦!",
+    "expected": "!👨‍👩‍👧‍👦"
+  },
+  {
+    "id": "flag",
+    "label": "Country flag",
+    "input": "🇮🇳!",
+    "expected": "!🇮🇳"
+  },
+  {
+    "id": "skin-tone",
+    "label": "Skin-tone modifier",
+    "input": "👍🏽!",
+    "expected": "!👍🏽"
+  },
+  {
+    "id": "devanagari",
+    "label": "Devanagari vowel sign",
+    "input": "कि!",
+    "expected": "!कि"
+  },
+  {
+    "id": "keycap",
+    "label": "Keycap emoji",
+    "input": "1️⃣!",
+    "expected": "!1️⃣"
+  },
+  {
+    "id": "variation",
+    "label": "Emoji presentation selector",
+    "input": "✈️!",
+    "expected": "!✈️"
+  },
+  {
+    "id": "line-ending",
+    "label": "CRLF line ending",
+    "input": "A\r\nB",
+    "expected": "B\r\nA"
+  }
+]

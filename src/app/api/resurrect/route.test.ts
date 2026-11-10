@@ -3,16 +3,17 @@
  * All upstream HTTP is mocked via vi.stubGlobal('fetch').
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { POST } from './route';
-import { NextRequest } from 'next/server';
-import { verifyChain } from '@/lib/receipts/chain';
-import fc from 'fast-check';
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { POST } from "./route";
+import { NextRequest } from "next/server";
+import { verifyChain } from "@/lib/receipts/chain";
+import { verifyProof } from "@/client/proof";
+import fc from "fast-check";
 
 function jsonRequest(body: unknown): NextRequest {
-  return new NextRequest('http://localhost/api/resurrect', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
+  return new NextRequest("http://localhost/api/resurrect", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
 }
@@ -25,10 +26,10 @@ function waybackOk(url: string) {
       url,
       archived_snapshots: {
         closest: {
-          status: '200',
+          status: "200",
           available: true,
           url: `https://web.archive.org/web/20231015120000/${url}`,
-          timestamp: '20231015120000',
+          timestamp: "20231015120000",
         },
       },
     }),
@@ -51,18 +52,18 @@ function githubMetaOk() {
     ok: true,
     status: 200,
     json: async () => ({
-      name: 'gravekeeper',
-      full_name: 'ghost/gravekeeper',
-      owner: { login: 'ghost' },
-      description: 'haunted',
+      name: "gravekeeper",
+      full_name: "ghost/gravekeeper",
+      owner: { login: "ghost" },
+      description: "haunted",
       stargazers_count: 3,
       forks_count: 1,
       open_issues_count: 0,
-      license: { spdx_id: 'MIT', name: 'MIT' },
-      default_branch: 'main',
-      pushed_at: '2020-01-01T00:00:00Z',
+      license: { spdx_id: "MIT", name: "MIT" },
+      default_branch: "main",
+      pushed_at: "2020-01-01T00:00:00Z",
       archived: true,
-      language: 'TypeScript',
+      language: "TypeScript",
     }),
   };
 }
@@ -73,10 +74,10 @@ function githubCommitsOk() {
     status: 200,
     json: async () => [
       {
-        sha: 'abc123',
+        sha: "abc123",
         commit: {
-          message: 'initial commit\n\nbody',
-          author: { date: '2020-01-01T00:00:00Z', name: 'Ghost' },
+          message: "initial commit\n\nbody",
+          author: { date: "2020-01-01T00:00:00Z", name: "Ghost" },
         },
       },
     ],
@@ -85,19 +86,19 @@ function githubCommitsOk() {
 
 /** Import raw public key bytes from base64url for verifyChain. */
 async function importPublicKey(b64url: string): Promise<CryptoKey> {
-  const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/').padEnd(
-    b64url.length + ((4 - (b64url.length % 4)) % 4),
-    '=',
-  );
+  const b64 = b64url
+    .replace(/-/g, "+")
+    .replace(/_/g, "/")
+    .padEnd(b64url.length + ((4 - (b64url.length % 4)) % 4), "=");
   const binary = atob(b64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return crypto.subtle.importKey('raw', bytes, { name: 'Ed25519' }, true, [
-    'verify',
+  return crypto.subtle.importKey("raw", bytes, { name: "Ed25519" }, true, [
+    "verify",
   ]);
 }
 
-describe('POST /api/resurrect', () => {
+describe("POST /api/resurrect", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
@@ -106,24 +107,64 @@ describe('POST /api/resurrect', () => {
     vi.restoreAllMocks();
   });
 
-  it('returns 400 when url is missing', async () => {
+  it.each([
+    "javascript:alert(1)",
+    "file:///etc/passwd",
+    "ftp://example.com",
+    "not-a-url",
+    "https://user:password@example.com",
+    "http://localhost/private",
+    "http://127.0.0.1",
+    "http://192.168.1.2",
+    "http://[::1]",
+    "https://example.com/?token=secret",
+  ])(
+    "rejects unsafe or credential-bearing URL %s before network access",
+    async (url) => {
+      const fetchMock = vi.fn().mockResolvedValue(waybackMiss(url));
+      vi.stubGlobal("fetch", fetchMock);
+      const res = await POST(jsonRequest({ url }));
+      expect(res.status).toBe(400);
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("does not start commit lookups after cancellation", async () => {
+    const controller = new AbortController();
+    const request = new NextRequest("http://localhost/api/resurrect", {
+      method: "POST",
+      body: JSON.stringify({ url: "https://github.com/ghost/gravekeeper" }),
+      signal: controller.signal,
+    });
+    const calls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (url) => {
+        calls.push(String(url));
+        controller.abort();
+        return String(url).includes("archive.org")
+          ? waybackMiss("https://github.com/ghost/gravekeeper")
+          : githubMetaOk();
+      }),
+    );
+    expect((await POST(request)).status).toBe(499);
+    expect(calls.some((url) => url.includes("/commits"))).toBe(false);
+  });
+  it("returns 400 when url is missing", async () => {
     const res = await POST(jsonRequest({}));
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.code).toBe('PARSE_ERROR');
+    expect(body.code).toBe("PARSE_ERROR");
   });
 
-  it('returns 400 when url is empty', async () => {
-    const res = await POST(jsonRequest({ url: '   ' }));
+  it("returns 400 when url is empty", async () => {
+    const res = await POST(jsonRequest({ url: "   " }));
     expect(res.status).toBe(400);
   });
 
-  it('returns wayback-only response for a non-GitHub URL', async () => {
-    const url = 'https://example.com/dead';
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(waybackOk(url)),
-    );
+  it("returns wayback-only response for a non-GitHub URL", async () => {
+    const url = "https://example.com/dead";
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(waybackOk(url)));
 
     const res = await POST(jsonRequest({ url }));
     expect(res.status).toBe(200);
@@ -131,67 +172,73 @@ describe('POST /api/resurrect', () => {
     expect(body.github).toBeNull();
     expect(body.spec).toBeNull();
     expect(body.wayback?.available).toBe(true);
-    expect(body.receipts[0].kind).toBe('wayback');
-    expect(typeof body.publicKey).toBe('string');
+    expect(body.receipts[0].kind).toBe("wayback");
+    expect(typeof body.publicKey).toBe("string");
 
     const pk = await importPublicKey(body.publicKey);
     const verified = await verifyChain(body.receipts, pk);
     expect(verified.valid).toBe(true);
+    expect(await verifyProof(body)).toBe(true);
   });
 
-  it('records wayback-miss and continues when no snapshot exists', async () => {
-    const url = 'https://example.com/never-archived';
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(waybackMiss(url)));
+  it("records wayback-miss and continues when no snapshot exists", async () => {
+    const url = "https://example.com/never-archived";
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(waybackMiss(url)));
 
     const res = await POST(jsonRequest({ url }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.wayback).toBeNull();
-    expect(body.receipts[0].kind).toBe('wayback-miss');
+    expect(body.receipts[0].kind).toBe("wayback-miss");
+    expect(await verifyProof(body)).toBe(true);
   });
 
-  it('builds a full GitHub resurrection chain with a valid receipt chain', async () => {
-    const url = 'https://github.com/ghost/gravekeeper';
+  it("builds a full GitHub resurrection chain with a valid receipt chain", async () => {
+    const url = "https://github.com/ghost/gravekeeper";
     const fetchMock = vi.fn().mockImplementation(async (req: string | URL) => {
       const href = String(req);
-      if (href.includes('archive.org')) return waybackOk(url);
-      if (href.includes('/commits')) return githubCommitsOk();
-      if (href.includes('/repos/')) return githubMetaOk();
+      if (href.includes("archive.org")) return waybackOk(url);
+      if (href.includes("/commits")) return githubCommitsOk();
+      if (href.includes("/repos/")) return githubMetaOk();
       throw new Error(`unexpected fetch: ${href}`);
     });
-    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal("fetch", fetchMock);
 
     const res = await POST(jsonRequest({ url }));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.github?.meta.fullName).toBe('ghost/gravekeeper');
+    expect(body.github?.meta.fullName).toBe("ghost/gravekeeper");
     expect(body.spec?.revivalSteps.length).toBeGreaterThanOrEqual(3);
+    expect(body.evidence).toHaveLength(body.receipts.length);
+    expect(body.evidence[1].body).toEqual(body.github.meta);
+    expect(body.evidence[3].body).toEqual(body.spec);
     expect(body.receipts.map((r: { kind: string }) => r.kind)).toEqual([
-      'wayback',
-      'github-meta',
-      'github-commits',
-      'spec',
+      "wayback",
+      "github-meta",
+      "github-commits",
+      "spec",
     ]);
 
     const pk = await importPublicKey(body.publicKey);
     const verified = await verifyChain(body.receipts, pk);
     expect(verified.valid).toBe(true);
+    expect(await verifyProof(body)).toBe(true);
   });
 
-  it('property: successful GitHub resurrect always yields a verifiable receipt chain', async () => {
+  it("property: successful GitHub resurrect always yields a verifiable receipt chain", async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.stringMatching(/^[a-z][a-z0-9-]{1,12}$/),
-        fc.stringMatching(/^[a-z][a-z0-9-]{1,12}$/),
+        fc.stringMatching(/^[a-z][a-z0-9-]{0,11}[a-z0-9]$/),
+        fc.stringMatching(/^[a-z][a-z0-9-]{0,11}[a-z0-9]$/),
         async (owner, repo) => {
           const url = `https://github.com/${owner}/${repo}`;
           vi.stubGlobal(
-            'fetch',
+            "fetch",
             vi.fn().mockImplementation(async (req: string | URL) => {
               const href = String(req);
-              if (href.includes('archive.org')) return waybackOk(url);
-              if (href.includes('/commits')) return githubCommitsOk();
-              if (href.includes('/repos/')) {
+              if (href.includes("archive.org")) return waybackOk(url);
+              if (href.includes("/commits")) return githubCommitsOk();
+              if (href.includes("/repos/")) {
                 const base = await githubMetaOk();
                 const json = await base.json();
                 return {
@@ -214,6 +261,7 @@ describe('POST /api/resurrect', () => {
           const pk = await importPublicKey(body.publicKey);
           const verified = await verifyChain(body.receipts, pk);
           expect(verified.valid).toBe(true);
+          expect(await verifyProof(body)).toBe(true);
           expect(body.receipts.length).toBeGreaterThanOrEqual(4);
         },
       ),

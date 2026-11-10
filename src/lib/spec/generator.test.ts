@@ -113,7 +113,8 @@ describe('generateRevivalSpec — no language', () => {
   });
 
   it('works when language field is absent entirely', () => {
-    const { language: _lang, ...metaNoLang } = makeMeta();
+    const { language, ...metaNoLang } = makeMeta();
+    expect(language).toBeDefined();
     const spec = generateRevivalSpec(metaNoLang, []);
 
     expect(spec.detectedLanguages).toHaveLength(0);
