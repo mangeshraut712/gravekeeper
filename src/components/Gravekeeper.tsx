@@ -504,7 +504,7 @@ export default function Gravekeeper() {
     setError("Lookup canceled. You can start another one.");
   }
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#111510] text-stone-200">
+    <div className="relative min-h-screen overflow-hidden text-stone-200">
       <a
         href="#lookup"
         className="sr-only z-50 focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:rounded focus:bg-amber-200 focus:p-3 focus:text-black"

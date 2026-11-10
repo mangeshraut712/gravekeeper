@@ -4,6 +4,10 @@
 
 Gravekeeper is a digital-archaeology workbench for public websites and forgotten GitHub repositories, built for Kiroween 2026. Enter a URL to find an Internet Archive snapshot, inspect repository history, generate a practical revival checklist, and export a self-contained, tamper-evident record of the lookup.
 
+## Live demo
+
+A public Hobby deployment is at https://gravekeeper-drab.vercel.app (`GITHUB_TOKEN` and `FORK_API_SECRET` unset). This is a preview host for development and judging, not a contest submission.
+
 ## What works
 
 - Live Internet Archive and public GitHub lookups, with partial results when a source is unavailable.
@@ -76,11 +80,11 @@ The verifier checks receipt sequence, predecessor hashes, signatures, evidence d
 - A narrowly scoped, public-read-only `GITHUB_TOKEN` may be supplied for higher lookup limits. Never expose it with a `NEXT_PUBLIC_` prefix. Private repository data is rejected.
 - `/api/fork` is an optional **operator-only** route, disabled unless a separate `FORK_API_SECRET` of at least 32 characters is configured. It requires that secret in an `Authorization: Bearer ...` header in addition to a server-side GitHub token. The public interface does not call it. Do not configure write credentials on a public demo.
 - Apply provider-level rate limits and spending controls before public deployment. Per-request upstream timeouts and cancellation are implemented; a distributed abuse limiter is not.
-- No deployment, YouTube upload, or contest submission is implied by this repository's presence.
+- A public Vercel demo is documented above. No YouTube upload or contest submission is implied by this repository's presence.
 
 ## How Kiro was used
 
-See [KIRO_USAGE.md](KIRO_USAGE.md), the committed [.kiro](.kiro) steering/spec/task files, and [review metering evidence](.kiro/evidence/2026-11-06-review-metering.json). The log distinguishes Kiro-generated work, manual implementation, unsuccessful quota-limited sessions, and Kiro's later read-only review. It does not claim that untested hook or MCP configurations were exercised.
+See [KIRO_USAGE.md](KIRO_USAGE.md), the committed [.kiro](.kiro) steering/spec/task files, and review metering evidence in [.kiro/evidence](.kiro/evidence). The log distinguishes Kiro-generated work, manual implementation, unsuccessful quota-limited sessions, and Kiro's later read-only review. It does not claim that untested hook or MCP configurations were exercised.
 
 ## License and third-party services
 

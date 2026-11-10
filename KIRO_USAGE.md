@@ -116,3 +116,16 @@ Run in a `kiro-cli` session; no credit figure is recorded. Added `src/lib/restor
 Preserved and reconciled the existing staged Lantern Hill files with the safer workbench. This work was done in `kiro-cli` sessions on this Mac (local CLI session records line up with the merge and follow-up commits); no credit figure is recorded for them. The original fixture now lives separately at `/lantern-hill`, without replacing live lookup or the licensed esrever demonstration. Fixed malformed-signature handling, empty receipt exports, muted-text contrast, and overly broad Unicode property-test claims.
 
 Separately, attempted one bounded read-only `kiro-cli chat --agent gravekeeper-review --no-interactive --output-format stream-json` review. The execution environment blocked the CLI's telemetry network request before a review completed. No successful review, credit usage, token count or WBM record is claimed for this attempt. Network controls were not changed or bypassed.
+
+## Nov 10, 2026 IST — Fog overlay, Kiro review, and Vercel deploy
+
+The FogOverlay component, CSS drift keyframes, home-page composition, hook matcher change, and tests were written outside Kiro, then checked with one bounded read-only `kiro-cli chat --agent gravekeeper-review --no-interactive --output-format stream-json` session (session `d07e79e4-2ad2-40da-9bfe-7d3c815c1d88`). The review agent has read/grep/glob tools only. Kiro did not execute tests or modify files.
+
+Kiro found no bugs in the five files it read. It recommended tightening the home-page test so `aria-hidden` and `motion-reduce:hidden` are asserted on the fog overlay tag itself, and noted that `"use client"` is unnecessary for this CSS-only component but harmless. The test was tightened afterward. `"use client"` was left in place to match the Task 14 spec.
+
+Reported Kiro metering: **0.4055374147595356 credits**, from two credit entries in the CLI metadata. The CLI did not expose exact input/output token counts. This is not a WBM token count. No WBM upload was performed. A metadata-only record is committed under `.kiro/evidence/2026-11-10-fog-review.json`; full local session output is not published.
+
+The save hook in `.kiro/hooks/run-tests-on-save.json` now also runs when files under `src/components` are saved. Hook or MCP execution is not claimed for this session.
+
+A public Vercel production deployment was created on the existing Hobby team `mbr63` (account `mbr63drexel`), with `GITHUB_TOKEN` and `FORK_API_SECRET` left unset. Vercel Authentication was turned off so the demo URLs are reachable without a Vercel login. Live URL: https://gravekeeper-drab.vercel.app
+

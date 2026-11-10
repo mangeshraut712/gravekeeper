@@ -22,4 +22,13 @@ describe("Gravekeeper landing page", () => {
     expect(html).toContain("not proof of authorship");
     expect(html).not.toContain("Chain verified");
   });
+
+  it("places decorative fog behind the workbench and hides it for reduced motion", () => {
+    const html = renderToStaticMarkup(<Home />);
+    expect(html).toMatch(
+      /<div[^>]*pointer-events-none[^>]*z-0[^>]*motion-reduce:hidden[^>]*aria-hidden="true"[^>]*data-testid="fog-overlay"/,
+    );
+    expect(html).toContain("relative z-10");
+    expect(html).toContain("fog-layer-a");
+  });
 });
