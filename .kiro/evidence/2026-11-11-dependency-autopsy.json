@@ -139,5 +139,33 @@
     "demoVerify": "passed (exit 0)",
     "mergeFromMain": "origin/main unchanged (already up to date); no conflicts",
     "realLookupsRerun": false
+  },
+  "followUpAfterStalledResume": {
+    "note": "Metadata only. No transcript or secrets. This follow-up was hand work after a stalled kiro-cli resume, not a Kiro session. No credit figure is claimed.",
+    "stalledSession": "sess_896d8716-8cca-40c1-846e-8b21e710a68d",
+    "stalledLog": "~/kiroween/logs/kiro-deps-autopsy-20261111-r3.jsonl last write 16:14 IST",
+    "stoppedAt": "2026-11-11T16:32:47+05:30",
+    "stoppedHow": "SIGTERM on the orphaned kiro-cli PID only; PID 73527 and the gravekeeper-proof kiro-cli job were left alone",
+    "thirdCodexFinding": {
+      "file": "src/lib/deps/semver.ts",
+      "issue": "exclusive npm partials and X-ranges (>1, >1.x) used an inclusive floor, classifying current majors as major-behind",
+      "fix": "raise the last precise component for exclusive partials and X-ranges; fully specified >1.2.3 unchanged",
+      "commit": "8dca3d4",
+      "testsFirst": "unit cases plus a property that >N and >N.x floor to (N+1).0.0 and classify as current against that latest"
+    },
+    "mergeFromMain": {
+      "command": "git merge --no-edit origin/main",
+      "main": "4184d6f (PRs #6 and #8)",
+      "conflicts": "none"
+    },
+    "testsAfterMerge": {
+      "files": 33,
+      "tests": 482,
+      "result": "all passed",
+      "lint": "passed",
+      "typecheck": "passed (npx next typegen, then npx tsc --noEmit)",
+      "build": "passed",
+      "demoVerify": "passed"
+    }
   }
 }
