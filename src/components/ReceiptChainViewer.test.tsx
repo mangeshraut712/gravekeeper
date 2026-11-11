@@ -60,6 +60,12 @@ describe("ReceiptChainViewer", () => {
     expect(html).toContain(`${"a".repeat(12)}…`);
   });
 
+  it("separates sequence, kind and hash fragment with spaces so the summary's accessible name does not fuse them", () => {
+    // Accessible-name computation joins inline elements without adding spaces.
+    const summaries = [...html.matchAll(/<summary[^>]*>(.*?)<\/summary>/g)].map((m) => m[1].replace(/<[^>]*>/g, ""));
+    expect(summaries).toEqual([`01 wayback ${"a".repeat(12)}…`, `02 github-meta ${"c".repeat(12)}…`]);
+  });
+
   it("offers verify and download buttons and an empty polite status region", () => {
     expect(html).toContain("Verify proof");
     expect(html).toContain("Download proof");

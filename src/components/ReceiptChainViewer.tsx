@@ -93,8 +93,8 @@ export function ReceiptChainViewer({ result, url }: { result: ResurrectResponse;
             <summary className="cursor-pointer text-sm text-stone-200">
               <span className="mr-3 font-mono text-xs text-stone-400">
                 {String(receipt.seq + 1).padStart(2, "0")}
-              </span>
-              {receipt.kind}
+              </span>{" "}
+              {receipt.kind}{" "}
               <span className="ml-3 font-mono text-[10px] text-stone-400">
                 {receipt.hash.slice(0, 12)}…
               </span>
