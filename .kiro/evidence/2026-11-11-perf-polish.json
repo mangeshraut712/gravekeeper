@@ -51,6 +51,14 @@
     "screen-reader pass"
   ],
   "credits": "recorded by the runner",
+  "reviewFixes": [
+    {
+      "reportedBy": "cursor[bot] Bugbot (Medium)",
+      "bug": "demo pages inherited the home page twitter title/description; also found they had no og:image or twitter:image because a page-level openGraph/twitter object replaces the inherited one",
+      "reproduced": "src/app/metadata.test.ts failed before the fix; curl showed no og:image on /restoration and /lantern-hill",
+      "verified": "npm test 263 passed; curl shows page twitter:title plus og:image and twitter:image on both demo pages; e2e and demo:verify passed"
+    }
+  ],
   "exactTokenCountsExposed": false,
   "wbmUploadPerformed": false,
   "transcriptIncluded": false

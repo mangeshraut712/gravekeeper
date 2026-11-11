@@ -77,6 +77,7 @@ The focus check tabs through every focusable element on each page and through th
 - Root metadata now sets `metadataBase` (`https://gravekeeper-drab.vercel.app`), a canonical URL, a title template, `summary_large_image` Twitter card, and `viewport.themeColor` `#111510` with `color-scheme: dark`. `/restoration` and `/lantern-hill` have their own title, description and canonical.
 - `robots.txt` allows pages, disallows `/api/` and `/fixtures/`, and points at `sitemap.xml`, which lists the three pages.
 - The rendered `<head>` was checked with curl: `og:image` and `twitter:image` point at absolute URLs with width, height, type and alt.
+- Fixed after review on PR #10 (Cursor Bugbot): Next.js replaces, not merges, a child page's `openGraph` and `twitter` objects. The demo pages kept the home page's Twitter title and description and had no `og:image` or `twitter:image`. They now set their own Twitter text and list the share images explicitly. Confirmed with a failing test first (`src/app/metadata.test.ts`) and with curl on a fresh build.
 
 Not checked: how specific social networks render the card (no link was shared anywhere).
 

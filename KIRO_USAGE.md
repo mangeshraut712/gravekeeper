@@ -231,3 +231,5 @@ Branch `perf/polish-and-share-20261111`, from `4184d6f`. The credit figure for t
 **Hand work:** none beyond the prompt.
 
 **Limits:** local lab numbers on one machine, simulated mobile throttling, Chromium only for the polish check; the Vercel deployment was not measured; social card rendering on actual networks was not checked; no screen-reader pass.
+
+**Review follow-up (PR #10):** Cursor Bugbot reported that the demo pages inherited the home Twitter text. Reproduced with a failing test, then found with curl that those pages also had no `og:image` / `twitter:image`, because a page-level `openGraph` or `twitter` object replaces the inherited one. Fixed by setting page Twitter text and listing the share images explicitly. After the fix: `npm test` 263 passed, lint, `tsc`, build, e2e and `demo:verify` passed. Codex and Kilo reported no findings.
