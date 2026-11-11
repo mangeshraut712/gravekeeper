@@ -1,18 +1,36 @@
 // WCAG 2.1 A/AA scan with axe-core on the public routes.
-// Usage: BASE_URL=http://localhost:3000 node scripts/a11y-audit.mts [--lookup]
-//   CHROMIUM_PATH  optional Chromium/Chrome executable (defaults to Playwright's own)
+// Usage: BASE_URL=http://localhost:3000 node scripts/a11y-audit.mts [--lookup] [--browser=firefox] [--browsers=chromium,firefox,webkit]
+//   CHROMIUM_PATH  optional Chromium/Chrome executable (defaults to Playwright's own; chromium only)
+//   --browser / --browsers  engines to scan (default chromium). A browser that cannot launch fails the run.
 //   --lookup       also scan the results state after a real atom/atom lookup (needs network)
 // Always scanned, with /api/resurrect mocked (no network): invalid-URL, server-error, running and canceled states.
 import { AxeBuilder } from "@axe-core/playwright";
-import { chromium } from "playwright";
+import { chromium, firefox, webkit } from "playwright";
 
 const base = process.env.BASE_URL ?? "http://localhost:3000";
 const withLookup = process.argv.includes("--lookup");
 const tags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH || undefined,
-});
+const engines = { chromium, firefox, webkit } as const;
+type EngineName = keyof typeof engines;
+const flag = process.argv.find((a) => a.startsWith("--browsers=") || a.startsWith("--browser="));
+const requested = (flag ? flag.slice(flag.indexOf("=") + 1).split(",") : ["chromium"]).map((b) => b.trim()).filter(Boolean);
+for (const b of requested) {
+  if (!(b in engines)) throw new Error(`unknown browser "${b}" (use chromium, firefox or webkit)`);
+}
 let total = 0;
+const perBrowser: string[] = [];
+for (const engineName of requested as EngineName[]) {
+let browser: import("playwright").Browser;
+try {
+  browser = await engines[engineName].launch(
+    engineName === "chromium" ? { executablePath: process.env.CHROMIUM_PATH || undefined } : {},
+  );
+} catch (err) {
+  console.error(`FAILED to launch ${engineName}: ${(err as Error).message.split("\n")[0]}`);
+  process.exit(2);
+}
+const before = total;
+console.log(`\n=== ${engineName} ${browser.version()} ===`);
 // The "before" fixture is deliberately an inaccessible 1999-style page (blink, marquee,
 // unlabeled inputs); it is the thing being restored, so its findings are reported but not counted.
 const expectedFindings = new Set(["/fixtures/lantern-hill/before"]);
@@ -66,7 +84,7 @@ for (const path of [
     for (const label of ["Resource", "Recorded at", "Receipt hash", "Content digest"]) {
       await proof.getByText(label, { exact: true }).first().waitFor({ state: "visible" });
     }
-    await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => undefined)))); // axe must not sample mid-fade
+    await settleImpl(page); // axe must not sample mid-fade
     await scan("/ (after atom/atom lookup, proof-section receipt details open)", page);
   }
   await page.context().close();
@@ -75,8 +93,14 @@ for (const path of [
 // Lookup error and cancel states. /api/resurrect is mocked with page.route so these
 // states are deterministic and need no network. Each step throws if the state is not
 // actually reached, so a page never reports "0 violations" for a state it did not enter.
-async function settle(page: import("playwright").Page) {
-  await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => undefined))));
+// Wait for finite animations, but never forever: in headless Firefox the 200 ms fade-in
+// can fail to report "finished" after the lookup, so the wait is capped at 2 s.
+async function settleImpl(page: import("playwright").Page) {
+  await page.evaluate(() => Promise.race([
+    Promise.all(document.getAnimations().filter((a) => Number.isFinite(a.effect?.getComputedTiming().endTime as number) && a.playState === "running").map((a) => a.finished.catch(() => undefined))),
+    new Promise((resolve) => setTimeout(resolve, 2000)),
+  ]));
+  await page.waitForTimeout(300);
 }
 async function expectStatus(page: import("playwright").Page, text: string) {
   const status = page.locator("#lookup-error");
@@ -95,7 +119,7 @@ async function expectStatus(page: import("playwright").Page, text: string) {
   await page.click("button[type=submit]");
   await expectStatus(page, "Enter a public HTTP(S) URL");
   if (requested) throw new Error("validation error state made a network request");
-  await settle(page);
+  await settleImpl(page);
   await scan("/ (invalid URL error state)", page);
   await page.context().close();
 }
@@ -109,7 +133,7 @@ async function expectStatus(page: import("playwright").Page, text: string) {
   await page.fill("#resource-url", "https://github.com/example/missing");
   await page.click("button[type=submit]");
   await expectStatus(page, message);
-  await settle(page);
+  await settleImpl(page);
   await scan("/ (lookup error state, mocked 404)", page);
   await page.context().close();
 }
@@ -122,15 +146,18 @@ async function expectStatus(page: import("playwright").Page, text: string) {
   await page.click("button[type=submit]");
   const cancel = page.getByRole("button", { name: "Cancel" });
   await cancel.waitFor({ state: "visible", timeout: 10_000 });
-  await settle(page);
+  await settleImpl(page);
   await scan("/ (lookup running, Cancel button visible)", page);
   await page.keyboard.press("Escape");
   await expectStatus(page, "Lookup canceled. You can start another one.");
   if (await cancel.count()) throw new Error("Cancel button still present after Escape");
-  await settle(page);
+  await settleImpl(page);
   await scan("/ (lookup canceled state)", page);
   await page.context().close();
 }
 await browser.close();
+perBrowser.push(`${engineName}: ${total - before} violation(s)`);
+}
+console.log("\nPer browser: " + perBrowser.join("; "));
 console.log(total === 0 ? "RESULT: no violations in scanned states" : `RESULT: ${total} violation(s)`);
 process.exit(total === 0 ? 0 : 1);
