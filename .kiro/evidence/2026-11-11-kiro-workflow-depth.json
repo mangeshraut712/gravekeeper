@@ -1,0 +1,59 @@
+{
+  "purpose": "Kiro workflow depth pass: inclusion-mode steering, two custom agents, three hooks, e2e smoke test, CI browser job",
+  "recordedAt": "2026-11-11",
+  "branch": "feat/kiro-workflow-depth-20261111",
+  "baseCommit": "9165fa3",
+  "cliVersion": "kiro-cli 3.2.0",
+  "formatSources": [
+    "https://kiro.dev/docs/steering/",
+    "https://kiro.dev/docs/hooks/",
+    "https://kiro.dev/docs/hooks/types/",
+    "https://kiro.dev/docs/hooks/actions/",
+    "https://kiro.dev/docs/custom-agents/configuration-reference/"
+  ],
+  "added": {
+    "steering": {
+      "fileMatch": ["receipts-security.md", "accessibility.md", "testing.md"],
+      "manual": ["release.md"],
+      "alwaysUnchanged": ["product.md", "tech.md", "structure.md"]
+    },
+    "agents": ["gravekeeper-a11y.json", "gravekeeper-docs.json"],
+    "hooks": ["receipts-property-tests-on-save.json", "spec-requirements-coverage.json", "pre-release-gate.json"]
+  },
+  "validation": {
+    "agentValidate": "kiro-cli agent validate exit 0 for gravekeeper-a11y, gravekeeper-docs, gravekeeper-review",
+    "hookJsonParses": true,
+    "manualSteeringRegistered": "CLI listed 'release' as a steering slash command in the headless runs"
+  },
+  "hookTypesSupportedPerDocs": {
+    "cliV3": ["PromptSubmit", "Stop", "SessionStart", "AgentSpawn (alias)", "SessionEnd", "PreCompact", "PostCompact", "PreToolUse", "PostToolUse", "FileCreate", "PostFileSave", "FileDelete", "PreTaskExecution", "PostTaskExecution"],
+    "manual": "Listed by CLI V3 but /hooks cannot invoke it, so the pre-release gate uses PreToolUse on shell"
+  },
+  "observedRuns": [
+    {
+      "what": "gravekeeper-a11y agent ran npm run a11y against a local production build",
+      "record": ".kiro/evidence/2026-11-11-a11y-agent-run.json",
+      "reportedCredits": 0.2289508389718076
+    },
+    {
+      "what": "pre-release-gate PreToolUse hook fired before the gravekeeper agent ran git push --dry-run origin HEAD",
+      "agent": "gravekeeper",
+      "sessionId": "sess_31dbeb2a-c20b-4f6d-b4bc-b15533e6d1fc",
+      "hookUpdate": { "name": "pre-release-gate", "status": "completed", "actionType": "runCommand" },
+      "outcome": "Checks passed, so the dry-run push was allowed. Nothing was pushed (dry run). The agent's own summary said it saw no hook message, because a passing hook only adds stdout to context.",
+      "blockPathTested": "Only by running scripts/pre-release-gate.mjs directly with failing checks (exit 2), not through Kiro",
+      "meteringUsage": [{ "value": 0.317291123880597, "unit": "credit", "unitPlural": "credits" }],
+      "turnDurationMs": 21050
+    }
+  ],
+  "reportedCreditsTotal": 0.5462419628524046,
+  "notObserved": [
+    "PostFileSave hooks (would require the agent to save src/ or spec files, which this pass did not do)",
+    "gravekeeper-docs agent",
+    "MCP tool calls",
+    "fileMatch steering activation by file path"
+  ],
+  "exactTokenCountsExposed": false,
+  "wbmUploadPerformed": false,
+  "authoring": "Config files, scripts and docs in this pass were written by a Kiro agent session (the orchestrating session's own credits were not exposed to it). Credits above cover only the two headless kiro-cli runs."
+}
