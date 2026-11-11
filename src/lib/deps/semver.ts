@@ -47,7 +47,26 @@ function toNumber(text: string): number | null {
   return Number.isSafeInteger(value) ? value : null;
 }
 
-export function parseVersion(input: string): ParsedVersion | null {
+/** Split a hyphenated pre-release such as rc1 into the PEP 440 pair ['rc', 1]. */
+function normalizePypiPre(raw: string): (number | string)[] {
+  const out: (number | string)[] = [];
+  for (const part of raw.split(".")) {
+    const pep = /^(alpha|beta|preview|pre|rc|a|b|c)(\d*)$/i.exec(part);
+    if (pep) {
+      out.push(PEP440_PRE[pep[1].toLowerCase()], toNumber(pep[2] || "0") ?? 0);
+      continue;
+    }
+    const dev = /^dev(\d*)$/i.exec(part);
+    if (dev) {
+      out.push(DEV, toNumber(dev[1] || "0") ?? 0);
+      continue;
+    }
+    out.push(/^\d+$/.test(part) ? (toNumber(part) ?? part) : part);
+  }
+  return out;
+}
+
+export function parseVersion(input: string, ecosystem?: Ecosystem): ParsedVersion | null {
   if (typeof input !== "string" || input.length > 128) return null;
   const match = VERSION_RE.exec(input.trim());
   if (!match) return null;
@@ -56,7 +75,9 @@ export function parseVersion(input: string): ParsedVersion | null {
   if (epoch === null || release.some((part) => part === null)) return null;
   let pre: (number | string)[] | null = null;
   if (match[3]) {
-    pre = match[3].split(".").map((id) => (/^\d+$/.test(id) ? (toNumber(id) ?? id) : id));
+    pre = ecosystem === "pypi"
+      ? normalizePypiPre(match[3])
+      : match[3].split(".").map((id) => (/^\d+$/.test(id) ? (toNumber(id) ?? id) : id));
   } else if (match[4]) {
     pre = [PEP440_PRE[match[4].toLowerCase()], toNumber(match[5] || "0") ?? 0];
   }
@@ -97,9 +118,9 @@ export function compareParsed(a: ParsedVersion, b: ParsedVersion): -1 | 0 | 1 {
 }
 
 /** -1, 0 or 1; null when either side is not a version. */
-export function compareVersions(a: string, b: string): -1 | 0 | 1 | null {
-  const left = parseVersion(a);
-  const right = parseVersion(b);
+export function compareVersions(a: string, b: string, ecosystem?: Ecosystem): -1 | 0 | 1 | null {
+  const left = parseVersion(a, ecosystem);
+  const right = parseVersion(b, ecosystem);
   return left && right ? compareParsed(left, right) : null;
 }
 
@@ -188,7 +209,7 @@ function npmFloor(spec: string): string | null {
 
 /** True when a PEP 440 prefix (e.g. 1.* → [1]) covers this version. */
 function pypiPrefixCovers(prefix: number[], version: string): boolean {
-  const parsed = parseVersion(version);
+  const parsed = parseVersion(version, "pypi");
   if (!parsed || parsed.epoch !== 0) return false;
   for (let i = 0; i < prefix.length; i++) {
     if ((parsed.release[i] ?? 0) !== prefix[i]) return false;
@@ -218,7 +239,7 @@ function pypiFloor(spec: string): string | null {
     if (lower) {
       const rawVersion = lower[2];
       const floor = rawVersion.replace(/\.\*$/, "");
-      if (!parseVersion(floor)) continue;
+      if (!parseVersion(floor, "pypi")) continue;
       const wildcardEquality = (lower[1] === "==" || lower[1] === "===") && /\.\*$/.test(rawVersion);
       if (wildcardEquality) {
         const match = /^(\d+(?:\.\d+)*)\.\*$/.exec(rawVersion);
@@ -229,7 +250,7 @@ function pypiFloor(spec: string): string | null {
       } else if (lower[1] === "==" || lower[1] === "===") {
         exactPins.push(floor);
       }
-      if (highest === null || (compareVersions(floor, highest) ?? 0) > 0) highest = floor;
+      if (highest === null || (compareVersions(floor, highest, "pypi") ?? 0) > 0) highest = floor;
       continue;
     }
     const excluded = /^!=\s*(\S+)$/.exec(text);
@@ -241,12 +262,12 @@ function pypiFloor(spec: string): string | null {
       if (parts.every((n) => Number.isSafeInteger(n))) prefixes.push(parts);
       continue;
     }
-    if (parseVersion(raw.replace(/\.\*$/, ""))) exactExclusions.push(raw.replace(/\.\*$/, ""));
+    if (parseVersion(raw.replace(/\.\*$/, ""), "pypi")) exactExclusions.push(raw.replace(/\.\*$/, ""));
   }
   if (highest === null) return null;
   const uniquePins: string[] = [];
   for (const pin of exactPins) {
-    if (!uniquePins.some((existing) => (compareVersions(existing, pin) ?? 1) === 0)) uniquePins.push(pin);
+    if (!uniquePins.some((existing) => (compareVersions(existing, pin, "pypi") ?? 1) === 0)) uniquePins.push(pin);
   }
   if (uniquePins.length > 1) return null;
   let floor: string = highest;
@@ -255,17 +276,17 @@ function pypiFloor(spec: string): string | null {
     if (!covering) break;
     const bumped = pypiBumpPastPrefix(covering);
     if (bumped === null) return null;
-    if ((compareVersions(bumped, floor) ?? 0) <= 0) return null;
+    if ((compareVersions(bumped, floor, "pypi") ?? 0) <= 0) return null;
     floor = bumped;
   }
   if (prefixes.some((prefix) => pypiPrefixCovers(prefix, floor))) return null;
   // Exact != that lands on the floor cannot be bumped reliably.
-  if (exactExclusions.some((v) => (compareVersions(v, floor) ?? 1) === 0)) return null;
+  if (exactExclusions.some((v) => (compareVersions(v, floor, "pypi") ?? 1) === 0)) return null;
   if (uniquePins.length === 1) {
     const pin = uniquePins[0];
-    if ((compareVersions(pin, floor) ?? 0) < 0) return null;
+    if ((compareVersions(pin, floor, "pypi") ?? 0) < 0) return null;
     if (prefixes.some((prefix) => pypiPrefixCovers(prefix, pin))) return null;
-    if (exactExclusions.some((v) => (compareVersions(v, pin) ?? 1) === 0)) return null;
+    if (exactExclusions.some((v) => (compareVersions(v, pin, "pypi") ?? 1) === 0)) return null;
     if (equalityPrefixes.some((prefix) => !pypiPrefixCovers(prefix, pin))) return null;
     return pin;
   }
@@ -287,11 +308,12 @@ export function classify(
   floor: string | null,
   latest: string | null,
   outcome: RegistryOutcome,
+  ecosystem?: Ecosystem,
 ): DependencyStatus {
   if (outcome === "not-found") return "not-found";
   if (outcome !== "ok" || floor === null || latest === null) return "unknown";
-  const f = parseVersion(floor);
-  const l = parseVersion(latest);
+  const f = parseVersion(floor, ecosystem);
+  const l = parseVersion(latest, ecosystem);
   if (!f || !l) return "unknown";
   if (f.epoch !== l.epoch) return f.epoch < l.epoch ? "major-behind" : "current";
   if (f.release[0] < l.release[0]) return "major-behind";

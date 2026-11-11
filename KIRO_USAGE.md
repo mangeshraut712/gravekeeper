@@ -247,3 +247,5 @@ Not a Kiro session. After the exclusive-floor entry above, Codex and Cursor Bugb
 - Codex P2: `addOrMergePypi` used `findIndex` on every requirement, so a large unique manifest was quadratic. Parsing now uses a name-to-index map (this commit).
 
 Limits: Kilo review was still pending on some of these heads; later findings arrived after earlier fixes. No Devpost submission, video, blog publish, or social post was made.
+
+- Codex P2: `==1.0-rc1` against latest `1.0rc2` compared as current because the hyphenated form kept `rc1` as one identifier. PyPI parsing now splits known pre tags (`rc1` → `['rc', 1]`); npm identifier semantics are unchanged.

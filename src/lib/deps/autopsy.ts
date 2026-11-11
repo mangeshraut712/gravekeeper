@@ -102,13 +102,14 @@ function noteFor(
   outcome: RegistryOutcome,
   floor: string | null,
   latest: string | null,
+  ecosystem: Ecosystem,
 ): string | null {
   if (status === "not-found") return "Not found on the registry.";
   if (status !== "unknown") return null;
   if (outcome === "skipped") return "Not a registry version (git, URL, path, alias or workspace spec).";
   if (outcome === "error") return "Registry lookup failed.";
   if (floor === null) return "Declared spec has no lower bound.";
-  if (latest === null || !parseVersion(latest)) return "Latest version is not comparable.";
+  if (latest === null || !parseVersion(latest, ecosystem)) return "Latest version is not comparable.";
   return null;
 }
 
@@ -148,7 +149,7 @@ export function buildAutopsy(manifestBody: unknown, registryBody: unknown): Depe
     const { latest, outcome } = registryBody.results[index];
     if (outcome === "error") partial = true;
     const floor = outcome === "skipped" ? null : rangeFloor(item.spec, manifest.ecosystem);
-    const status = classify(floor, latest, outcome);
+    const status = classify(floor, latest, outcome, manifest.ecosystem);
     counts[status]++;
     return {
       name: item.name,
@@ -157,7 +158,7 @@ export function buildAutopsy(manifestBody: unknown, registryBody: unknown): Depe
       floor,
       latest,
       status,
-      note: noteFor(status, outcome, floor, latest),
+      note: noteFor(status, outcome, floor, latest, manifest.ecosystem),
     };
   });
   return { state: partial ? "partial" : "complete", manifest, dependencies, counts };

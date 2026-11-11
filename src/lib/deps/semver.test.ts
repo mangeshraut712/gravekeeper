@@ -194,6 +194,17 @@ describe("isNonRegistrySpec", () => {
   });
 });
 
+describe("PyPI hyphenated prereleases", () => {
+  it("normalizes 1.0-rc1 like 1.0rc1 without changing npm identifiers", () => {
+    expect(parseVersion("1.0-rc1", "pypi")).toEqual({ epoch: 0, release: [1, 0], pre: ["rc", 1] });
+    expect(parseVersion("1.0rc1", "pypi")).toEqual({ epoch: 0, release: [1, 0], pre: ["rc", 1] });
+    expect(parseVersion("1.0-rc1")).toEqual({ epoch: 0, release: [1, 0], pre: ["rc1"] });
+    expect(compareVersions("1.0-rc1", "1.0rc2", "pypi")).toBe(-1);
+    expect(compareVersions("1.0-rc1", "1.0rc1", "pypi")).toBe(0);
+    expect(classify(rangeFloor("==1.0-rc1", "pypi"), "1.0rc2", "ok", "pypi")).toBe("minor-behind");
+  });
+});
+
 describe("classify", () => {
   it.each([
     ["16.14.0", "19.2.0", "ok", "major-behind"],
