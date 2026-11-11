@@ -94,7 +94,7 @@ export function SearchForm({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [loading]);
+  }, [loading, cancel]);
   return (
     <>
       <form onSubmit={submit} noValidate>
