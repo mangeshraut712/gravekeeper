@@ -6,6 +6,7 @@ import {
   parseManifest,
   parsePackageJson,
   parsePyprojectToml,
+  mergePypiSpecs,
   parseRequirement,
   parseRequirementsTxt,
 } from "./manifest";
@@ -127,7 +128,7 @@ describe("parseRequirementsTxt", () => {
     const data = ok(parseRequirementsTxt(text));
     expect(data.ecosystem).toBe("pypi");
     expect(data.packages).toEqual([
-      { name: "django", spec: "==3.2.4", group: "requirements" },
+      { name: "django", spec: "==3.2.4,>=4", group: "requirements" },
       { name: "requests", spec: ">=2.0,<3", group: "requirements" },
       { name: "numpy", spec: "", group: "requirements" },
     ]);
@@ -141,6 +142,51 @@ describe("parseRequirementsTxt", () => {
   it("caps at the package limit", () => {
     const text = Array.from({ length: 45 }, (_, i) => `pkg${i}==1.0`).join("\n");
     expect(ok(parseRequirementsTxt(text))).toMatchObject({ totalDeclared: 45, truncated: true });
+  });
+});
+
+describe("mergePypiSpecs", () => {
+  it("joins distinct clauses and keeps a bare name from weakening a bound", () => {
+    expect(mergePypiSpecs(">=1.0", ">=4.0")).toBe(">=1.0,>=4.0");
+    expect(mergePypiSpecs(">=1.0", "")).toBe(">=1.0");
+    expect(mergePypiSpecs("", ">=4.0")).toBe(">=4.0");
+    expect(mergePypiSpecs(">=1.0", ">=1.0")).toBe(">=1.0");
+  });
+});
+
+describe("repeated PyPI requirements", () => {
+  it("combines unconditional constraints for the same project", () => {
+    const data = ok(parseRequirementsTxt("Django>=1.0\nDjango>=4.0\n"));
+    expect(data.packages).toEqual([{ name: "django", spec: ">=1.0,>=4.0", group: "requirements" }]);
+  });
+
+  it("does the same in pyproject.toml", () => {
+    const text = '[project]\ndependencies = ["Django>=1.0", "Django>=4.0"]\n';
+    const data = ok(parsePyprojectToml(text));
+    expect(data.packages).toEqual([{ name: "django", spec: ">=1.0,>=4.0", group: "project" }]);
+  });
+
+  it("keeps a valid spec when merging would exceed the evidence length limit", () => {
+    const lines = Array.from({ length: 40 }, (_, i) => `demo>=1.0.${i}`);
+    const data = ok(parseRequirementsTxt(lines.join("\n")));
+    expect(data.packages).toHaveLength(1);
+    expect(data.packages[0]?.name).toBe("demo");
+    expect(data.packages[0]?.spec.length ?? 0).toBeLessThanOrEqual(256);
+    expect(data.packages[0]?.spec.startsWith(">=1.0.0")).toBe(true);
+    expect(data.skippedLines).toBeGreaterThan(0);
+  });
+
+  it("merges a late repeat in a large unique list without quadratic cost", () => {
+    const count = 8_000;
+    const lines = Array.from({ length: count }, (_, i) => `pkg-${String(i).padStart(4, "0")}`);
+    lines.push("pkg-0000>=2.0");
+    const started = Date.now();
+    const data = ok(parseRequirementsTxt(lines.join("\n")));
+    expect(Date.now() - started).toBeLessThan(1_000);
+    expect(data.totalDeclared).toBe(count);
+    expect(data.truncated).toBe(true);
+    expect(data.packages[0]).toEqual({ name: "pkg-0000", spec: ">=2.0", group: "requirements" });
+    expect(data.packages).toHaveLength(MAX_PACKAGES);
   });
 });
 

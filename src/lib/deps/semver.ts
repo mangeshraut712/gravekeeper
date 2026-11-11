@@ -47,7 +47,38 @@ function toNumber(text: string): number | null {
   return Number.isSafeInteger(value) ? value : null;
 }
 
-export function parseVersion(input: string): ParsedVersion | null {
+/** Split a hyphenated pre-release such as rc1 into the PEP 440 pair ['rc', 1]. */
+function normalizePypiPre(raw: string): (number | string)[] {
+  const parts = raw.split(".");
+  const out: (number | string)[] = [];
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    const pep = /^(alpha|beta|preview|pre|rc|a|b|c)(\d*)$/i.exec(part);
+    if (pep) {
+      let number = toNumber(pep[2] || "0") ?? 0;
+      if (!pep[2] && i + 1 < parts.length && /^\d+$/.test(parts[i + 1])) {
+        number = toNumber(parts[i + 1]) ?? 0;
+        i += 1;
+      }
+      out.push(PEP440_PRE[pep[1].toLowerCase()], number);
+      continue;
+    }
+    const dev = /^dev(\d*)$/i.exec(part);
+    if (dev) {
+      let number = toNumber(dev[1] || "0") ?? 0;
+      if (!dev[1] && i + 1 < parts.length && /^\d+$/.test(parts[i + 1])) {
+        number = toNumber(parts[i + 1]) ?? 0;
+        i += 1;
+      }
+      out.push(DEV, number);
+      continue;
+    }
+    out.push(/^\d+$/.test(part) ? (toNumber(part) ?? part) : part);
+  }
+  return out;
+}
+
+export function parseVersion(input: string, ecosystem?: Ecosystem): ParsedVersion | null {
   if (typeof input !== "string" || input.length > 128) return null;
   const match = VERSION_RE.exec(input.trim());
   if (!match) return null;
@@ -56,7 +87,9 @@ export function parseVersion(input: string): ParsedVersion | null {
   if (epoch === null || release.some((part) => part === null)) return null;
   let pre: (number | string)[] | null = null;
   if (match[3]) {
-    pre = match[3].split(".").map((id) => (/^\d+$/.test(id) ? (toNumber(id) ?? id) : id));
+    pre = ecosystem === "pypi"
+      ? normalizePypiPre(match[3])
+      : match[3].split(".").map((id) => (/^\d+$/.test(id) ? (toNumber(id) ?? id) : id));
   } else if (match[4]) {
     pre = [PEP440_PRE[match[4].toLowerCase()], toNumber(match[5] || "0") ?? 0];
   }
@@ -97,9 +130,9 @@ export function compareParsed(a: ParsedVersion, b: ParsedVersion): -1 | 0 | 1 {
 }
 
 /** -1, 0 or 1; null when either side is not a version. */
-export function compareVersions(a: string, b: string): -1 | 0 | 1 | null {
-  const left = parseVersion(a);
-  const right = parseVersion(b);
+export function compareVersions(a: string, b: string, ecosystem?: Ecosystem): -1 | 0 | 1 | null {
+  const left = parseVersion(a, ecosystem);
+  const right = parseVersion(b, ecosystem);
   return left && right ? compareParsed(left, right) : null;
 }
 
@@ -186,16 +219,91 @@ function npmFloor(spec: string): string | null {
   return lowest;
 }
 
+/** True when a PEP 440 prefix (e.g. 1.* → [1]) covers this version. */
+function pypiPrefixCovers(prefix: number[], version: string): boolean {
+  const parsed = parseVersion(version, "pypi");
+  if (!parsed || parsed.epoch !== 0) return false;
+  for (let i = 0; i < prefix.length; i++) {
+    if ((parsed.release[i] ?? 0) !== prefix[i]) return false;
+  }
+  return true;
+}
+
+/** Lowest version after a prefix exclusion: 1.* → 2.0, 1.2.* → 1.3. */
+function pypiBumpPastPrefix(prefix: number[]): string | null {
+  if (!prefix.length) return null;
+  const next = [...prefix];
+  next[next.length - 1] += 1;
+  while (next.length < 2) next.push(0);
+  const floor = next.join(".");
+  return parseVersion(floor) ? floor : null;
+}
+
 function pypiFloor(spec: string): string | null {
   let highest: string | null = null;
+  const prefixes: number[][] = [];
+  const equalityPrefixes: number[][] = [];
+  const exactExclusions: string[] = [];
+  const exactPins: string[] = [];
   for (const clause of spec.replace(/^\(|\)$/g, "").split(",")) {
-    const match = /^(===|==|~=|>=|>)\s*(\S+)$/.exec(clause.trim());
-    if (!match) continue;
-    const floor = match[2].replace(/\.\*$/, "");
-    if (!parseVersion(floor)) continue;
-    if (highest === null || (compareVersions(floor, highest) ?? 0) > 0) highest = floor;
+    const text = clause.trim();
+    const lower = /^(===|==|~=|>=|>)\s*(\S+)$/.exec(text);
+    if (lower) {
+      const rawVersion = lower[2];
+      const floor = rawVersion.replace(/\.\*$/, "");
+      if (!parseVersion(floor, "pypi")) continue;
+      const wildcardEquality = (lower[1] === "==" || lower[1] === "===") && /\.\*$/.test(rawVersion);
+      if (wildcardEquality) {
+        const match = /^(\d+(?:\.\d+)*)\.\*$/.exec(rawVersion);
+        if (match) {
+          const parts = match[1].split(".").map(Number);
+          if (parts.every((n) => Number.isSafeInteger(n))) equalityPrefixes.push(parts);
+        }
+      } else if (lower[1] === "==" || lower[1] === "===") {
+        exactPins.push(floor);
+      }
+      if (highest === null || (compareVersions(floor, highest, "pypi") ?? 0) > 0) highest = floor;
+      continue;
+    }
+    const excluded = /^!=\s*(\S+)$/.exec(text);
+    if (!excluded) continue;
+    const raw = excluded[1];
+    const prefix = /^(\d+(?:\.\d+)*)\.\*$/.exec(raw);
+    if (prefix) {
+      const parts = prefix[1].split(".").map(Number);
+      if (parts.every((n) => Number.isSafeInteger(n))) prefixes.push(parts);
+      continue;
+    }
+    if (parseVersion(raw.replace(/\.\*$/, ""), "pypi")) exactExclusions.push(raw.replace(/\.\*$/, ""));
   }
-  return highest;
+  if (highest === null) return null;
+  const uniquePins: string[] = [];
+  for (const pin of exactPins) {
+    if (!uniquePins.some((existing) => (compareVersions(existing, pin, "pypi") ?? 1) === 0)) uniquePins.push(pin);
+  }
+  if (uniquePins.length > 1) return null;
+  let floor: string = highest;
+  for (let i = 0; i < 8; i++) {
+    const covering = prefixes.find((prefix) => pypiPrefixCovers(prefix, floor));
+    if (!covering) break;
+    const bumped = pypiBumpPastPrefix(covering);
+    if (bumped === null) return null;
+    if ((compareVersions(bumped, floor, "pypi") ?? 0) <= 0) return null;
+    floor = bumped;
+  }
+  if (prefixes.some((prefix) => pypiPrefixCovers(prefix, floor))) return null;
+  // Exact != that lands on the floor cannot be bumped reliably.
+  if (exactExclusions.some((v) => (compareVersions(v, floor, "pypi") ?? 1) === 0)) return null;
+  if (uniquePins.length === 1) {
+    const pin = uniquePins[0];
+    if ((compareVersions(pin, floor, "pypi") ?? 0) < 0) return null;
+    if (prefixes.some((prefix) => pypiPrefixCovers(prefix, pin))) return null;
+    if (exactExclusions.some((v) => (compareVersions(v, pin, "pypi") ?? 1) === 0)) return null;
+    if (equalityPrefixes.some((prefix) => !pypiPrefixCovers(prefix, pin))) return null;
+    return pin;
+  }
+  if (equalityPrefixes.some((prefix) => !pypiPrefixCovers(prefix, floor))) return null;
+  return floor;
 }
 
 /** The lowest version a declared spec admits, or null when it has no registry floor. */
@@ -212,11 +320,12 @@ export function classify(
   floor: string | null,
   latest: string | null,
   outcome: RegistryOutcome,
+  ecosystem?: Ecosystem,
 ): DependencyStatus {
   if (outcome === "not-found") return "not-found";
   if (outcome !== "ok" || floor === null || latest === null) return "unknown";
-  const f = parseVersion(floor);
-  const l = parseVersion(latest);
+  const f = parseVersion(floor, ecosystem);
+  const l = parseVersion(latest, ecosystem);
   if (!f || !l) return "unknown";
   if (f.epoch !== l.epoch) return f.epoch < l.epoch ? "major-behind" : "current";
   if (f.release[0] < l.release[0]) return "major-behind";

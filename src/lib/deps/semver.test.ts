@@ -123,8 +123,58 @@ describe("rangeFloor (pypi)", () => {
     ["(>=1.0)", "1.0"],
     ["===2.0", "2.0"],
     [">1.0", "1.0"],
+    // !=1.* excludes the 1.x series, so >=1.0,!=1.* starts at 2.0
+    [">=1.0,!=1.*", "2.0"],
+    [">=1.5,!=1.*", "2.0"],
+    [">=2.0,!=1.*", "2.0"],
+    [">=1.2,!=1.2.*", "1.3"],
+    ["(>=1.0,!=1.*)", "2.0"],
   ])("%s → %s", (spec, floor) => {
     expect(rangeFloor(spec, "pypi")).toBe(floor);
+  });
+
+  it("classifies >=1.0,!=1.* against latest 2.0.0 as current, not major-behind", () => {
+    expect(classify(rangeFloor(">=1.0,!=1.*", "pypi"), "2.0.0", "ok")).toBe("current");
+    expect(classify(rangeFloor(">=1.0,!=1.*", "pypi"), "3.0.0", "ok")).toBe("major-behind");
+  });
+
+  it("returns no floor when an exact != matches the inclusive floor (not reliably bumpable)", () => {
+    expect(rangeFloor(">=1.0,!=1.0", "pypi")).toBeNull();
+  });
+
+  it.each(["==1.0,==4.0", "==3.2.4,>=4", "===1.0,==2.0"])(
+    "returns no floor for unsatisfiable exact pins: %s",
+    (spec) => expect(rangeFloor(spec, "pypi")).toBeNull(),
+  );
+
+  it("keeps the stronger lower bound when repeated constraints are combined", () => {
+    expect(rangeFloor(">=1.0,>=4.0", "pypi")).toBe("4.0");
+    expect(classify(rangeFloor(">=1.0,>=4.0", "pypi"), "4.0.0", "ok")).toBe("current");
+  });
+
+  it("treats ==1.* as a prefix, not an exact pin, so ==1.*,>=1.5 has floor 1.5", () => {
+    expect(rangeFloor("==1.*,>=1.5", "pypi")).toBe("1.5");
+    expect(rangeFloor("==1.*,==1.5", "pypi")).toBe("1.5");
+    expect(classify(rangeFloor("==1.*,>=1.5", "pypi"), "1.5.0", "ok")).toBe("current");
+  });
+
+  it("returns no floor when a bound sits outside an ==N.* prefix", () => {
+    expect(rangeFloor("==1.*,>=2.0", "pypi")).toBeNull();
+    expect(rangeFloor("==1.*,==2.0", "pypi")).toBeNull();
+    expect(rangeFloor("==1.2.*,==1.5", "pypi")).toBeNull();
+    expect(rangeFloor("==1.*,==2.*", "pypi")).toBeNull();
+  });
+
+  it("property: >=N,!=N.* floors to N+1 and classifies as current against that latest", () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 0, max: 40 }), (major) => {
+        const floor = rangeFloor(`>=${major},!=${major}.*`, "pypi");
+        const next = `${major + 1}.0`;
+        expect(floor).not.toBeNull();
+        expect(compareVersions(floor!, next)).toBe(0);
+        expect(classify(floor, next, "ok")).toBe("current");
+      }),
+    );
   });
 
   it.each(["", "<3", "!=1.0", "<=2,!=1.5", "1.0"])("no floor for %j", (spec) => {
@@ -141,6 +191,20 @@ describe("isNonRegistrySpec", () => {
   it("flags direct references for PyPI", () => {
     expect(isNonRegistrySpec("@ https://x/y.whl", "pypi")).toBe(true);
     expect(isNonRegistrySpec(">=1.0", "pypi")).toBe(false);
+  });
+});
+
+describe("PyPI hyphenated prereleases", () => {
+  it("normalizes 1.0-rc1 like 1.0rc1 without changing npm identifiers", () => {
+    expect(parseVersion("1.0-rc1", "pypi")).toEqual({ epoch: 0, release: [1, 0], pre: ["rc", 1] });
+    expect(parseVersion("1.0rc1", "pypi")).toEqual({ epoch: 0, release: [1, 0], pre: ["rc", 1] });
+    expect(parseVersion("1.0-rc1")).toEqual({ epoch: 0, release: [1, 0], pre: ["rc1"] });
+    expect(parseVersion("1.0-rc.1", "pypi")).toEqual({ epoch: 0, release: [1, 0], pre: ["rc", 1] });
+    expect(compareVersions("1.0-rc1", "1.0rc2", "pypi")).toBe(-1);
+    expect(compareVersions("1.0-rc1", "1.0rc1", "pypi")).toBe(0);
+    expect(compareVersions("1.0-rc.1", "1.0rc1", "pypi")).toBe(0);
+    expect(classify(rangeFloor("==1.0-rc1", "pypi"), "1.0rc2", "ok", "pypi")).toBe("minor-behind");
+    expect(classify(rangeFloor("==1.0-rc.1", "pypi"), "1.0rc1", "ok", "pypi")).toBe("current");
   });
 });
 

@@ -235,6 +235,21 @@ Not a Kiro session. The follow-up kiro-cli resume (`sess_896d8716-8cca-40c1-846e
 
 No credit figure is claimed for this hand work. No Devpost submission, video, blog publish, or social post was made.
 
+## Nov 11, 2026 — PR #7 review follow-ups (hand work)
+
+Not a Kiro session. After the exclusive-floor entry above, Codex and Cursor Bugbot kept filing findings on this branch; each verified one was fixed with tests first, then pushed (no force-push, no PR replies, PID 73527 not touched). Credit usage is not claimed here.
+
+- Browser CI: `@/lib` aliases failed under Node e2e; `generator.ts` now uses a relative import of `majorOf` (`b21df84`).
+- Codex P2: `>=1.0,!=1.*` ignored the exclusion and floored at `1.0`; floors now bump past prefix exclusions, and an exact `!=` of the floor returns null (`d8d698c`).
+- Codex P2: repeated Python requirements kept only the first line; `mergePypiSpecs` / `addOrMergePypi` combine them, and conflicting exact pins yield no floor (`3abf399`).
+- Codex P2 and Bugbot: a merged spec can exceed 256 characters, and `==1.*` was recorded as an exact pin of `1`; overflow now keeps the previous valid spec, and wildcard equality is a prefix (`b6838af`).
+- Bugbot: `==1.*,>=2.0` still returned a floor of `2.0` outside the required series; floors and pins must sit inside every `==N.*` prefix (`83c38c5`).
+- Codex P2: `addOrMergePypi` used `findIndex` on every requirement, so a large unique manifest was quadratic. Parsing now uses a name-to-index map (this commit).
+
+Limits: Kilo review was still pending on some of these heads; later findings arrived after earlier fixes. No Devpost submission, video, blog publish, or social post was made.
+
+- Codex P2: `==1.0-rc1` against latest `1.0rc2` compared as current because the hyphenated form kept `rc1` as one identifier. PyPI parsing now splits known pre tags (`rc1` → `['rc', 1]`); npm identifier semantics are unchanged.
+
 ## Nov 11, 2026 — Epitaph timeline and permalinks (Kiro agent session)
 
 Branch `feat/epitaph-timeline-20261111`, from `7c927bf` (PR #7 tip). Session `sess_01f7c850-64cc-429f-9ccc-2fb2296f888e`. Evidence: `.kiro/evidence/2026-11-11-epitaph-timeline.json`. The session metadata available to the agent exposed no credit figure or token count, so none is claimed. No MCP server was used. No Devpost submission, video, blog publish, or social post was made.
