@@ -348,3 +348,31 @@ Branch `fix/review-findings-20261111`, from main `7c2973f`. The credit figure fo
 **Hooks, observed:** after each `src/` save, the `keep-tasks-in-sync` prompt arrived. No unchecked `tasks.md` item was completed, so `tasks.md` was not changed. The `npm test` save hook's output was not attached, so its result was not observed; tests were run by hand.
 
 **Limits:** the timings come from one machine. Firefox and WebKit were not rescanned. There was no screen-reader pass. Kiro did not review its own fixes.
+## Nov 11, 2026 — Judge guide and docs pass (Kiro agent session)
+
+Branch `docs/judge-guide-20261111`, from `main` at `129c301` (PRs #7, #9, #10 and #11 merged). The credit figure for this session is recorded by the runner, not here. No token count or WBM record is claimed. No hook fired in this session (only docs and `.kiro/evidence` were edited, and no hook matcher covers them), and no MCP server was used. No Devpost submission, video, blog publish, or social post was made.
+
+**Kiro-generated (agent wrote and ran these):**
+- README top section rewritten for judges: pitch, a 60-second path on the live app, a feature table with limits for what is on `main`, a Mermaid architecture diagram, setup commands and a "How Kiro built this" section. The existing screenshots and their mocked/live captions are kept; no screenshots were recaptured.
+- `docs/JUDGES.md`: each judging criterion mapped to files and recorded results, plus the submission requirements with their status. The video is pending, the Devpost entry is not submitted, and Best Student Project is not entered.
+- `docs/submission/WRITEUP.md`, `docs/submission/DEVPOST.md` and `docs/DEMO_SCRIPT.md` updated to match the merged features (autopsy, Epitaph, permalinks, `/proof`, share previews) and the evidence files. The demo scripts no longer say the plan ignores dependency files.
+- `docs/KIRO_WORKFLOW.md` corrected against `.kiro/evidence`. Hook statuses now show which hooks were observed. The MCP section now names the `uvx mcp-server-fetch` config and the probe results. The later specs and evidence files are listed. The proof-workbench spec is marked as landing in the same commit as its code (`89a94fa`), not spec-first.
+- Facts checked live and read-only: `gh repo view` (public, MIT detected), `git check-ignore .kiro` (not ignored), the GitHub contents API for `.kiro`, HTTP 200 on seven production paths, and two production `POST /api/resurrect` calls for `atom/atom` at about 12:38 UTC. Both calls returned 7 receipts with a complete timeline and a `package.json` autopsy. The Wayback availability API returned a miss both times.
+
+**Checks:** `npm test` 41 files, 626 tests passed; `npm run lint`; `npx next typegen && npx tsc --noEmit`; `npm run build`; `npm run demo:verify` (4/12 before, 12/12 after); `npm run e2e` against `npx next start -p 3437`, 12/12 passed, server stopped afterwards.
+
+**Hand work:** none beyond the prompt.
+
+**Limits:** PR #12 (revival kit) is open and was not described as merged. `docs/submission/BLOG_DRAFT.md` and `SOCIAL_DRAFT.md` were not updated and still describe the earlier, metadata-only plan. No axe run, screenshot refresh or screen-reader pass was done in this session.
+
+## Nov 11, 2026 — Judge guide follow-up (hand work)
+
+Not a Kiro session. After PR #12 (`7a55157`) and PR #13 merged, this branch was updated with a normal merge of `origin/main` (every `KIRO_USAGE.md` entry kept). The 60-second path and both demo scripts said **Resurrect**; the live button is **Unearth project**, so those labels were corrected. The revival kit is now described as a merged feature (it was in the production JavaScript at 13:06:49 UTC). Credit usage is not claimed here. Checks after the edit: `npm test` 44 files, 682 passed; lint; typegen + tsc; build; `demo:verify` (4/12 before, 12/12 after). No Devpost submission, video upload, blog publish, or social post was made.
+
+## Nov 11, 2026 — Judge guide, second pass after the kit merge (Kiro agent session)
+
+Same Kiro session as the judge-guide entry above. The credit figure is recorded by the runner. No hook fired and no MCP server was used. No Devpost submission, video, blog publish, or social post was made.
+
+- While PR #14 CI ran, the hand commit above (`dd8a700`) was pushed to this branch. The agent fast-forwarded to it with `git pull --no-rebase` (no force-push, all `KIRO_USAGE.md` entries kept). The agent's first drafts had used the wrong button label (**Resurrect**); `dd8a700` corrected it.
+- Kiro then updated `docs/KIRO_WORKFLOW.md` and `docs/submission/WRITEUP.md` for what PRs #12 and #13 added: the `revival-kit` spec (`f52061d`), the Nov 11 `gravekeeper-review` run (`2026-11-11-review-findings.json`, 5.63 credits; findings fixed, partly fixed or rejected per that file), the two new evidence files, and the hook counts recorded in them. `.kiro/evidence/2026-11-11-judge-guide.json` gained a `followUp` note.
+- Checks on the merged tree: `npm test` 44 files, 682 passed; lint; typegen + tsc; build; `demo:verify` (4/12 before, 12/12 after); `npm run e2e` against `npx next start -p 3438`, 16 checks passed, server stopped.

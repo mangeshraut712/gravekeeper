@@ -1,0 +1,56 @@
+{
+  "kind": "kiro-session-metadata",
+  "note": "Metadata only. No transcript, prompts, tokens, environment values or secrets are recorded.",
+  "purpose": "Judge-facing docs: README top section, docs/JUDGES.md, write-up, Devpost draft, demo scripts, KIRO_WORKFLOW corrections",
+  "recordedAt": "2026-11-11",
+  "branch": "docs/judge-guide-20261111",
+  "baseCommit": "129c301",
+  "credits": "recorded by the runner",
+  "exactTokenCountsExposed": false,
+  "wbmUploadPerformed": false,
+  "filesChanged": [
+    "README.md",
+    "docs/JUDGES.md",
+    "docs/KIRO_WORKFLOW.md",
+    "docs/submission/WRITEUP.md",
+    "docs/submission/DEVPOST.md",
+    "docs/DEMO_SCRIPT.md",
+    "KIRO_USAGE.md",
+    ".kiro/evidence/2026-11-11-judge-guide.json"
+  ],
+  "productCodeChanged": false,
+  "factsCheckedReadOnly": {
+    "repoVisibility": "PUBLIC (gh repo view)",
+    "license": "mit (gh repo view licenseInfo)",
+    "kiroIgnored": false,
+    "kiroOnMainViaContentsApi": ["agents", "evidence", "hooks", "settings", "specs", "steering"],
+    "productionHttp200": ["/", "/proof", "/restoration", "/lantern-hill", "/opengraph-image", "/robots.txt", "/sitemap.xml"],
+    "productionLookup": {
+      "url": "https://github.com/atom/atom",
+      "at": "2026-11-11T12:38Z (two calls)",
+      "receiptKinds": ["wayback-miss", "wayback-cdx", "github-meta", "github-commits", "github-manifest", "registry", "spec"],
+      "timelineState": "complete",
+      "autopsyManifest": "package.json"
+    }
+  },
+  "checks": {
+    "npmTest": { "files": 41, "tests": 626, "result": "all passed" },
+    "lint": "passed",
+    "typecheck": "passed (npx next typegen, then npx tsc --noEmit)",
+    "build": "passed",
+    "demoVerify": "passed (before 4/12, after 12/12)",
+    "e2e": "12/12 passed against npx next start -p 3437; server stopped afterwards"
+  },
+  "hooks": "None fired: only docs and .kiro/evidence were edited, and no hook matcher covers them.",
+  "mcp": "No MCP server was used.",
+  "notDone": [
+    "Screenshot refresh",
+    "BLOG_DRAFT.md and SOCIAL_DRAFT.md updates",
+    "Video, blog, social post, Devpost submission (owner only)"
+  ],
+  "followUp": {
+    "context": "While PR #14 CI ran, PRs #12 and #13 merged and a hand commit (dd8a700) merged main into this branch, corrected the button label to 'Unearth project' and described the revival kit as merged. The agent fast-forwarded to it (no force-push).",
+    "agentEdits": "KIRO_WORKFLOW.md and WRITEUP.md: revival-kit spec, the Nov 11 review run and its evidence file, updated hook counts.",
+    "missedByAgent": "The first README and demo-script drafts said 'Resurrect'; the live button label is 'Unearth project'. Fixed in dd8a700 by hand."
+  }
+}
