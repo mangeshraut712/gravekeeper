@@ -125,30 +125,41 @@ export function isNonRegistrySpec(spec: string, ecosystem: Ecosystem): boolean {
   );
 }
 
+/** Floor of one comparator token, "" for a wildcard with no bound, null when unparseable. */
+function npmTokenFloor(token: string): string | null {
+  const bare = token.replace(/^(>=|~>|>|=|\^|~)/, "").replace(/^v/i, "");
+  const [core, ...rest] = bare.split(/(?=[-+])/);
+  const parts = core.split(".");
+  if (!parts.length || /^[x*]$/i.test(parts[0])) return "";
+  const firstWildcard = parts.findIndex((part) => /^[x*]$/i.test(part));
+  const floor =
+    firstWildcard === -1
+      ? core + rest.join("")
+      : parts
+          .slice(0, firstWildcard)
+          .concat(parts.slice(firstWildcard).map(() => "0"))
+          .join(".");
+  return parseVersion(floor) ? floor : null;
+}
+
+/** A comparator set is an intersection, so its floor is the strongest (highest) lower bound. */
 function npmAlternativeFloor(alternative: string): string | null {
   const hyphen = /^(\S+)\s+-\s+(\S+)$/.exec(alternative);
-  const candidates = hyphen
+  const tokens = hyphen
     ? [hyphen[1]]
     : alternative
         .replace(/(>=|<=|~>|>|<|=|\^|~)\s+/g, "$1")
         .split(/\s+/)
         .filter(Boolean);
-  const lower = candidates.find((token) => !token.startsWith("<"));
-  if (!lower) return null;
-  const bare = lower.replace(/^(>=|~>|>|=|\^|~)/, "").replace(/^v/i, "");
-  const [core, ...rest] = bare.split(/(?=[-+])/);
-  const parts = core.split(".");
-  if (!parts.length || /^[x*]$/i.test(parts[0])) return null;
-  const firstWildcard = parts.findIndex((part) => /^[x*]$/i.test(part));
-  const release =
-    firstWildcard === -1
-      ? core
-      : parts
-          .slice(0, firstWildcard)
-          .concat(parts.slice(firstWildcard).map(() => "0"))
-          .join(".");
-  const floor = firstWildcard === -1 ? release + rest.join("") : release;
-  return parseVersion(floor) ? floor : null;
+  let highest: string | null = null;
+  for (const token of tokens) {
+    if (token.startsWith("<")) continue;
+    const floor = npmTokenFloor(token);
+    if (floor === null) return null;
+    if (floor === "") continue;
+    if (highest === null || (compareVersions(floor, highest) ?? 0) > 0) highest = floor;
+  }
+  return highest;
 }
 
 function npmFloor(spec: string): string | null {

@@ -239,3 +239,35 @@ describe("comparator properties", () => {
     );
   });
 });
+
+describe("rangeFloor uses the strongest lower bound in a comparator set (PR #7 review)", () => {
+  it.each([
+    [">=1.0.0 >=2.0.0", "2.0.0"],
+    [">=2.0.0 >=1.0.0", "2.0.0"],
+    ["^1.2.0 >=1.5.0 <2", "1.5.0"],
+    [">=1.0.0 >=2.0.0 || >=1.5.0", "1.5.0"],
+    [">=3.0.0 >=4.0.0 || >=1.0.0 >=2.0.0", "2.0.0"],
+    ["* >=1.2.0", "1.2.0"],
+  ])("%s → %s", (spec, floor) => {
+    expect(rangeFloor(spec, "npm")).toBe(floor);
+  });
+
+  it("classifies '>=1.0.0 >=2.0.0' against latest 2.0.0 as current", () => {
+    expect(classify(rangeFloor(">=1.0.0 >=2.0.0", "npm"), "2.0.0", "ok")).toBe("current");
+  });
+
+  it("property: floor is the max lower bound within a set and the min across ||", () => {
+    const plain = fc.array(fc.nat({ max: 20 }), { minLength: 3, maxLength: 3 }).map((r) => r.join("."));
+    const set = fc.array(fc.tuple(fc.constantFrom(">=", "^", "~", ">", "="), plain), { minLength: 1, maxLength: 4 });
+    const max = (vs: string[]) => vs.reduce((a, b) => (cmp(a, b) >= 0 ? a : b));
+    const min = (vs: string[]) => vs.reduce((a, b) => (cmp(a, b) <= 0 ? a : b));
+    fc.assert(
+      fc.property(fc.array(set, { minLength: 1, maxLength: 3 }), (alternatives) => {
+        const spec = alternatives.map((s) => s.map(([op, v]) => `${op}${v}`).join(" ")).join(" || ");
+        const expected = min(alternatives.map((s) => max(s.map(([, v]) => v))));
+        expect(cmp(rangeFloor(spec, "npm")!, expected)).toBe(0);
+      }),
+      { numRuns: 300 },
+    );
+  });
+});
