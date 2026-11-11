@@ -214,3 +214,20 @@ Branch `feat/kiro-depth-20261111`, from `9165fa3`. Session `sess_a0090c9c-b917-4
 **Hand work:** none beyond the prompt.
 
 **Limits:** no screen-reader pass; contrast sampled in Chromium only and only three animation frames; no real upstream-failure scan; Kiro was not shown calling an MCP tool in a chat turn.
+
+## Nov 11, 2026 — Performance measurements, share previews and UI polish (Kiro agent session)
+
+Branch `perf/polish-and-share-20261111`, from `4184d6f`. The credit figure for this session is recorded by the runner, not here. No token count or WBM record is claimed. No Devpost submission, video, blog publish, or social post was made.
+
+**Kiro-generated (agent wrote and ran these):**
+- `scripts/lighthouse-run.mjs`: Lighthouse 12.8.2 via `npx -y lighthouse@12`, mobile and `--preset=desktop`, 3 warmed runs per page, median reported. Before and after numbers for `/`, `/restoration` and `/lantern-hill` are in `docs/PERFORMANCE.md`. Scores were already 98 to 100 and did not move beyond run spread. A first cold run of `/` mobile scored 69 (2,820 ms TBT) and did not repeat; it is recorded as an outlier.
+- Tried `experimental.inlineCss` for the render-blocking CSS finding. Mobile LCP got worse and gzipped HTML grew from 6.2 KB to 24.3 KB, so it was reverted and not committed.
+- `scripts/polish-check.mts` (+ `scripts/synthetic-lookup.mts`, synthetic `example/abandoned-widget` data): horizontal scroll, visible focus on every tab stop (including the results state), and layout shift after results, at 375x812 and 1440x900. Found two real issues and fixed them: the lookup status line and Cancel row shifted the page when results arrived (0.0554 to 0.0004 at 375 px), and the Lantern Hill preview iframes showed no focus indicator (new `PreviewFrame`, sandbox unchanged). Screenshots in `docs/screenshots/polish/`.
+- Share previews and metadata: `opengraph-image.tsx` / `twitter-image.tsx` (1200x630 PNG from the app's own palette and mark), `metadataBase`, canonical URLs, per-page descriptions for the two demo pages, `themeColor`, `robots.ts`, `sitemap.ts`. Checked with curl: both image routes return `200 image/png`, `file` reports 1200 x 630. Lighthouse `canonical` and `robots-txt` audits now apply and pass.
+- `node_modules` in this worktree was a symlink to another checkout, which Turbopack refused to resolve; it was replaced with a local `npm ci` (the symlink only, not its target).
+- Checks run: `npm test` (261 passed), `npm run lint`, `npx next typegen && npx tsc --noEmit`, `npm run build`, `npm run demo:verify` (4/12 before, 12/12 after), `npm run e2e` (all passed) and `npm run a11y` (Chromium, 0 counted violations, 4 intentional on the "before" fixture) against a production build on port 3418.
+- Hooks, observed: after each `src/` save the `keep-tasks-in-sync` agent-hook prompt arrived; no unchecked task in `tasks.md` was completed by these changes, so it was left unchanged. The `npm test` save-hook's output was not attached, so its result was not observed; `npm test` was run by hand.
+
+**Hand work:** none beyond the prompt.
+
+**Limits:** local lab numbers on one machine, simulated mobile throttling, Chromium only for the polish check; the Vercel deployment was not measured; social card rendering on actual networks was not checked; no screen-reader pass.

@@ -1,0 +1,57 @@
+{
+  "purpose": "Measured performance (Lighthouse before/after), social share previews and metadata, UI polish checks",
+  "recordedAt": "2026-11-11",
+  "branch": "perf/polish-and-share-20261111",
+  "baseCommit": "4184d6f",
+  "measurement": {
+    "tool": "lighthouse 12.8.2 via npx -y lighthouse@12",
+    "browser": "HeadlessChrome 158 (Playwright Chrome for Testing build)",
+    "modes": ["mobile (default simulated throttling)", "desktop (--preset=desktop)"],
+    "pages": ["/", "/restoration", "/lantern-hill"],
+    "runsPerPageAndMode": 3,
+    "reported": "median run; all runs listed in docs/PERFORMANCE.md",
+    "target": "local production build (next start), not the Vercel deployment",
+    "outlier": "first cold single run of / mobile: perf 69, TBT 2820 ms; not reproduced in later runs"
+  },
+  "triedAndReverted": [
+    {
+      "change": "experimental.inlineCss",
+      "reason": "mobile LCP medians 2.2-2.4 s vs 2.1-2.2 s; gzipped home HTML 24289 bytes vs 6184 bytes"
+    }
+  ],
+  "polishCheck": {
+    "script": "scripts/polish-check.mts",
+    "viewports": ["375x812", "1440x900"],
+    "syntheticData": "example/abandoned-widget (invented, signed with project receipt code)",
+    "layoutShiftAfterResults": { "before": { "375": 0.0554, "1440": 0.0049 }, "after": { "375": 0.0004, "1440": 0.0006 } },
+    "tabStopsWithoutVisibleFocus": { "before": 2, "after": 0, "unit": "per viewport" },
+    "horizontalScroll": { "before": false, "after": false }
+  },
+  "sharePreview": {
+    "routes": ["/opengraph-image", "/twitter-image"],
+    "curlResult": "200 image/png, PNG image data 1200 x 630",
+    "externalAssets": false
+  },
+  "checksRun": {
+    "npmTest": "261 passed (30 files)",
+    "lint": "pass",
+    "typegenAndTsc": "pass",
+    "build": "pass",
+    "demoVerify": "before 4/12, after 12/12",
+    "e2e": "all smoke checks passed (port 3418)",
+    "a11y": "chromium, 0 counted violations; 4 intentional on /fixtures/lantern-hill/before"
+  },
+  "hooksObserved": [
+    "keep-tasks-in-sync agent-hook prompt delivered after src/ saves; no tasks.md change needed"
+  ],
+  "notObserved": [
+    "run-tests-on-save command output",
+    "MCP tool calls",
+    "social network card rendering",
+    "screen-reader pass"
+  ],
+  "credits": "recorded by the runner",
+  "exactTokenCountsExposed": false,
+  "wbmUploadPerformed": false,
+  "transcriptIncluded": false
+}
