@@ -1,5 +1,6 @@
 import Link from "next/link";
 import LanternHillProof from "@/components/LanternHillProof";
+import { PreviewFrame } from "@/components/PreviewFrame";
 import type { buildLanternHillDemo } from "@/lib/restore/demo";
 
 export type LanternHillDemo = Awaited<ReturnType<typeof buildLanternHillDemo>>;
@@ -14,11 +15,11 @@ export function LanternHillView({ demo }: { demo: LanternHillDemo }) {
     <div className="mt-8 grid gap-6 lg:grid-cols-2">
       <section aria-labelledby="before-title">
         <h2 id="before-title" className="mb-3 font-serif text-2xl">Before: modem-era markup</h2>
-        <iframe title="Before: original 1999-style fixture" src="/fixtures/lantern-hill/before" sandbox="" className="h-[32rem] w-full rounded-lg border border-stone-600 bg-white" />
+        <PreviewFrame title="Before: original 1999-style fixture" src="/fixtures/lantern-hill/before" />
       </section>
       <section aria-labelledby="after-title">
         <h2 id="after-title" className="mb-3 font-serif text-2xl">After: generated HTML5</h2>
-        <iframe title="After: generated HTML5 restoration" src="/fixtures/lantern-hill/after" sandbox="" className="h-[32rem] w-full rounded-lg border border-stone-600 bg-white" />
+        <PreviewFrame title="After: generated HTML5 restoration" src="/fixtures/lantern-hill/after" />
       </section>
     </div>
     <section className="mt-10" aria-labelledby="changes-title">

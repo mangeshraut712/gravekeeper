@@ -141,28 +141,36 @@ export function SearchForm({
             required
             className="min-h-12 min-w-0 flex-1 rounded-md border border-stone-600 bg-[#10140e] px-4 font-mono text-sm text-stone-100 placeholder:text-stone-400 disabled:opacity-60"
           />
-          <button
-            type="submit"
-            disabled={loading}
-            className={`${primary} min-h-12 sm:px-6`}
-          >
-            {loading ? "Unearthing…" : "Unearth project"}
-            <span aria-hidden="true">↗</span>
-          </button>
-          {loading && (
-            <button type="button" onClick={cancel} className={button}>
-              Cancel
+          {/* Submit and Cancel share one row so Cancel never adds a row on narrow screens. */}
+          <div className="flex gap-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className={`${primary} min-h-12 flex-1 sm:flex-none sm:px-6`}
+            >
+              {loading ? "Unearthing…" : "Unearth project"}
+              <span aria-hidden="true">↗</span>
             </button>
-          )}
+            {loading && (
+              <button
+                type="button"
+                onClick={cancel}
+                className={`${button} min-h-12`}
+              >
+                Cancel
+              </button>
+            )}
+          </div>
         </div>
+        {/* Reserves two lines so status text appearing or clearing does not shift the page. */}
         <p
           id="lookup-error"
           role="status"
-          className="mt-3 text-sm text-amber-200"
+          className="mt-3 min-h-10 text-sm leading-5 text-amber-200 md:min-h-5"
         >
           {error ||
             (loading
-              ? "Checking the Internet Archive and public GitHub history. This may take up to 30 seconds."
+              ? "Checking the Internet Archive and GitHub. This can take up to 30 seconds."
               : "")}
         </p>
         <p
