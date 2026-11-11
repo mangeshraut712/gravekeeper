@@ -394,3 +394,18 @@ Branch `feat/a11y-and-demo-assets-20261111`, from main `f6b7b40`. Evidence: `.ki
 **Checks:** `npm test` 45 files, 685 passed; `npm run lint`; `npx next typegen && npx tsc --noEmit`; `npm run build`; `npm run demo:verify` (4/12 before, 12/12 after); `npm run e2e` against `npx next start -p 3467`, 17 checks passed; `npm run a11y` (Chromium) on the same build, 0 counted violations. Server stopped afterwards.
 
 **Limits:** no screen-reader pass. The new panels were scanned with synthetic data only; the live `--lookup` scan was not re-run and contrast was not re-sampled for them. Which copy status Firefox and WebKit showed was not recorded. The polish check and keyboard e2e step ran in Chromium only.
+
+## Nov 11, 2026 — Panel contrast sampling and storyboard stills (Kiro agent session)
+
+Branch `feat/contrast-and-storyboard-stills-20261111`, from main `0d944db` (PRs #7 and #9–#15 merged). Evidence: `.kiro/evidence/2026-11-11-contrast-storyboard-stills.json`. The credit figure for this session is recorded by the runner; the agent saw none, so none is claimed here. No hook instruction arrived in this session (only `scripts/` and `docs/` were edited), and no MCP server was used. No video was recorded or uploaded. No Devpost submission, blog publish, or social post was made.
+
+**Kiro-generated (agent wrote and ran these):**
+- `scripts/contrast-sample.mts --panels`: mocks `/api/resurrect` with the synthetic signed lookup, opens every disclosure, presses **Download revival kit** and **Copy issue body**, and samples only text inside the Epitaph, Dependency autopsy and Revival kit sections. These panels are opaque above the fog, so this mode keeps component backgrounds and includes button labels. `CONTRAST_LIST=1` prints every box. Result on a local production build (Chromium, 1440x900): lowest 6.74:1 in all three panels (30, 43 and 10 text boxes), 0 under 4.5:1. No failure was found, so no palette change or test was added. Recorded in `docs/A11Y_AUDIT.md`.
+- `scripts/capture-storyboard-stills.mts [--live]` and eight stills in `docs/screenshots/live/storyboard/`: the Epitaph table opened, the autopsy table at viewport size, the kit status after both buttons, and `/proof` Valid. Each beat has a synthetic still and a real `atom/atom` still, all from a local production build at 1440x900 with reduced motion. The `atom/atom` proof was downloaded in the session, loaded into `/proof` through the file input (Valid), and also passed `node scripts/verify-proof.ts`. Captions are in `docs/screenshots/live/README.md`, and `docs/submission/DEMO_STORYBOARD.md` now points at the stills.
+- `docs/JUDGES.md`: the opening now names main at `0d944db` and PRs #7 and #9–#15. It also adds the panel contrast numbers and the stills, and narrows the "not done" list.
+
+**Hand work:** none beyond the prompt.
+
+**Checks:** `npm test` 45 files, 685 passed; `npm run lint`; `npx next typegen && npx tsc --noEmit`; `npm run build`; `npm run demo:verify` (4/12 before, 12/12 after); `npm run e2e` against `npx next start -p 3471`, 17 passed, server stopped afterwards.
+
+**Limits:** no screen-reader pass. Panel contrast was sampled with synthetic data only, in Chromium only, over three frames, without hover or focus colours, and without non-text contrast for the chart bars or borders. The stills come from a local build, not production, and the live `atom/atom` data can change on a rerun. No Fork-on-GitHub or terminal still was captured.
