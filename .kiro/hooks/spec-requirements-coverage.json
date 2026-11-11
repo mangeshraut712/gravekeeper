@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "spec-requirements-coverage",
+      "description": "When the agent saves a spec's requirements.md, check that the sibling design.md and tasks.md still cover every requirement id.",
+      "trigger": "PostFileSave",
+      "matcher": "\\.kiro/specs/[^/]+/requirements\\.md$",
+      "action": {
+        "type": "agent",
+        "prompt": "A requirements.md under .kiro/specs was just saved. In the same spec folder, list every requirement id it defines (for example US-01 and each numbered acceptance criterion such as US-01 AC-4). Then check design.md and tasks.md: every user story must be referenced by at least one task's **Refs:** line, and every acceptance criterion must be addressed by design.md or a task. Report a short table of ids that are missing or only partly covered, with the file to change. Do not edit code. Only edit design.md or tasks.md if the user asked you to keep specs in sync; never delete requirements or tick tasks that the code does not complete."
+      },
+      "enabled": true
+    }
+  ]
+}

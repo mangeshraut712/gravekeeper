@@ -1,0 +1,17 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "pre-release-gate",
+      "description": "Before the agent runs a shell command, block `git push` and `gh pr create` unless npm test, npm run lint and npm run demo:verify pass. Other shell commands pass through.",
+      "trigger": "PreToolUse",
+      "matcher": "shell",
+      "action": {
+        "type": "command",
+        "command": "node scripts/pre-release-gate.mjs"
+      },
+      "timeout": 600,
+      "enabled": true
+    }
+  ]
+}
