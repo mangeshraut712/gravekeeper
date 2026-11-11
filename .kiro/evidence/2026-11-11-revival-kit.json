@@ -1,0 +1,64 @@
+{
+  "kind": "kiro-session-metadata",
+  "note": "Metadata only. No transcript, prompts, tokens, environment values or secrets are recorded. The credit figure is recorded by the runner; the agent saw none, so none is claimed.",
+  "session": {
+    "id": "sess_5e434b4f-4aaf-4888-a574-82fb093c9f42",
+    "date": "2026-11-11",
+    "branch": "feat/revival-kit-export-20261111",
+    "base": "70d5a7d (PR #11 tip, includes merged PR #7)",
+    "worktree": "~/kiroween/wt-q4-kit"
+  },
+  "spec": {
+    "path": ".kiro/specs/revival-kit/",
+    "files": ["requirements.md", "design.md", "tasks.md"],
+    "committedBeforeCode": "f52061d"
+  },
+  "tasksCompleted": [
+    "1 Escaping",
+    "2 Issue body and REVIVAL.md",
+    "3 prepareRevivalKit",
+    "4 RevivalKitPanel",
+    "5 e2e smoke",
+    "6 Real example and docs"
+  ],
+  "bugFoundByTests": "encodeURIComponent does not encode parentheses, so a snapshot URL containing ')' could end the Markdown link; replaced with an explicit %28/%29/%20 map",
+  "newDependencies": "none",
+  "checks": {
+    "npmTest": { "files": 40, "tests": 606, "result": "all passed" },
+    "lint": "passed (npm run lint)",
+    "typecheck": "passed (npx next typegen, then npx tsc --noEmit)",
+    "build": "passed (npm run build)",
+    "demoVerify": "passed (after 12/12, before 4/12)",
+    "e2e": "14/14 passed (npm run e2e, BASE_URL http://localhost:3400, npx next start -p 3400, stopped afterwards)"
+  },
+  "realLookup": {
+    "server": "local production build, npx next start -p 3400, GITHUB_TOKEN and FORK_API_SECRET unset",
+    "input": "https://github.com/facebookarchive/flux",
+    "driver": "Playwright Chromium clicking Verify proof, Download proof, Download revival kit, Copy issue body",
+    "recordedAt": "2026-11-11T12:22:39.827Z",
+    "http": 200,
+    "seconds": 9.0,
+    "receiptKinds": ["wayback", "wayback-cdx", "github-meta", "github-commits", "github-manifest", "registry", "spec"],
+    "browserVerify": "Proof internally consistent",
+    "offlineVerifier": "Internally consistent: 7 receipts and their evidence verified; exit 0",
+    "proofSha256": "c853324fe253ce46d5c8d4ec1fe55e25acf45a0a8e67da1d3b51f6f5a6d7f033",
+    "proofShaNamedInKit": true,
+    "copiedIssueBodyIsSubstringOfKit": true,
+    "planSteps": 12,
+    "doc": "docs/REVIVAL_KIT.md (REVIVAL.md reproduced verbatim)"
+  },
+  "hooks": {
+    "observed": true,
+    "detail": [
+      "spec-requirements-coverage agent hook fired after .kiro/specs/revival-kit/requirements.md was saved; coverage re-checked after design.md and tasks.md were written, no gaps.",
+      "keep-tasks-md-in-sync agent hook fired on src/ saves; .kiro/specs/resurrect/tasks.md had no item completed by this work and was left unchanged.",
+      "Output of the npm test and receipts-property-tests command hooks was not observed by the agent, so their execution is not claimed.",
+      "Files written through shell commands do not trigger save hooks."
+    ]
+  },
+  "mcp": "No MCP server was used in this session.",
+  "notDone": [
+    "axe scan, contrast sampling and screen-reader pass for the Revival kit panel",
+    "browser test of the clipboard-failure message"
+  ]
+}
