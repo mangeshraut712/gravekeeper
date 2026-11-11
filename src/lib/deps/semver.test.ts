@@ -152,6 +152,12 @@ describe("rangeFloor (pypi)", () => {
     expect(classify(rangeFloor(">=1.0,>=4.0", "pypi"), "4.0.0", "ok")).toBe("current");
   });
 
+  it("treats ==1.* as a prefix, not an exact pin, so ==1.*,>=1.5 has floor 1.5", () => {
+    expect(rangeFloor("==1.*,>=1.5", "pypi")).toBe("1.5");
+    expect(rangeFloor("==1.*,==1.5", "pypi")).toBe("1.5");
+    expect(classify(rangeFloor("==1.*,>=1.5", "pypi"), "1.5.0", "ok")).toBe("current");
+  });
+
   it("property: >=N,!=N.* floors to N+1 and classifies as current against that latest", () => {
     fc.assert(
       fc.property(fc.integer({ min: 0, max: 40 }), (major) => {

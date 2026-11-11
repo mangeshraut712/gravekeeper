@@ -165,6 +165,16 @@ describe("repeated PyPI requirements", () => {
     const data = ok(parsePyprojectToml(text));
     expect(data.packages).toEqual([{ name: "django", spec: ">=1.0,>=4.0", group: "project" }]);
   });
+
+  it("keeps a valid spec when merging would exceed the evidence length limit", () => {
+    const lines = Array.from({ length: 40 }, (_, i) => `demo>=1.0.${i}`);
+    const data = ok(parseRequirementsTxt(lines.join("\n")));
+    expect(data.packages).toHaveLength(1);
+    expect(data.packages[0]?.name).toBe("demo");
+    expect(data.packages[0]?.spec.length ?? 0).toBeLessThanOrEqual(256);
+    expect(data.packages[0]?.spec.startsWith(">=1.0.0")).toBe(true);
+    expect(data.skippedLines).toBeGreaterThan(0);
+  });
 });
 
 describe("parsePyprojectToml", () => {

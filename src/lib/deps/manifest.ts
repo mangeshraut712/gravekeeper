@@ -97,13 +97,23 @@ export function mergePypiSpecs(current: string, incoming: string): string {
   return a === b ? a : `${a},${b}`;
 }
 
-function addOrMergePypi(all: DeclaredDependency[], requirement: { name: string; spec: string }, group: DeclaredDependency["group"]): void {
+function addOrMergePypi(
+  all: DeclaredDependency[],
+  requirement: { name: string; spec: string },
+  group: DeclaredDependency["group"],
+  skipped: { n: number },
+): void {
   const index = all.findIndex((pkg) => pkg.name === requirement.name);
   if (index === -1) {
     all.push({ ...requirement, group });
     return;
   }
-  all[index] = { ...all[index], spec: mergePypiSpecs(all[index].spec, requirement.spec) };
+  const merged = mergePypiSpecs(all[index].spec, requirement.spec);
+  if (!withinLimits(requirement.name, merged)) {
+    skipped.n += 1;
+    return;
+  }
+  all[index] = { ...all[index], spec: merged };
 }
 
 /** Parse one PEP 508 requirement. Returns null for direct references and anything unparseable. */
@@ -120,18 +130,18 @@ export function parseRequirement(line: string): { name: string; spec: string } |
 export function parseRequirementsTxt(text: string): Result<ParsedManifest> {
   const logical = text.replace(/^\uFEFF/, "").replace(/\\\r?\n/g, " ").split(/\r?\n/);
   const all: DeclaredDependency[] = [];
-  let skipped = 0;
+  const skipped = { n: 0 };
   for (const raw of logical) {
     const line = raw.replace(/(^|\s)#.*$/, "").trim();
     if (!line) continue;
     const requirement = line.startsWith("-") ? null : parseRequirement(line);
     if (!requirement || !withinLimits(requirement.name, requirement.spec)) {
-      skipped++;
+      skipped.n++;
       continue;
     }
-    addOrMergePypi(all, requirement, "requirements");
+    addOrMergePypi(all, requirement, "requirements", skipped);
   }
-  return { ok: true, data: finish("pypi", all, skipped) };
+  return { ok: true, data: finish("pypi", all, skipped.n) };
 }
 
 // ---------------------------------------------------------------------------
@@ -179,16 +189,16 @@ export function parsePyprojectToml(text: string): Result<ParsedManifest> {
   const entries = readStringArray(table, key.index + key[0].length - 1);
   if (!entries) return parseError("pyproject.toml [project].dependencies is not a string array.");
   const all: DeclaredDependency[] = [];
-  let skipped = 0;
+  const skipped = { n: 0 };
   for (const entry of entries) {
     const requirement = parseRequirement(entry);
     if (!requirement || !withinLimits(requirement.name, requirement.spec)) {
-      skipped++;
+      skipped.n++;
       continue;
     }
-    addOrMergePypi(all, requirement, "project");
+    addOrMergePypi(all, requirement, "project", skipped);
   }
-  return { ok: true, data: finish("pypi", all, skipped) };
+  return { ok: true, data: finish("pypi", all, skipped.n) };
 }
 
 export function parseManifest(path: ManifestPath, text: string): Result<ParsedManifest> {

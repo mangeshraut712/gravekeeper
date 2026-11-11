@@ -215,9 +215,11 @@ function pypiFloor(spec: string): string | null {
     const text = clause.trim();
     const lower = /^(===|==|~=|>=|>)\s*(\S+)$/.exec(text);
     if (lower) {
-      const floor = lower[2].replace(/\.\*$/, "");
+      const rawVersion = lower[2];
+      const floor = rawVersion.replace(/\.\*$/, "");
       if (!parseVersion(floor)) continue;
-      if (lower[1] === "==" || lower[1] === "===") exactPins.push(floor);
+      const wildcardEquality = (lower[1] === "==" || lower[1] === "===") && /\.\*$/.test(rawVersion);
+      if ((lower[1] === "==" || lower[1] === "===") && !wildcardEquality) exactPins.push(floor);
       if (highest === null || (compareVersions(floor, highest) ?? 0) > 0) highest = floor;
       continue;
     }
