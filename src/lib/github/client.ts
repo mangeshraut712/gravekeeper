@@ -406,15 +406,16 @@ export async function fetchRootManifest(
   branch: string,
   signal?: AbortSignal,
 ): Promise<Result<RootManifest>> {
+  // One deadline for every probe so a missing manifest costs at most TIMEOUT_MS in total.
+  const deadline = AbortSignal.timeout(TIMEOUT_MS);
+  const probeSignal = signal ? AbortSignal.any([signal, deadline]) : deadline;
   for (const path of MANIFEST_PATHS) {
     const url = `${contentsUrl(owner, repo)}/${path}?ref=${encodeURIComponent(branch)}`;
     let response: Response;
     try {
       response = await fetch(url, {
         headers: { ...baseHeaders(), Accept: "application/vnd.github.raw+json" },
-        signal: signal
-          ? AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT_MS)])
-          : AbortSignal.timeout(TIMEOUT_MS),
+        signal: probeSignal,
       });
     } catch (err) {
       return fetchError(err) as Result<RootManifest>;

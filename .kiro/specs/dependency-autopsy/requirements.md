@@ -40,7 +40,7 @@ Terms:
 ### DA-03 — Look up the latest version
 
 1. **[Event-driven]** WHEN dependencies are parsed, THEN the system SHALL request the latest version of each package from `https://registry.npmjs.org/<name>/latest` (npm) or `https://pypi.org/pypi/<name>/json` (PyPI).
-2. **[Ubiquitous]** Registry requests SHALL run with at most 4 in flight, a 10-second per-request timeout, a 12-second batch deadline, and the request's cancel signal.
+2. **[Ubiquitous]** Registry requests SHALL run with at most 4 in flight, a 10-second per-request timeout, an 8-second batch deadline, and the request's cancel signal. The manifest probe (up to three requests) SHALL share one 10-second deadline, so a lookup stays within the route's 30-second limit.
 3. **[Unwanted]** IF a package name fails the ecosystem's name rules, or its spec is a git, URL, file, link, workspace or alias spec, THEN the system SHALL NOT request it and SHALL mark it `skipped`.
 4. **[Unwanted]** IF the registry returns 404, THEN the package SHALL be marked `not-found`.
 5. **[Unwanted]** IF a registry request times out, is canceled by the batch deadline, returns another non-2xx status, or returns an unreadable body, THEN the package SHALL be marked `error` and the autopsy SHALL be labelled partial.

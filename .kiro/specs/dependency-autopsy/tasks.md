@@ -46,8 +46,8 @@ Complete in order. Each task lists the requirements it covers (see `requirements
 ## Phase 3 — Integration
 
 ### Task 7 — Route (`src/app/api/resurrect/route.ts`)
-- [ ] Fetch the manifest in parallel with commits; record `github-manifest`; run registry lookups; record `registry`; build the autopsy; pass it to the spec generator; return `autopsy`.
-- [ ] Route tests: npm manifest, requirements manifest, no manifest, registry down (partial), cancellation during registry lookup.
+- [x] Fetch the manifest in parallel with commits; record `github-manifest`; run registry lookups; record `registry`; build the autopsy; pass it to the spec generator; return `autopsy`.
+- [x] Route tests: npm manifest, requirements manifest, no manifest, registry down (partial), cancellation during registry lookup.
 - **Refs:** DA-01, DA-03, DA-05
 
 ### Task 8 — Verification (`src/client/proof.ts`)

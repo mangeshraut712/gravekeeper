@@ -9,7 +9,8 @@ import { REGISTRY_BASE } from "./autopsy";
 import { isNonRegistrySpec } from "./semver";
 
 export const REQUEST_TIMEOUT_MS = 10_000;
-export const BATCH_TIMEOUT_MS = 12_000;
+/** Keeps the whole lookup under the route maxDuration (30 s): 10 s archive/meta + 10 s manifest + 8 s registry. */
+export const BATCH_TIMEOUT_MS = 8_000;
 export const CONCURRENCY = 4;
 
 const NPM_NAME = /^(?:@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/i;

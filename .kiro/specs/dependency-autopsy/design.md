@@ -9,7 +9,7 @@ POST /api/resurrect (GitHub URL)
   ├─ Promise.all: fetchWaybackSnapshot, fetchRepoMeta           (unchanged)
   └─ if meta ok, Promise.all:
        ├─ fetchCommits                                            (unchanged)
-       └─ fetchRootManifest(owner, repo, defaultBranch, signal)   lib/github/client.ts
+       └─ fetchRootManifest(owner, repo, defaultBranch, signal)   lib/github/client.ts (one 10 s deadline for all probes)
             → parseManifest(path, text)                           lib/deps/manifest.ts
   ├─ record "github-commits"
   ├─ record "github-manifest"   evidence: ManifestEvidence | { code }
@@ -107,7 +107,7 @@ Returns `{ epoch, release: number[], pre: (number|string)[] | null }` or `null`.
 
 ## Registry client
 
-`lookupLatestVersions(ecosystem, packages, signal)` keeps the manifest order. It creates a batch signal `AbortSignal.any([signal, AbortSignal.timeout(12_000)])` and a 4-worker pool; each request adds `AbortSignal.timeout(10_000)`. Outcomes:
+`lookupLatestVersions(ecosystem, packages, signal)` keeps the manifest order. It creates a batch signal `AbortSignal.any([signal, AbortSignal.timeout(8_000)])` and a 4-worker pool; each request adds `AbortSignal.timeout(10_000)`. Outcomes:
 
 | Condition | outcome |
 |---|---|
