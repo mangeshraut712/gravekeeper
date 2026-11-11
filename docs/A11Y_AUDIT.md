@@ -16,6 +16,40 @@ BASE_URL=http://localhost:3100 node scripts/contrast-sample.mts --lookup        
 
 Rule tags scanned: `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`. Preview iframes are excluded from the parent-page scan (sandboxed frames block the scanner) and their documents are scanned directly.
 
+## Results panels and /proof verdicts (2026-11-11, branch `feat/a11y-and-demo-assets-20261111`)
+
+The earlier multi-browser scans below did not include the Epitaph, Dependency autopsy and Revival kit panels, or a `/proof` page showing a verdict. `npm run a11y` now scans them on every run, with no network:
+
+- **Synthetic results state.** `/api/resurrect` is mocked with the signed synthetic response from `scripts/synthetic-lookup.mts` (`example/abandoned-widget`, invented data, 7 receipts: `wayback`, `wayback-cdx`, `github-meta`, `github-commits`, `github-manifest`, `registry`, `spec`). It is not a live lookup. The script waits until the Epitaph, autopsy, kit and proof headings and the autopsy table are present, then scans once with disclosures collapsed. It then opens every `<details>` (Epitaph table, plan sections, receipts), presses **Verify proof** and waits for "internally consistent", presses **Download revival kit** and waits for the `REVIVAL.md` download and its status text, presses **Copy issue body** and waits for a copy status, and scans again. Clipboard access differs by engine, so either "Issue body copied." or the "Could not copy…" message is accepted; the script does not record which one appeared in Firefox and WebKit.
+- **`/proof` verdicts.** The synthetic lookup's `gravekeeper-proof-v1` text is pasted and verified ("Valid…" must appear), then the same file with one receipt URL changed ("Invalid…" must appear). Each verdict is scanned.
+- `scripts/synthetic-lookup.test.ts` (Vitest) checks that the synthetic response verifies with `verifyProof`, has a complete timeline and autopsy, and is refused once the displayed autopsy is edited. Without that, the kit could silently show its "refused" state and the scan would cover less than it says.
+
+One run against a local production build (`npm run build`, `npx next start -p 3466`) with Playwright 1.65.0:
+
+| Page / state | Chromium 158.0.8127.18 | Firefox 159.0 | WebKit 27.2 |
+|---|---|---|---|
+| `/` synthetic lookup, collapsed (29 rules passed; color-contrast needs review, 14 nodes in Chromium) | 0 | 0 | 0 |
+| `/` synthetic lookup, all disclosures open, proof verified, kit downloaded, copy status shown (29 passed; color-contrast needs review, 22 nodes in Chromium) | 0 | 0 | 0 |
+| `/proof` valid synthetic proof (23 passed) | 0 | 0 | 0 |
+| `/proof` tampered proof, invalid (23 passed) | 0 | 0 | 0 |
+| All earlier pages and mocked states, re-run in the same pass (not the live `atom/atom` lookup) | 0 | 0 | 0 |
+| `/fixtures/lantern-hill/before` (intentional, not counted) | 4 | 4 | 4 |
+
+Counted violations: 0 in each browser. Intentional findings: 4 per browser (`blink`, `html-has-lang`, `label`, `marquee`), unchanged. The "needs manual review" node counts are from the Chromium output; Firefox and WebKit printed one review item for the same states.
+
+Checks beyond axe in the same session (Chromium only):
+
+- `scripts/polish-check.mts` with the extended synthetic response: at 375x812 and 1440x900, the results page had 24 tab stops and none without a visible focus indicator, no horizontal scroll, and layout shift after results of 0.0004 / 0.0006.
+- A new `npm run e2e` step, "keyboard only: Epitaph table, autopsy region and revival kit work in reading order with visible focus". From the results heading it presses Tab 22 times and checks that the sections are reached in reading order (resource card, Epitaph, autopsy, plan, proof, kit) and that every stop in the three new panels shows an outline or box-shadow. It then opens the Epitaph table with Enter, focuses the autopsy table region (named by its caption), downloads `REVIVAL.md` with Enter (which must contain "## Dependency autopsy"), and copies the issue body with Space. Both kit messages must stay in their own status regions. It passed.
+- Target size (WCAG 2.2 2.5.8, by review, not scanned): from a one-off Playwright probe, the new panels' targets measured 996x32 (Epitaph summary), 1030x274 (autopsy region), 159x44 and 138x44 (kit buttons). The receipt summaries are 20 px tall but sit 24 px apart (`py-3`), so they meet the spacing exception.
+
+No counted violation was found, so no component was changed. Limits for this pass:
+
+- No screen-reader pass (VoiceOver, NVDA or other) was done. The status regions are checked for existence and text, not for how a screen reader announces them.
+- The panels were scanned with synthetic data only. The live `atom/atom` lookup (`--lookup`) was not re-run in this pass, and contrast was not re-sampled for the new panels; their color-contrast nodes are axe "needs review" items, not measured passes.
+- Autopsy notes for partial, truncated and no-manifest states, and the Epitaph loading, empty, unavailable and truncated states, are covered by static-markup tests, not by a browser scan.
+- axe covers part of WCAG 2.1 A/AA. This is not a conformance claim.
+
 ## Results by browser
 
 One run of `npm run a11y -- --browsers=chromium,firefox,webkit --lookup` against the local production build, including the live `atom/atom` lookup in each browser. Every page and state below produced identical counts in all three engines.

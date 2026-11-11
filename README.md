@@ -85,7 +85,7 @@ More checks: `npm run lint`, `npx next typegen && npx tsc --noEmit`, `npm run bu
 
 ## Screenshots
 
-Captured at 1440x900 from a local production build (`npm run build`, `next start`) with Playwright's Chromium by `scripts/capture-screenshots.mts`. Regenerate with `BASE_URL=http://localhost:3000 node scripts/capture-screenshots.mts`. These predate the Epitaph and autopsy panels; 375 px and 1440 px polish shots are in [docs/screenshots/polish](docs/screenshots/polish).
+Captured at 1440x900 from a local production build (`npm run build`, `next start`) with Playwright's Chromium by `scripts/capture-screenshots.mts`. Regenerate with `BASE_URL=http://localhost:3000 node scripts/capture-screenshots.mts`. These predate the Epitaph and autopsy panels, except the production captures noted below; 375 px and 1440 px polish shots are in [docs/screenshots/polish](docs/screenshots/polish).
 
 ![Home page with the search form](docs/screenshots/home.png)
 
@@ -102,6 +102,10 @@ Results view. **This is not a live lookup.** `/api/resurrect` was mocked in the 
 ![Live lookup of atom/atom](docs/screenshots/home-lookup-live.png)
 
 Results view from a **live lookup** of `https://github.com/atom/atom` (not mocked), captured on 2026-11-11 from a local production build with `node scripts/capture-screenshots.mts --live`. The archive snapshot, repository metadata and commits come from the real Internet Archive and GitHub APIs at that moment, so a rerun will differ. The mocked screenshot above is kept and stays labeled as mocked.
+
+![Production lookup of atom/atom: tombstone card and Epitaph panel](docs/screenshots/live/home-lookup-atom-epitaph.png)
+
+**Live production**, https://gravekeeper-drab.vercel.app, 2026-11-11 about 13:17 UTC, lookup of `atom/atom` (not mocked). The Wayback availability API returned no snapshot ("None found"), while the Epitaph panel, from the CDX capture index, shows born Jun 22, 2014, last seen Oct 2026 and 136 captured months. More production captures, including the revival kit panel and a full-page shot with the Dependency autopsy, are in [docs/screenshots/live](docs/screenshots/live).
 
 ![Licensed restoration case](docs/screenshots/restoration.png)
 

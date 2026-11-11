@@ -69,7 +69,7 @@ Provider-reported credit figures are recorded for several sessions (two read-onl
 
 - The revival plan is built from public metadata and the declared versions in one root manifest. It is not a lockfile, transitive-dependency or vulnerability audit.
 - Receipts prove internal consistency, not authorship or that GitHub, the Internet Archive or a registry said what they say.
-- Accessibility: axe scans found no violations on the product pages scanned in Chromium, Firefox and WebKit (identical counts; the intentionally broken "before" fixture is excluded from the count). Those scans predate the Epitaph and autopsy panels, which have static-markup tests but no recorded axe scan. Color contrast over the fog is "needs review" in axe and was re-measured per text box in Chromium (lowest 7.13:1 in the sampled frames, with caveats in the audit); no screen reader pass was done. See [docs/A11Y_AUDIT.md](../A11Y_AUDIT.md).
+- Accessibility: axe scans found no violations on the product pages scanned in Chromium, Firefox and WebKit (identical counts; the intentionally broken "before" fixture is excluded from the count). A later pass on 2026-11-11 added the Epitaph, Dependency autopsy and Revival kit panels and `/proof` verdicts, using a synthetic signed lookup (not live data): 0 counted violations in all three engines. Color contrast over the fog is "needs review" in axe and was re-measured per text box in Chromium (lowest 7.13:1 in the sampled frames, with caveats in the audit); no screen reader pass was done. See [docs/A11Y_AUDIT.md](../A11Y_AUDIT.md).
 
 ## Addendum: proof checker, restoration properties, performance (Nov 11)
 
