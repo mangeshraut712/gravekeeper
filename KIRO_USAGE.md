@@ -214,3 +214,18 @@ Branch `feat/kiro-depth-20261111`, from `9165fa3`. Session `sess_a0090c9c-b917-4
 **Hand work:** none beyond the prompt.
 
 **Limits:** no screen-reader pass; contrast sampled in Chromium only and only three animation frames; no real upstream-failure scan; Kiro was not shown calling an MCP tool in a chat turn.
+
+## Nov 11, 2026 — Proof workbench, restoration properties, fog margin, Lighthouse (Kiro agent session)
+
+Branch `feat/proof-restoration-20261111`, from `4184d6f`. This run's metadata exposed no credit figure or token count, so none is claimed. No hook or MCP execution was observed or is claimed. No Devpost submission, video, blog publish, or social post was made.
+
+**Kiro-generated (agent wrote and ran these):**
+- `/proof` workbench: `.kiro/specs/proof-workbench/` (EARS requirements, design, tasks), `src/app/proof/analyze.ts` (wraps the unmodified `src/client/proof.ts` and `verifyReceiptExport`), `src/components/ProofWorkbench.tsx`, `SiteFooter` linked from `layout.tsx`. 18 analyzer tests with real signed fixtures, and component tests. `scripts/proof-smoke.mts` drives a real Chromium: downloads the Lantern Hill receipt file, loads it on `/proof` through the file input (valid), tampers it (invalid), bad JSON (error, no verdict), paste, a synthetic drop event, Tab order, and confirms no POST requests. 9/9 passed. A real mouse drag from the OS was not exercised.
+- Restoration property tests (fast-check): never throws and returns a string; UTF-16 length and code-unit multiset preserved; concatenation distributes (swapped) on a plain alphabet; identity on single graphemes; segment count never increases (also run 30,000 times on an adversarial combining/ZWJ/regional-indicator alphabet, one-off, not committed). `compareVersions` invariants. The existing warning about non-involution on leading combining marks is unchanged.
+- Fog: alphas reduced; a unit test recomputes worst-case contrast from the CSS; `scripts/fog-sweep.mts` sweeps 144 phase pairs per viewport. Finding: with the old CSS the sweep peaked at `#292a23` (5.60:1), not the `#55514c` recorded earlier, so the old CSS did not fail in this measurement and the source of `#55514c` is unexplained. Details in `docs/A11Y_AUDIT.md`.
+- Lighthouse 13.6.0 (pinned) via `npm run lighthouse`: all 100s after one fix. The first run caught CLS 0.113 on `/lantern-hill` caused by the new footer; fixed with a taller Suspense fallback. Lab numbers on localhost only. See `docs/LIGHTHOUSE.md`.
+
+**Hand work:** none beyond the prompt.
+
+**Limits:** no screen-reader pass; no OS-level drag test; Chromium only for the new checks; the deployed site was not measured.
+
