@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { Receipt, ResurrectResponse } from "@/types";
-import { ReceiptChainViewer } from "./ReceiptChainViewer";
+import { ProofStatus, ReceiptChainViewer } from "./ReceiptChainViewer";
 
 const receipts: Receipt[] = [
   {
@@ -65,5 +65,36 @@ describe("ReceiptChainViewer", () => {
     expect(html).toContain("Download proof");
     expect(html).toContain('<span aria-hidden="true">↓</span>');
     expect(html).toMatch(/<p role="status"[^>]*><\/p>/);
+  });
+});
+
+describe("ProofStatus", () => {
+  const msg = "Download could not start. Please try again.";
+
+  it.each(["idle", "running", "valid", "invalid"] as const)(
+    "shows a download error in its own status region when verification is %s",
+    (verification) => {
+      const out = renderToStaticMarkup(
+        <ProofStatus verification={verification} downloadError={msg} />,
+      );
+      expect(out.match(/role="status"/g)).toHaveLength(2);
+      expect(out).toMatch(new RegExp(`<p role="status"[^>]*>${msg}</p>`));
+    },
+  );
+
+  it("keeps the verification result alongside a download error", () => {
+    const out = renderToStaticMarkup(
+      <ProofStatus verification="valid" downloadError={msg} />,
+    );
+    expect(out).toContain("Proof internally consistent");
+    expect(out).toContain(msg);
+  });
+
+  it("renders an empty download region when there is no error", () => {
+    const out = renderToStaticMarkup(
+      <ProofStatus verification="valid" downloadError="" />,
+    );
+    expect(out).not.toContain("Download could not start");
+    expect(out).toMatch(/<p role="status"[^>]*><\/p>$/);
   });
 });

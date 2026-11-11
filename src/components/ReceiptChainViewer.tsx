@@ -5,16 +5,44 @@ import type { ResurrectResponse } from "@/types";
 import { exportProof, verifyProof } from "@/client/proof";
 import { button } from "./styles";
 
+type Verification = "idle" | "running" | "valid" | "invalid";
+
+/** Two polite live regions: verification result and download failure, so one never hides the other. */
+export function ProofStatus({
+  verification,
+  downloadError,
+}: {
+  verification: Verification;
+  downloadError: string;
+}) {
+  return (
+    <>
+      <p
+        role="status"
+        className={`mb-3 text-sm ${verification === "valid" ? "text-lime-200" : "text-amber-200"}`}
+      >
+        {verification === "valid"
+          ? "Proof internally consistent: signatures, links, and included data match."
+          : verification === "invalid"
+            ? "Verification failed or this browser does not support Ed25519. Try the offline verifier."
+            : ""}
+      </p>
+      <p role="status" className="mb-3 text-sm text-amber-200">
+        {downloadError}
+      </p>
+    </>
+  );
+}
+
 export function ReceiptChainViewer({ result, url }: { result: ResurrectResponse; url: string }) {
-  const [verification, setVerification] = useState<
-    "idle" | "running" | "valid" | "invalid"
-  >("idle");
+  const [verification, setVerification] = useState<Verification>("idle");
   const [downloadError, setDownloadError] = useState("");
   async function verify() {
     setVerification("running");
     setVerification((await verifyProof(result, url)) ? "valid" : "invalid");
   }
   function download() {
+    setDownloadError("");
     try {
       const href = URL.createObjectURL(
         new Blob([exportProof(result, url)], { type: "application/json" }),
@@ -58,16 +86,7 @@ export function ReceiptChainViewer({ result, url }: { result: ResurrectResponse;
           Download proof <span aria-hidden="true">↓</span>
         </button>
       </div>
-      <p
-        role="status"
-        className={`mb-3 text-sm ${verification === "valid" ? "text-lime-200" : "text-amber-200"}`}
-      >
-        {verification === "valid"
-          ? "Proof internally consistent: signatures, links, and included data match."
-          : verification === "invalid"
-            ? "Verification failed or this browser does not support Ed25519. Try the offline verifier."
-            : downloadError}
-      </p>
+      <ProofStatus verification={verification} downloadError={downloadError} />
       <div className="divide-y divide-stone-700/60">
         {result.receipts.map((receipt) => (
           <details key={receipt.seq} className="py-3">
