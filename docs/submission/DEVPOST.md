@@ -12,7 +12,7 @@ Nothing here has been submitted. Mangesh must review, fill the blanks, and submi
 
 ## What it does
 
-Gravekeeper is a digital-archaeology workbench for public websites and abandoned GitHub repositories. Enter a public URL and it looks for an Internet Archive snapshot and, for GitHub repository URLs, fetches repository metadata and recent commits. It builds a revival checklist from that metadata and records each lookup as an Ed25519-signed, SHA-256 hash-chained receipt. The receipt chain can be downloaded and checked offline with `node scripts/verify-proof.ts`.
+Gravekeeper is a digital-archaeology workbench for public websites and abandoned GitHub repositories. Enter a public URL and it looks for an Internet Archive snapshot. For GitHub repository URLs it also fetches repository metadata and recent commits, and runs a dependency autopsy: it reads the root `package.json`, `requirements.txt` or `pyproject.toml`, asks npm or PyPI for each package's latest version, and labels each declaration current, minor behind, major behind, unknown or not found. The revival plan then names concrete upgrades, such as "Upgrade react ^17.0.1 → 19.x (major behind)". Each lookup, including the manifest and registry results, is recorded as an Ed25519-signed, SHA-256 hash-chained receipt. The receipt chain can be downloaded and checked offline with `node scripts/verify-proof.ts`, which also rejects an edited autopsy. Details and a real run are in [docs/DEPENDENCY_AUTOPSY.md](../DEPENDENCY_AUTOPSY.md).
 
 It also includes two bundled demonstrations:
 
@@ -21,7 +21,7 @@ It also includes two bundled demonstrations:
 
 Limits, stated plainly:
 
-- The revival plan is metadata-based. It is not a code audit, dependency audit, or automated repair of live repositories.
+- The revival plan uses repository metadata and the declared versions in one root manifest (40 packages at most). It is not a lockfile, transitive-dependency or vulnerability audit, and it does not repair live repositories.
 - Receipts show internal consistency only. They do not prove authorship or that GitHub or the Internet Archive returned the content. Each lookup uses a fresh ephemeral key; removing a valid suffix is not detectable.
 - The Internet Archive may have no snapshot for a URL; the app then returns a partial result.
 - The restoration is one curated function and one curated fixture, not a general rewriting service.
