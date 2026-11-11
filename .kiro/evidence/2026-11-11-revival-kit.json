@@ -89,5 +89,23 @@
   "notDone": [
     "axe scan, contrast sampling and screen-reader pass for the Revival kit panel",
     "browser test of the clipboard-failure message"
-  ]
+  ],
+  "reviewFollowUp": {
+    "pr": 12,
+    "finding": "Codex P2: Safari loses user gesture across awaits before clipboard.writeText",
+    "verifiedWith": "failing unit tests in src/client/kit.test.ts",
+    "fix": "copyIssueBody starts clipboard.write synchronously with a promise-backed ClipboardItem resolved only after verifyProof; writeText fallback",
+    "safariTested": false,
+    "checksAfter": {
+      "npmTest": {
+        "files": 42,
+        "tests": 620
+      },
+      "lint": "passed",
+      "typecheck": "passed",
+      "build": "passed",
+      "demoVerify": "passed",
+      "e2e": "14/14 passed"
+    }
+  }
 }

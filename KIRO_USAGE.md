@@ -310,3 +310,5 @@ Branch `feat/revival-kit-export-20261111`, from `70d5a7d` (PR #11 tip, which inc
 **Hand work:** none beyond the prompt.
 
 **Limits:** no axe scan, contrast sampling or screen-reader pass for the new panel. The "Copy issue body" clipboard-failure message is covered by static markup only, not a browser test. The kit is not signed itself; it references the signed proof by hash.
+
+**Review follow-up (PR #12):** Codex P2: Safari can drop the user gesture across the WebCrypto awaits before `writeText`, so Copy issue body could fail on a valid proof. Reproduced with failing tests, then added `copyIssueBody()`: when `ClipboardItem` exists the write starts synchronously in the click with a promise-backed item that resolves only after verification (rejects otherwise); without it, verify then `writeText`. Safari itself was not tested; the fix is checked by unit tests and the Chromium e2e. After the fix: `npm test` 42 files, 620 tests; lint, typegen + tsc, build, `demo:verify` and e2e 14/14 passed.

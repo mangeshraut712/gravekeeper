@@ -11,7 +11,10 @@ Browser, after a lookup (ResurrectResponse already in memory)
          ├─ issueBody   = buildIssueBody(input)       src/lib/revival/markdown.ts (pure)
          └─ markdown    = buildRevivalMarkdown(input) src/lib/revival/markdown.ts (pure, embeds issueBody verbatim)
     download → Blob('text/markdown;charset=utf-8') named REVIVAL.md
-    copy     → navigator.clipboard.writeText(issueBody)
+    copy     → copyIssueBody(): called synchronously in the click handler; when ClipboardItem
+               exists, clipboard.write() starts before any await with a promise-backed item
+               that resolves to the issue body only if verification passes (Safari keeps the
+               user gesture); otherwise verify first, then navigator.clipboard.writeText(issueBody)
 ```
 
 No network, no server route, no new dependency. The proof hash is over the same bytes the "Download proof" button writes, because both call `exportProof(result, url)` and `JSON.stringify` is deterministic for the same object.
