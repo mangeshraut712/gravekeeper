@@ -2,6 +2,7 @@
 // Usage: BASE_URL=http://localhost:3000 node scripts/a11y-audit.mts [--lookup]
 //   CHROMIUM_PATH  optional Chromium/Chrome executable (defaults to Playwright's own)
 //   --lookup       also scan the results state after a real atom/atom lookup (needs network)
+// Always scanned, with /api/resurrect mocked (no network): invalid-URL, server-error, running and canceled states.
 import { AxeBuilder } from "@axe-core/playwright";
 import { chromium } from "playwright";
 
@@ -68,6 +69,66 @@ for (const path of [
     await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => undefined)))); // axe must not sample mid-fade
     await scan("/ (after atom/atom lookup, proof-section receipt details open)", page);
   }
+  await page.context().close();
+}
+
+// Lookup error and cancel states. /api/resurrect is mocked with page.route so these
+// states are deterministic and need no network. Each step throws if the state is not
+// actually reached, so a page never reports "0 violations" for a state it did not enter.
+async function settle(page: import("playwright").Page) {
+  await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => undefined))));
+}
+async function expectStatus(page: import("playwright").Page, text: string) {
+  const status = page.locator("#lookup-error");
+  await status.getByText(text).waitFor({ state: "visible", timeout: 10_000 });
+  if ((await page.locator("#resource-url").getAttribute("aria-invalid")) !== "true") {
+    throw new Error(`expected aria-invalid=true on the URL input for: ${text}`);
+  }
+}
+{
+  // 1. Client-side validation error (no request is made).
+  const page = await (await browser.newContext({ bypassCSP: true })).newPage();
+  let requested = false;
+  await page.route("**/api/resurrect", (route) => { requested = true; return route.abort(); });
+  await page.goto(base + "/", { waitUntil: "networkidle" });
+  await page.fill("#resource-url", "not a url");
+  await page.click("button[type=submit]");
+  await expectStatus(page, "Enter a public HTTP(S) URL");
+  if (requested) throw new Error("validation error state made a network request");
+  await settle(page);
+  await scan("/ (invalid URL error state)", page);
+  await page.context().close();
+}
+{
+  // 2. Server error response shown by the form.
+  const message = "Repository not found or not public.";
+  const page = await (await browser.newContext({ bypassCSP: true })).newPage();
+  await page.route("**/api/resurrect", (route) =>
+    route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: message }) }));
+  await page.goto(base + "/", { waitUntil: "networkidle" });
+  await page.fill("#resource-url", "https://github.com/example/missing");
+  await page.click("button[type=submit]");
+  await expectStatus(page, message);
+  await settle(page);
+  await scan("/ (lookup error state, mocked 404)", page);
+  await page.context().close();
+}
+{
+  // 3. Cancel: the mocked request never completes, so the form stays in its loading state until Cancel.
+  const page = await (await browser.newContext({ bypassCSP: true })).newPage();
+  await page.route("**/api/resurrect", () => new Promise<void>(() => {}));
+  await page.goto(base + "/", { waitUntil: "networkidle" });
+  await page.fill("#resource-url", "https://github.com/example/slow");
+  await page.click("button[type=submit]");
+  const cancel = page.getByRole("button", { name: "Cancel" });
+  await cancel.waitFor({ state: "visible", timeout: 10_000 });
+  await settle(page);
+  await scan("/ (lookup running, Cancel button visible)", page);
+  await page.keyboard.press("Escape");
+  await expectStatus(page, "Lookup canceled. You can start another one.");
+  if (await cancel.count()) throw new Error("Cancel button still present after Escape");
+  await settle(page);
+  await scan("/ (lookup canceled state)", page);
   await page.context().close();
 }
 await browser.close();

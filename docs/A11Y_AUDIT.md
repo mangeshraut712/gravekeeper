@@ -1,11 +1,11 @@
 # Accessibility audit (WCAG 2.1 AA)
 
-Run date: 2026-11-11 · Tool: axe-core via `@axe-core/playwright` 4.14.0 · Browser: Chromium (Playwright 1.65.0 headless shell) · Target: production build (`npm run build && next start`).
+Run date: 2026-11-11 (refreshed after the error/cancel and receipt-open scans were added) · Tool: axe-core via `@axe-core/playwright` 4.14.0 · Browser: Chromium (Playwright 1.65.0 headless shell) · Target: production build (`npm run build && next start`).
 
 Reproduce:
 
 ```bash
-npm run build && npx next start -p 3100 &
+npm run build && npx next start -p 3100 &   # then wait a few seconds
 npx playwright install chromium            # once
 BASE_URL=http://localhost:3100 npm run a11y -- --lookup
 ```
@@ -17,7 +17,11 @@ Rule tags scanned: `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`. Preview iframes a
 | Page / state | Violations | Rules passed | Needs manual review |
 |---|---|---|---|
 | `/` (initial) | 0 | 22 | 1 (color-contrast, 16 nodes) |
-| `/` after a real `atom/atom` lookup, proof-section receipt details open | re-run needed | re-run needed | re-run needed |
+| `/` after a real `atom/atom` lookup, proof-section receipt details open | 0 | 27 | 1 (color-contrast, 13 nodes) |
+| `/` invalid-URL error state | 0 | 22 | 1 (color-contrast, 13 nodes) |
+| `/` lookup error state (mocked 404 from `/api/resurrect`) | 0 | 22 | 1 (color-contrast, 13 nodes) |
+| `/` lookup running, Cancel button visible (mocked never-completing request) | 0 | 22 | 1 (color-contrast, 13 nodes) |
+| `/` lookup canceled (after Escape) | 0 | 22 | 1 (color-contrast, 13 nodes) |
 | `/restoration` | 0 | 23 | 0 |
 | `/lantern-hill` (page, iframes excluded) | 0 | 21 | 0 |
 | `/fixtures/lantern-hill/after` | 0 | 19 | 0 |
@@ -27,7 +31,18 @@ Rule tags scanned: `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`. Preview iframes a
 
 The `--lookup` scan opens every `<details>` inside `section[aria-labelledby="proof-title"]` (the receipt chain) and waits until the receipt body fields — Resource, Recorded at, Receipt hash, and Content digest — are visible before axe runs. It does not open the first `<details>` on the page. That first disclosure is "Detected stack" in the revival plan, which precedes the proof section, and leaving receipts collapsed would not be a receipt-details scan.
 
-The 27-pass / 13-incomplete counts in the table above were recorded on 2026-11-11 before this scoping fix, when the script opened "Detected stack" instead. Re-run `BASE_URL=… npm run a11y -- --lookup` against a production build to refresh those numbers for the actual receipt-open state. The other rows were not affected.
+The lookup row above was re-run on 2026-11-11 against the production build after the scoping fix (live `atom/atom` lookup, so it needs network): 0 violations, 27 rules passed, 1 incomplete (color-contrast, 13 nodes).
+
+### Scan coverage for error and cancel states
+
+These run on every `npm run a11y` (no flag, no network). `/api/resurrect` is mocked with Playwright `page.route`, so the states are deterministic. The script throws, and the run fails, if a state is not actually reached: it waits for the exact status text, checks `aria-invalid="true"` on the input, checks the Cancel button is visible while running and gone after Escape, and checks the invalid-URL case made no request.
+
+- Invalid URL ("not a url"): status text "Enter a public HTTP(S) URL…".
+- Server error: mocked 404 with a fixed JSON error message shown in the status region.
+- Running: request never completes; Cancel button visible.
+- Canceled: Escape pressed; status text "Lookup canceled. You can start another one."
+
+The color-contrast "needs review" nodes in these states are the same fog/glow-backed text as the initial page. The pixel-sampling measurement below was done for the initial page only and was not repeated for these states.
 
 ### Intentional findings: Lantern Hill "before"
 
@@ -50,7 +65,7 @@ An earlier scan reported one `color-contrast` violation (2.13:1) on the revival-
 ### Not covered
 
 - axe finds roughly a third of WCAG issues automatically; this is not a full conformance claim. No screen reader (VoiceOver/NVDA) pass was done.
-- Only Chromium was scanned. The error state and the Cancel state were not axe-scanned.
+- Only Chromium was scanned. The error and Cancel states are scanned with a mocked API; a real upstream failure was not scanned. The `Download proof` failure message (shown in its own status region) is covered by a unit test, not an axe scan.
 - Reduced motion: confirmed by code (`motion-reduce:hidden` on fog, `motion-reduce:transition-none` on accordion chevrons, global `prefers-reduced-motion` reset in `globals.css`) and by unit tests for the fog; not visually re-verified in a browser with the OS setting on.
 
 ## Keyboard path (verified with Playwright key events on the built app)
