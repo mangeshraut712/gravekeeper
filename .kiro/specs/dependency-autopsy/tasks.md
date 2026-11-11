@@ -63,9 +63,9 @@ Complete in order. Each task lists the requirements it covers (see `requirements
 ## Phase 4 — Interface and docs
 
 ### Task 10 — `DependencyAutopsyPanel` (`src/components/DependencyAutopsyPanel.tsx`)
-- [ ] Summary counts, table with text status badges, scope note, partial/truncated/no-manifest labels, keyboard-scrollable table region.
-- [ ] Wire into `Gravekeeper.tsx` results; update the plan subtitle when dependency data was used.
-- [ ] Static-markup tests.
+- [x] Summary counts, table with text status badges, scope note, partial/truncated/no-manifest labels, keyboard-scrollable table region.
+- [x] Wire into `Gravekeeper.tsx` results; update the plan subtitle when dependency data was used.
+- [x] Static-markup tests.
 - **Refs:** DA-07
 
 ### Task 11 — Verify and document
