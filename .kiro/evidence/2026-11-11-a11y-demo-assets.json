@@ -1,0 +1,54 @@
+{
+  "kind": "kiro-session-metadata",
+  "note": "Metadata only. No transcript, prompts, tokens, environment values or secrets are recorded. The credit figure is recorded by the runner; the agent saw none, so none is claimed.",
+  "session": {
+    "date": "2026-11-11",
+    "branch": "feat/a11y-and-demo-assets-20261111",
+    "base": "f6b7b40 (main, PR #14 merged)",
+    "worktree": "~/kiroween/wt-q6-a11y"
+  },
+  "newDependencies": "none",
+  "a11yScan": {
+    "tool": "@axe-core/playwright 4.14.0, Playwright 1.65.0, tags wcag2a wcag2aa wcag21a wcag21aa",
+    "target": "local production build, npx next start -p 3466",
+    "browsers": ["chromium 158.0.8127.18", "firefox 159.0", "webkit 27.2"],
+    "newStates": [
+      "/ synthetic signed lookup (example/abandoned-widget), collapsed",
+      "/ synthetic lookup, all details open, proof verified, REVIVAL.md downloaded, copy status shown",
+      "/proof valid synthetic proof",
+      "/proof tampered proof, invalid"
+    ],
+    "countedViolations": { "chromium": 0, "firefox": 0, "webkit": 0 },
+    "intentionalFindings": "4 per browser on /fixtures/lantern-hill/before (blink, html-has-lang, label, marquee)",
+    "liveLookupRescanned": false,
+    "componentsChanged": "none (no counted violation found)"
+  },
+  "otherChecksInSession": {
+    "polishCheck": "chromium, 375x812 and 1440x900, results page 24 tab stops, 0 without visible focus",
+    "e2eNewStep": "keyboard only: Epitaph table, autopsy region and revival kit work in reading order with visible focus (passed)"
+  },
+  "checks": {
+    "npmTest": { "files": 45, "tests": 685, "result": "all passed" },
+    "lint": "passed",
+    "typecheck": "passed (npx next typegen, then npx tsc --noEmit)",
+    "build": "passed",
+    "demoVerify": "passed (before 4/12, after 12/12)",
+    "e2e": "17 checks passed against npx next start -p 3467, server stopped",
+    "a11yChromiumFinalBuild": "0 counted violations"
+  },
+  "screenshots": {
+    "copiedTo": "docs/screenshots/live/",
+    "source": "production https://gravekeeper-drab.vercel.app, captured about 13:16-13:17 UTC 2026-11-11, before this session",
+    "count": 9,
+    "capturedByThisSession": false
+  },
+  "drafts": ["docs/submission/DEMO_STORYBOARD.md"],
+  "hooks": "No hook output was observed in this session.",
+  "mcp": "No MCP server was used.",
+  "notDone": [
+    "screen-reader pass",
+    "contrast re-sampling of the Epitaph, autopsy and kit panels",
+    "live atom/atom --lookup axe re-scan",
+    "video recording or upload, Devpost submission, social posts"
+  ]
+}

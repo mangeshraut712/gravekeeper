@@ -376,3 +376,21 @@ Same Kiro session as the judge-guide entry above. The credit figure is recorded 
 - While PR #14 CI ran, the hand commit above (`dd8a700`) was pushed to this branch. The agent fast-forwarded to it with `git pull --no-rebase` (no force-push, all `KIRO_USAGE.md` entries kept). The agent's first drafts had used the wrong button label (**Resurrect**); `dd8a700` corrected it.
 - Kiro then updated `docs/KIRO_WORKFLOW.md` and `docs/submission/WRITEUP.md` for what PRs #12 and #13 added: the `revival-kit` spec (`f52061d`), the Nov 11 `gravekeeper-review` run (`2026-11-11-review-findings.json`, 5.63 credits; findings fixed, partly fixed or rejected per that file), the two new evidence files, and the hook counts recorded in them. `.kiro/evidence/2026-11-11-judge-guide.json` gained a `followUp` note.
 - Checks on the merged tree: `npm test` 44 files, 682 passed; lint; typegen + tsc; build; `demo:verify` (4/12 before, 12/12 after); `npm run e2e` against `npx next start -p 3438`, 16 checks passed, server stopped.
+
+## Nov 11, 2026 — Axe scan of the results panels and /proof verdicts, demo storyboard (Kiro agent session)
+
+Branch `feat/a11y-and-demo-assets-20261111`, from main `f6b7b40`. Evidence: `.kiro/evidence/2026-11-11-a11y-demo-assets.json` (metadata only). The credit figure for this session is recorded by the runner, not here. No token count or WBM record is claimed. No hook output was observed in this session, and no MCP server was used. No video was recorded or uploaded, and no Devpost submission, blog publish or social post was made.
+
+**Kiro-generated (agent wrote and ran these):**
+- `scripts/synthetic-lookup.mts` now also signs a `wayback-cdx` capture index, a `package.json` manifest and npm registry results, in the route's receipt order, so the Epitaph, Dependency autopsy and Revival kit panels render with data. `scripts/synthetic-lookup.test.ts` checks that it verifies and is refused after the displayed autopsy is edited.
+- `scripts/a11y-audit.mts` scans the synthetic results state twice (collapsed; then all disclosures open, proof verified, kit downloaded and issue-body copy status shown) and `/proof` with a valid and a tampered proof pasted. Each state throws if it is not reached.
+- Ran it against a local production build in Chromium 158, Firefox 159 and WebKit 27.2: 0 counted violations in each, plus the same 4 intentional findings on the Lantern Hill "before" fixture. No counted violation was found, so no component was changed and there was no failing test to write for a fix. `scripts/polish-check.mts` with the extended data: 24 tab stops on the results page at 375 and 1440 px, none without visible focus.
+- New `npm run e2e` step: keyboard-only path through the Epitaph table, autopsy table region and revival kit (section order, visible focus on each stop in the three panels, Enter and Space on the kit buttons, separate status regions).
+- `docs/A11Y_AUDIT.md` gained a section for this pass with its limits; `docs/JUDGES.md`, `docs/submission/DEVPOST.md`, `docs/submission/WRITEUP.md` and `docs/EPITAPH_TIMELINE.md` no longer say the panels were never scanned.
+- Copied nine production screenshots (captured 13:16–13:17 UTC before this session, not by this agent) into `docs/screenshots/live/` with captions, renaming one whose viewport shows the Epitaph but not the autopsy. Added one to the README, labelled live production. Wrote `docs/submission/DEMO_STORYBOARD.md` (both cuts, title card, recording checklist) as a draft. Beats with no screenshot are marked "None yet".
+
+**Hand work:** none beyond the prompt. The production screenshots were captured earlier, outside this session.
+
+**Checks:** `npm test` 45 files, 685 passed; `npm run lint`; `npx next typegen && npx tsc --noEmit`; `npm run build`; `npm run demo:verify` (4/12 before, 12/12 after); `npm run e2e` against `npx next start -p 3467`, 17 checks passed; `npm run a11y` (Chromium) on the same build, 0 counted violations. Server stopped afterwards.
+
+**Limits:** no screen-reader pass. The new panels were scanned with synthetic data only; the live `--lookup` scan was not re-run and contrast was not re-sampled for them. Which copy status Firefox and WebKit showed was not recorded. The polish check and keyboard e2e step ran in Chromium only.
