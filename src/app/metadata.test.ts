@@ -28,6 +28,27 @@ describe("site metadata", () => {
     expect(lanternMetadata.description).toBeTruthy();
   });
 
+  it("overrides the root Twitter card text on demo pages (metadata merges shallowly)", () => {
+    for (const page of [restorationMetadata, lanternMetadata]) {
+      expect(page.twitter).toMatchObject({
+        card: "summary_large_image",
+        title: page.title,
+        description: page.description,
+      });
+    }
+  });
+
+  it("keeps the share image on demo pages that override openGraph and twitter", () => {
+    for (const page of [restorationMetadata, lanternMetadata]) {
+      expect(page.openGraph?.images).toMatchObject([
+        { url: "/opengraph-image", width: 1200, height: 630, type: "image/png" },
+      ]);
+      expect(page.twitter?.images).toMatchObject([
+        { url: "/twitter-image", width: 1200, height: 630, type: "image/png" },
+      ]);
+    }
+  });
+
   it("declares 1200x630 PNG share images with alt text", () => {
     for (const image of [og, twitter]) {
       expect(image.size).toEqual({ width: 1200, height: 630 });

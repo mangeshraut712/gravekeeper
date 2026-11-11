@@ -4,8 +4,7 @@ import { siteUrl, themeColor } from "@/shared/site";
 // Shared renderer for opengraph-image.tsx and twitter-image.tsx (1200x630 PNG).
 // Drawn from the app's own palette and tombstone mark; no external images or fonts.
 export const shareImageSize = { width: 1200, height: 630 };
-export const shareImageAlt =
-  "Gravekeeper: a tombstone mark on a dark graveyard background with the line 'Good code deserves a second life.'";
+export { shareImageAlt } from "@/shared/site";
 
 export function renderShareImage() {
   const host = new URL(siteUrl).host;

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { openGraphImages, twitterImages } from "@/shared/site";
 import RestorationDemo from "@/components/RestorationDemo";
 
 const description =
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
   title: "Restoration case 001: esrever",
   description,
   alternates: { canonical: "/restoration" },
-  openGraph: { title: "Restoration case 001: esrever", description, url: "/restoration" },
+  openGraph: { title: "Restoration case 001: esrever", description, url: "/restoration", images: openGraphImages },
+  twitter: { card: "summary_large_image", title: "Restoration case 001: esrever", description, images: twitterImages },
 };
 
 export default function RestorationPage() {

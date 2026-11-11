@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { openGraphImages, twitterImages } from "@/shared/site";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { LanternHillView } from "@/components/LanternHillView";
@@ -11,7 +12,8 @@ export const metadata: Metadata = {
   title: "Lantern Hill restoration",
   description,
   alternates: { canonical: "/lantern-hill" },
-  openGraph: { title: "Lantern Hill restoration", description, url: "/lantern-hill" },
+  openGraph: { title: "Lantern Hill restoration", description, url: "/lantern-hill", images: openGraphImages },
+  twitter: { card: "summary_large_image", title: "Lantern Hill restoration", description, images: twitterImages },
 };
 
 export default function LanternHillPage() {
