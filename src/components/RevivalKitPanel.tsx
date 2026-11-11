@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { ResurrectResponse } from "@/types";
-import { prepareRevivalKit } from "@/client/kit";
+import { copyIssueBody, prepareRevivalKit } from "@/client/kit";
 import { KIT_FILENAME } from "@/lib/revival/markdown";
 import { button } from "./styles";
 
@@ -65,20 +65,26 @@ export function RevivalKitPanel({ result, url }: { result: ResurrectResponse; ur
   }
 
   async function copy() {
+    // Start the clipboard write inside the click, before any await (Safari user gesture).
+    const outcome = copyIssueBody(
+      result,
+      url,
+      navigator.clipboard,
+      typeof ClipboardItem === "undefined" ? undefined : ClipboardItem,
+    );
     setBusy("copy");
     setCopyMessage("");
     try {
-      const kit = await prepareRevivalKit(result, url);
-      if (!kit.ok) {
-        setCopyMessage(KIT_MESSAGES.copyRefused);
-        return;
-      }
-      try {
-        await navigator.clipboard.writeText(kit.issueBody);
-        setCopyMessage(KIT_MESSAGES.copied);
-      } catch {
-        setCopyMessage(KIT_MESSAGES.copyError);
-      }
+      const status = await outcome;
+      setCopyMessage(
+        status === "copied"
+          ? KIT_MESSAGES.copied
+          : status === "refused"
+            ? KIT_MESSAGES.copyRefused
+            : KIT_MESSAGES.copyError,
+      );
+    } catch {
+      setCopyMessage(KIT_MESSAGES.copyError);
     } finally {
       setBusy("");
     }

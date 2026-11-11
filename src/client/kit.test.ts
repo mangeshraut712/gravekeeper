@@ -1,5 +1,5 @@
-import { beforeAll, describe, expect, it } from "vitest";
-import { prepareRevivalKit } from "./kit";
+import { beforeAll, describe, expect, it, vi } from "vitest";
+import { copyIssueBody, prepareRevivalKit } from "./kit";
 import { exportProof, verifyProof } from "./proof";
 import { buildReceipt, sha256hex } from "@/lib/receipts/chain";
 import { exportPublicKey, generateKeyPair } from "@/lib/receipts/crypto";
@@ -129,5 +129,66 @@ describe("prepareRevivalKit", () => {
     };
     expect(await verifyProof(result, resource)).toBe(true);
     expect(await prepareRevivalKit(result, resource)).toEqual({ ok: false, reason: "no-plan" });
+  });
+});
+
+// Safari drops the user gesture across awaits, so the clipboard write must start
+// synchronously inside the click and receive its text through a promise.
+class FakeItem {
+  constructor(public readonly items: Record<string, Promise<Blob>>) {}
+}
+function fakeClipboard(opts: { failWrite?: boolean } = {}) {
+  const calls: string[] = [];
+  let written: string | null = null;
+  return {
+    calls,
+    get written() {
+      return written;
+    },
+    write: vi.fn(async (list: ClipboardItem[]) => {
+      const items = list as unknown as FakeItem[];
+      calls.push("write");
+      const blob = await items[0].items["text/plain"];
+      if (opts.failWrite) throw new Error("NotAllowedError");
+      written = await blob.text();
+    }),
+    writeText: vi.fn(async (text: string) => {
+      calls.push("writeText");
+      written = text;
+    }),
+  };
+}
+
+describe("copyIssueBody", () => {
+  it("starts the clipboard write before verification finishes and writes the issue body", async () => {
+    const result = await signedLookup();
+    const clipboard = fakeClipboard();
+    const pending = copyIssueBody(result, resource, clipboard, FakeItem as never);
+    // Synchronous: no await has happened yet.
+    expect(clipboard.write).toHaveBeenCalledTimes(1);
+    expect(await pending).toBe("copied");
+    const kit = await prepareRevivalKit(result, resource);
+    expect(kit.ok && clipboard.written).toBe(kit.ok ? kit.issueBody : false);
+    expect(clipboard.writeText).not.toHaveBeenCalled();
+  });
+
+  it("writes nothing when verification fails", async () => {
+    const result = await signedLookup();
+    result.spec!.revivalSteps[0].title = "Changed";
+    const clipboard = fakeClipboard();
+    expect(await copyIssueBody(result, resource, clipboard, FakeItem as never)).toBe("refused");
+    expect(clipboard.written).toBeNull();
+  });
+
+  it("reports a clipboard failure", async () => {
+    const clipboard = fakeClipboard({ failWrite: true });
+    expect(await copyIssueBody(await signedLookup(), resource, clipboard, FakeItem as never)).toBe("error");
+  });
+
+  it("falls back to writeText after verification when ClipboardItem is unavailable", async () => {
+    const result = await signedLookup();
+    const clipboard = fakeClipboard();
+    expect(await copyIssueBody(result, resource, clipboard, undefined)).toBe("copied");
+    expect(clipboard.calls).toEqual(["writeText"]);
   });
 });
