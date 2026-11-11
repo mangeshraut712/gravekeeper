@@ -55,7 +55,7 @@ Configuration alone is not execution evidence. What the evidence files record:
 
 `src/lib/receipts/chain.test.ts` and `crypto.test.ts` check the design properties: sign/verify round trip, tampered data failing verification, canonical JSON being key-order independent (plus a UTF-8 round trip), chain integrity for built chains, tamper detection when a receipt field is mutated, and sequence monotonicity. `src/lib/spec/generator.test.ts` runs 200-run properties (never throws, at least three steps, ordered step numbers, deterministic output, valid ISO timestamp). Later features added their own properties: the version-floor comparator (`src/lib/deps/semver.test.ts`), CDX timeline aggregation (sums, contiguous sorted years, first ≤ last, parser and validator agreement) and the permalink round trip.
 
-The only generator-related problem the log records: `fc.date()` produced `Invalid Date` objects in fast-check v4, so dates are generated from integer timestamps. The log does not say a property test found a real defect in the product code, and I am not claiming one. The Nov 7 log notes a later change narrowed an over-broad Unicode property-test claim in the restoration work. The full test count at the last recorded checkpoints is in `docs/RELEASE_CHECKLIST.md` and KIRO_USAGE.md; on the judge-guide branch (`main` at `129c301` plus docs) `npm test` ran 41 files and 626 tests, all passing.
+The only generator-related problem the log records: `fc.date()` produced `Invalid Date` objects in fast-check v4, so dates are generated from integer timestamps. The log does not say a property test found a real defect in the product code, and I am not claiming one. The Nov 7 log notes a later change narrowed an over-broad Unicode property-test claim in the restoration work. The full test count at the last recorded checkpoints is in `docs/RELEASE_CHECKLIST.md` and KIRO_USAGE.md; on the judge-guide branch after merging `main` at `7a55157` (PRs #12 and #13 plus docs) `npm test` ran 44 files and 682 tests, all passing.
 
 ## Powers and Crew
 
@@ -80,6 +80,6 @@ Provider-reported credit figures are recorded for several sessions (two read-onl
 
 - Share previews (PR #10): 1200×630 Open Graph and Twitter images, canonical URLs, `robots.txt` and `sitemap.xml`. Before/after Lighthouse runs with Lighthouse 12.8.2 are in `docs/PERFORMANCE.md`. Scores were already 98 to 100 and did not move beyond run spread. The polish check fixed a results layout shift (0.0554 to 0.0004 at 375 px) and missing focus rings on the Lantern Hill preview frames. Rendering on real social networks was not checked.
 
-## Not on `main`
+## Addendum: revival kit (PR #12, merged as `7a55157`)
 
-PR #12 (a revival kit: `REVIVAL.md` and a tracking issue from a verified lookup) is open and not merged. It is not described here as a feature.
+After a verified lookup, **Download revival kit** saves `REVIVAL.md` (facts, plan steps, autopsy and timeline when present, a tracking issue, and the SHA-256 of the downloaded proof). **Copy issue body** copies the issue section. Both run `verifyProof` first and refuse if it fails. The kit is not a second signature. See [docs/REVIVAL_KIT.md](../REVIVAL_KIT.md) and `.kiro/specs/revival-kit/` (committed before the code as `f52061d`).

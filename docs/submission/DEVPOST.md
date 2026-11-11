@@ -53,5 +53,5 @@ Not recorded. A 90-second cut and a roughly 2:30 to 2:45 cut are scripted in [do
 - A criterion-by-criterion evidence map and the requirements checklist are in [docs/JUDGES.md](../JUDGES.md).
 - Accessibility: axe-core scans in Chromium, Firefox and WebKit found no violations on the scanned product pages. The only intentional violations are on the deliberately broken Lantern Hill "before" fixture. Those scans predate the Epitaph and autopsy panels. Color contrast over the fog layer is "needs review" in axe and was checked by pixel sampling; no screen reader pass was done. See [docs/A11Y_AUDIT.md](../A11Y_AUDIT.md).
 - The mocked results screenshot in the README is labeled as mocked; a live `atom/atom` screenshot is next to it.
-- PR #12 (revival kit export) is open and not merged, so it is not part of this description.
+- Revival kit (PR #12, merged): a `REVIVAL.md` and tracking-issue export, only after the same proof check as **Verify proof**. See [docs/REVIVAL_KIT.md](../REVIVAL_KIT.md).
 - Pre-existing work: `esrever` (MIT, Mathias Bynens and contributors) is included as pinned third-party source with attribution; the Lantern Hill fixture is original to this project.

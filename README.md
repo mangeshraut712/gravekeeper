@@ -12,11 +12,12 @@ Websites go dark and open-source repositories get abandoned. Someone who wants t
 
 On the live app, no account or install needed:
 
-1. Open https://gravekeeper-drab.vercel.app and click the `https://github.com/atom/atom` example under the search box, then **Resurrect**.
+1. Open https://gravekeeper-drab.vercel.app and click the `https://github.com/atom/atom` example under the search box, then **Unearth project**.
 2. Read the results: the tombstone card (last push, archive snapshot, open issues), the **Epitaph** panel (first capture, last seen, captured months per year), the **Dependency autopsy** table and the revival plan.
-3. In the proof section, click **Verify proof**, then **Download proof**.
-4. Open https://gravekeeper-drab.vercel.app/proof and choose the downloaded `gravekeeper-proof.json`. It should say "Valid: internally consistent". Change one value in the file, such as the star count, and load it again to see it rejected.
-5. Optional: open https://gravekeeper-drab.vercel.app/restoration and https://gravekeeper-drab.vercel.app/lantern-hill for the two bundled restorations.
+3. Under **Take the plan home**, click **Download revival kit** for a `REVIVAL.md` (facts, steps, autopsy and timeline when present, a tracking issue, and the proof SHA-256). **Copy issue body** copies just the issue text. Both are refused if the proof does not verify.
+4. In the proof section, click **Verify proof**, then **Download proof**.
+5. Open https://gravekeeper-drab.vercel.app/proof and choose the downloaded `gravekeeper-proof.json`. It should say "Valid: internally consistent". Change one value in the file, such as the star count, and load it again to see it rejected.
+6. Optional: open https://gravekeeper-drab.vercel.app/restoration and https://gravekeeper-drab.vercel.app/lantern-hill for the two bundled restorations.
 
 The live lookup depends on GitHub's anonymous rate limit (60 requests/hour per server IP, shared by all visitors) and on the Internet Archive answering in time. If either fails, the app shows a partial result and says which source failed. For example, a production lookup of `atom/atom` on 2026-11-11 at 12:38 UTC returned "no archived snapshot" from the Wayback availability API while the CDX capture index for the same URL returned 136 captured months.
 
@@ -34,9 +35,9 @@ The live lookup depends on GitHub's anonymous rate limit (60 requests/hour per s
 | Restoration case 001 (`/restoration`) | The MIT `esrever` string reverser (pinned commit) passes 4 of 12 Unicode fixtures; an original `Intl.Segmenter` rewrite passes 12 of 12. Offline kit: `/restoration-kit.zip`. | One curated function. |
 | Lantern Hill (`/lantern-hill`) | An original 1999-style page rewritten into semantic HTML5, with sandboxed before/after previews and signed before/after receipts. | Original fixture, not recovered history; the rewriter is not a sanitizer. |
 | Share previews | Open Graph and Twitter images (1200×630), canonical URLs, `robots.txt`, `sitemap.xml`. | Rendering on real social networks was not checked. |
+| Revival kit | **Download revival kit** saves `REVIVAL.md`; **Copy issue body** copies a ready-to-paste tracking issue with one checkbox per plan step. Both run the same check as **Verify proof** and name the SHA-256 of the downloaded proof. See [docs/REVIVAL_KIT.md](docs/REVIVAL_KIT.md). | Refused if verification fails. The kit is not separately signed. User-controlled strings are escaped so they cannot form Markdown or HTML. Safari itself was not used to test the clipboard path; the write starts in the click handler. |
 | Fork | **Fork on GitHub** opens GitHub's own fork page for the visitor to confirm. | The operator fork API is off on the demo. |
 
-**Open, not merged:** PR #12 (revival kit: a `REVIVAL.md` and tracking-issue export from a verified lookup) is open and not on `main` or production.
 
 ## Architecture
 
@@ -51,7 +52,7 @@ flowchart LR
   WB & CDX & GH & REG --> C[Receipt chain<br/>SHA-256 links + Ed25519 signatures<br/>+ evidence payloads]
   C --> S[Revival plan generator]
   S --> C
-  C -->|JSON response| UI[Results UI: tombstone, Epitaph,<br/>autopsy, plan, receipts]
+  C -->|JSON response| UI[Results UI: tombstone, Epitaph,<br/>autopsy, plan, receipts, revival kit]
   UI -->|Download proof| P[gravekeeper-proof.json]
   P --> V1["/proof page in the browser"]
   P --> V2[node scripts/verify-proof.ts<br/>offline]
@@ -76,7 +77,7 @@ More checks: `npm run lint`, `npx next typegen && npx tsc --noEmit`, `npm run bu
 ## How Kiro built this
 
 - [docs/KIRO_WORKFLOW.md](docs/KIRO_WORKFLOW.md): every file under `.kiro/` and whether it was observed working or is only configured.
-- Specs (dependency autopsy and epitaph timeline were committed before any of their code; the proof workbench spec landed in the same commit as its code): [.kiro/specs/resurrect](.kiro/specs/resurrect), [.kiro/specs/dependency-autopsy](.kiro/specs/dependency-autopsy), [.kiro/specs/epitaph-timeline](.kiro/specs/epitaph-timeline), [.kiro/specs/proof-workbench](.kiro/specs/proof-workbench).
+- Specs (dependency autopsy, epitaph timeline and revival kit were committed before any of their code; the proof workbench spec landed in the same commit as its code): [.kiro/specs/resurrect](.kiro/specs/resurrect), [.kiro/specs/dependency-autopsy](.kiro/specs/dependency-autopsy), [.kiro/specs/epitaph-timeline](.kiro/specs/epitaph-timeline), [.kiro/specs/proof-workbench](.kiro/specs/proof-workbench), [.kiro/specs/revival-kit](.kiro/specs/revival-kit).
 - Steering, agents, hooks and MCP config: [.kiro/steering](.kiro/steering), [.kiro/agents](.kiro/agents), [.kiro/hooks](.kiro/hooks), [.kiro/settings/mcp.json](.kiro/settings/mcp.json).
 - [KIRO_USAGE.md](KIRO_USAGE.md): the dated session log, separating Kiro-generated work from hand work.
 - [.kiro/evidence](.kiro/evidence): metadata-only records (session ids, provider-reported credits where exposed, checks run). No transcripts.

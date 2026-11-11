@@ -364,3 +364,7 @@ Branch `docs/judge-guide-20261111`, from `main` at `129c301` (PRs #7, #9, #10 an
 **Hand work:** none beyond the prompt.
 
 **Limits:** PR #12 (revival kit) is open and was not described as merged. `docs/submission/BLOG_DRAFT.md` and `SOCIAL_DRAFT.md` were not updated and still describe the earlier, metadata-only plan. No axe run, screenshot refresh or screen-reader pass was done in this session.
+
+## Nov 11, 2026 — Judge guide follow-up (hand work)
+
+Not a Kiro session. After PR #12 (`7a55157`) and PR #13 merged, this branch was updated with a normal merge of `origin/main` (every `KIRO_USAGE.md` entry kept). The 60-second path and both demo scripts said **Resurrect**; the live button is **Unearth project**, so those labels were corrected. The revival kit is now described as a merged feature (it was in the production JavaScript at 13:06:49 UTC). Credit usage is not claimed here. Checks after the edit: `npm test` 44 files, 682 passed; lint; typegen + tsc; build; `demo:verify` (4/12 before, 12/12 after). No Devpost submission, video upload, blog publish, or social post was made.
