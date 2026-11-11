@@ -224,4 +224,23 @@ describe('fetchWaybackSnapshot', () => {
     if (result.ok) return;
     expect(result.code).toBe('PARSE_ERROR');
   });
+
+  it('returns PARSE_ERROR when the snapshot timestamp is not 14 digits', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue(
+          makeWaybackResponse({ available: true, timestamp: '2023-10-15' }),
+        ),
+      } as unknown as Response),
+    );
+
+    const result = await fetchWaybackSnapshot(TARGET_URL);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe('PARSE_ERROR');
+  });
 });
