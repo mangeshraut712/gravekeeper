@@ -17,7 +17,7 @@ import type {
   RevivalStep,
   StaleDep,
 } from '@/types/index';
-import { majorOf } from '@/lib/deps/semver';
+import { majorOf } from '../deps/semver.ts';
 
 // ---------------------------------------------------------------------------
 // Language-specific framework / tooling hints
