@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
+import RootLayout from "./layout";
 import Home from "./page";
 
 describe("Gravekeeper landing page", () => {
@@ -21,6 +22,17 @@ describe("Gravekeeper landing page", () => {
     expect(html).toContain("No lookups yet");
     expect(html).toContain("not proof of authorship");
     expect(html).not.toContain("Chain verified");
+  });
+
+  it("renders one site footer, not a second page footer", () => {
+    const html = renderToStaticMarkup(
+      <RootLayout params={Promise.resolve({})}>
+        <Home />
+      </RootLayout>,
+    );
+    expect(html.match(/<footer/g)?.length).toBe(1);
+    expect(html).toContain('href="/proof"');
+    expect(html).toContain("Built for Kiroween 2026");
   });
 
   it("places decorative fog behind the workbench and hides it for reduced motion", () => {
