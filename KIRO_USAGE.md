@@ -129,3 +129,21 @@ The save hook in `.kiro/hooks/run-tests-on-save.json` now also runs when files u
 
 A public Vercel production deployment was created on the existing Hobby team `mbr63` (account `mbr63drexel`), with `GITHUB_TOKEN` and `FORK_API_SECRET` left unset. Vercel Authentication was turned off so the demo URLs are reachable without a Vercel login. Live URL: https://gravekeeper-drab.vercel.app
 
+
+## Nov 11, 2026 — Judge-ready a11y, metadata, and CI pass (Kiro agent session)
+
+Branch `feat/judge-ready-a11y-ci-20261111`, from main `9899869`. No credit figure, token count, or WBM record is available for this session, so none is claimed. No hook or MCP execution is claimed.
+
+**Kiro-generated (agent wrote and ran these):**
+- Extracted `SearchForm`, `TombstoneCard`, `ReceiptChainViewer`, `RevivalSpecPanel` (plus shared `Mark.tsx`, `styles.ts`) from `Gravekeeper.tsx`; revival plan became a native-`<details>` accordion with `motion-reduce` handling; tombstone card gained the R.I.P. motif and snapshot date; Escape cancels a running lookup.
+- `scripts/a11y-audit.mts` (`npm run a11y`) and the dev dependencies `playwright` 1.65.0 and `@axe-core/playwright` 4.14.0; ran the scans, a keyboard-path check, and a pixel-sampled contrast measurement for the nodes axe marked "needs review"; wrote `docs/A11Y_AUDIT.md` from those outputs.
+- `.github/workflows/ci.yml`, `docs/DEMO_SCRIPT.md`, README live links, and the `tasks.md` reconciliation.
+- Task 14 (FogOverlay) was verified as already done on main and only checked off, not reimplemented. The `<title>`/Open Graph `metadata` export already existed in `layout.tsx`; it was verified and checked off, not changed.
+
+**Hand work (outside the agent):** none in this session beyond the prompt that set the milestone and constraints. The demo script has not been rehearsed or recorded by a person, and no video exists.
+
+**Deviations and limits worth knowing:**
+- Task 16 said `@axe-core/react`; Playwright-based axe was used instead because it scans the production build and sandboxed pages.
+- Playwright downloaded its own Chromium build (`npx playwright install chromium`) during the session.
+- An early scan flagged one contrast violation that turned out to be axe sampling a mid-fade animation; the script now waits for finite animations, and no styles were changed for it.
+- The pass was not reviewed by a second Kiro review agent.
