@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { ResurrectResponse } from "@/types";
 import { normalizePublicUrl } from "@/shared/url";
@@ -80,13 +80,14 @@ export function SearchForm({
       }
     }
   }
-  function cancel() {
+  const cancel = useCallback(() => {
     const controller = pending.current;
     pending.current = null;
     controller?.abort();
-    setLoading(false);
+    setLoadingState(false);
+    onLoadingChange(false);
     setError("Lookup canceled. You can start another one.");
-  }
+  }, [onLoadingChange]);
   useEffect(() => {
     if (!loading) return;
     const onKeyDown = (event: KeyboardEvent) => {
