@@ -6,10 +6,17 @@
 // Buttons are excluded (they paint their own background; text on them is not fog-backed). (4) report the contrast of each distinct text colour against that pixel (alpha blended over it).
 // The brightest pixel is a worst case: the real backdrop under most text is darker. It is a measurement of
 // the sampled frames only, not every animation phase. --lookup adds a live atom/atom results state (network).
+// --panels adds a SYNTHETIC signed lookup (scripts/synthetic-lookup.mts) and samples only text inside the
+// Epitaph, Dependency autopsy and Revival kit panels, with every disclosure open and the kit buttons pressed.
+// Those panels paint an opaque background over the fog, so in that mode component backgrounds are KEPT
+// (only text, borders and shadows are made transparent) and buttons are included: the backdrop sampled is
+// what is really behind each text box, with the fog still animating underneath.
 import { chromium } from "playwright";
+import { buildSyntheticLookup, syntheticRepoUrl } from "./synthetic-lookup.mts";
 
 const base = process.env.BASE_URL ?? "http://localhost:3000";
 const withLookup = process.argv.includes("--lookup");
+const withPanels = process.argv.includes("--panels");
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 
 type Item = { tag: string; text: string; color: [number, number, number, number]; x: number; y: number; w: number; h: number };
@@ -19,14 +26,16 @@ const ratio = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b
 const hex = (r: number, g: number, b: number) => "#" + [r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("");
 
 // Every visible text element: computed colour + page-space box of its own text.
-async function textItems(page: import("playwright").Page): Promise<Item[]> {
-  return page.evaluate(() => {
+type Opts = { scope?: string; keepBackgrounds?: boolean };
+async function textItems(page: import("playwright").Page, opts: Opts = {}): Promise<Item[]> {
+  return page.evaluate(({ scope, keep }) => {
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = 1;
     const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
     const out: Item[] = [];
     for (const el of document.body.querySelectorAll("*")) {
-      if (el.closest("[aria-hidden='true'], button")) continue; // buttons paint their own background
+      if (scope && !el.closest(scope)) continue;
+      if (el.closest(keep ? "[aria-hidden='true']" : "[aria-hidden='true'], button")) continue; // buttons paint their own background
       const nodes = [...el.childNodes].filter((n) => n.nodeType === 3 && n.textContent?.trim());
       if (!nodes.length) continue;
       const cs = getComputedStyle(el);
@@ -46,16 +55,17 @@ async function textItems(page: import("playwright").Page): Promise<Item[]> {
       }
     }
     return out;
-  });
+  }, { scope: opts.scope ?? "", keep: !!opts.keepBackgrounds });
 }
 
 // Brightest backdrop pixel inside each text box, over 3 frames (the fog drifts).
-async function backdrops(page: import("playwright").Page, items: Item[]): Promise<[number, number, number][]> {
+async function backdrops(page: import("playwright").Page, items: Item[], keepBackgrounds = false): Promise<[number, number, number][]> {
+  const hideText = `*,*::before,*::after{color:transparent!important;border-color:transparent!important;text-shadow:none!important;box-shadow:none!important;outline:none!important;caret-color:transparent!important;text-decoration:none!important;text-decoration-color:transparent!important;-webkit-text-fill-color:transparent!important}
+::placeholder{color:transparent!important;-webkit-text-fill-color:transparent!important}`;
   await page.addStyleTag({
-    content: `*,*::before,*::after{color:transparent!important;border-color:transparent!important;text-shadow:none!important;box-shadow:none!important;outline:none!important;caret-color:transparent!important;text-decoration:none!important;text-decoration-color:transparent!important;-webkit-text-fill-color:transparent!important}
-::placeholder{color:transparent!important;-webkit-text-fill-color:transparent!important}
-body *:not(svg):not(path){background:transparent!important;filter:none!important}
-svg,button{visibility:hidden!important}`,
+    content: keepBackgrounds
+      ? `${hideText}\nsvg{visibility:hidden!important}`
+      : `${hideText}\nbody *:not(svg):not(path){background:transparent!important;filter:none!important}\nsvg,button{visibility:hidden!important}`,
   });
   const best: [number, number, number][] = items.map(() => [0, 0, 0]);
   for (let i = 0; i < 3; i++) {
@@ -88,12 +98,15 @@ svg,button{visibility:hidden!important}`,
   return best;
 }
 
-async function measure(name: string, drive: (page: import("playwright").Page) => Promise<void>) {
-  const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+async function measure(name: string, drive: (page: import("playwright").Page) => Promise<void>, opts: Opts = {}) {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+  await ctx.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const page = await ctx.newPage();
   await drive(page);
   await page.evaluate(() => Promise.race([Promise.all(document.getAnimations().filter((a) => Number.isFinite(a.effect?.getComputedTiming().endTime as number)).map((a) => a.finished.catch(() => undefined))), new Promise((r) => setTimeout(r, 2000))]));
-  const items = await textItems(page);
-  const bgs = await backdrops(page, items);
+  const items = await textItems(page, opts);
+  if (!items.length) throw new Error(`${name}: no text boxes found${opts.scope ? ` inside ${opts.scope}` : ""}`);
+  const bgs = await backdrops(page, items, opts.keepBackgrounds);
   let worst = { r: Infinity, i: 0 };
   let maxBg = 0;
   let fail = 0;
@@ -105,12 +118,13 @@ async function measure(name: string, drive: (page: import("playwright").Page) =>
     const mix = [r, g, b].map((v, k) => Math.round(v * a + bg[k] * (1 - a))) as [number, number, number];
     const rr = ratio(lum(...mix), lum(...bg));
     maxBg = Math.max(maxBg, lum(...bg));
-    if (lum(...bg) > 0.1) bright.push(`    note: backdrop ${hex(...bg)} under ${hex(r, g, b)} ${rr.toFixed(2)}:1 <${it.tag}> "${it.text}" (element paints its own background)`);
+    if (lum(...bg) > 0.1 && !opts.keepBackgrounds) bright.push(`    note: backdrop ${hex(...bg)} under ${hex(r, g, b)} ${rr.toFixed(2)}:1 <${it.tag}> "${it.text}" (element paints its own background)`);
     if (rr < worst.r) worst = { r: rr, i };
     if (rr < 4.5) { fail++; failing.push(`    ${hex(r, g, b)}${a < 1 ? `@${a.toFixed(2)}` : ""} on ${hex(...bg)} ${rr.toFixed(2)}:1 <${it.tag}> "${it.text}"`); }
   });
   const w = items[worst.i];
   console.log(`${name}: ${items.length} text boxes; brightest backdrop under any text ${hex(...bgs.reduce((m, p) => (lum(...p) > lum(...m) ? p : m)))}; lowest ratio ${worst.r.toFixed(2)}:1 (${hex(w.color[0], w.color[1], w.color[2])} on ${hex(...bgs[worst.i])}, <${w.tag}> "${w.text}"); boxes below 4.5:1: ${fail}`);
+  if (process.env.CONTRAST_LIST) items.forEach((it, i) => console.log(`    ${hex(it.color[0], it.color[1], it.color[2])} on ${hex(...bgs[i])} <${it.tag}> "${it.text}"`));
   for (const f of failing.slice(0, 8)) console.log(f);
   for (const f of bright.slice(0, 4)) console.log(f);
   await page.context().close();
@@ -155,5 +169,29 @@ if (withLookup) {
     await page.getByText("Lookup complete").waitFor({ timeout: 45_000 });
     await page.locator("section[aria-labelledby='proof-title'] details").evaluateAll((n) => { for (const x of n) (x as HTMLDetailsElement).open = true; });
   });
+}
+if (withPanels) {
+  const synthetic = await buildSyntheticLookup();
+  const panels: [string, string][] = [
+    ["Epitaph", "section[aria-labelledby='epitaph-title']"],
+    ["Dependency autopsy", "section[aria-labelledby='autopsy-title']"],
+    ["Revival kit", "section[aria-labelledby='kit-title']"],
+  ];
+  for (const [label, scope] of panels) {
+    await measure(`synthetic lookup, ${label} panel (disclosures open, kit used; own backgrounds kept)`, async (page) => {
+      await page.route("**/api/resurrect", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(synthetic) }));
+      await goHome(page);
+      await page.fill("#resource-url", syntheticRepoUrl);
+      await page.click("button[type=submit]");
+      await page.getByText("Lookup complete").waitFor({ timeout: 15_000 });
+      await page.locator("details").evaluateAll((n) => { for (const x of n) (x as HTMLDetailsElement).open = true; });
+      await page.getByText("Months with a capture").waitFor({ state: "visible" });
+      await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Download revival kit" }).click()]);
+      await page.locator("#kit-download-status").getByText("REVIVAL.md downloaded").waitFor();
+      await page.getByRole("button", { name: "Copy issue body" }).click();
+      await page.locator("#kit-copy-status").getByText(/Issue body copied|Could not copy/).waitFor({ timeout: 10_000 });
+      await page.mouse.move(0, 0); // no hover colour on the last button
+    }, { scope, keepBackgrounds: true });
+  }
 }
 await browser.close();

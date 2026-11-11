@@ -1,0 +1,53 @@
+{
+  "kind": "kiro-session-metadata",
+  "note": "Metadata only. No transcript, prompts, tokens, environment values or secrets are recorded. The credit figure is recorded by the runner; the agent saw none, so none is claimed.",
+  "session": {
+    "date": "2026-11-11",
+    "branch": "feat/contrast-and-storyboard-stills-20261111",
+    "base": "0d944db (main, PRs #7, #9-#15 merged)",
+    "worktree": "~/kiroween/wt-q7-contrast"
+  },
+  "newDependencies": "none",
+  "productCodeChanged": false,
+  "contrastSample": {
+    "script": "scripts/contrast-sample.mts --panels (new mode: synthetic signed lookup, scoped to each panel section, component backgrounds kept, buttons included, 3 frames 1.5 s apart)",
+    "target": "local production build, npx next start -p 3471",
+    "browser": "chromium (Playwright 1.65.0)",
+    "viewport": "1440x900",
+    "data": "synthetic (scripts/synthetic-lookup.mts, example/abandoned-widget)",
+    "results": {
+      "epitaph": { "textBoxes": 30, "lowestRatio": "6.74:1", "boxesUnder4.5": 0 },
+      "dependencyAutopsy": { "textBoxes": 43, "lowestRatio": "6.74:1", "boxesUnder4.5": 0 },
+      "revivalKit": { "textBoxes": 10, "lowestRatio": "6.74:1", "boxesUnder4.5": 0 }
+    },
+    "existingStatesRerun": "initial, invalid URL, mocked 404, running, canceled: lowest 7.13:1, 0 under 4.5:1",
+    "failuresFound": 0,
+    "paletteChanged": false
+  },
+  "storyboardStills": {
+    "script": "scripts/capture-storyboard-stills.mts --live",
+    "target": "local production build, http://localhost:3471 (not production)",
+    "capturedAtUtc": "2026-11-11 about 13:47-13:48",
+    "viewport": "1440x900, reduced motion",
+    "files": [
+      "docs/screenshots/live/storyboard/epitaph-table-open-{synthetic,atom}.png",
+      "docs/screenshots/live/storyboard/autopsy-table-{synthetic,atom}.png",
+      "docs/screenshots/live/storyboard/kit-status-{synthetic,atom}.png",
+      "docs/screenshots/live/storyboard/proof-valid-{synthetic,atom}.png"
+    ],
+    "atomLookup": "real lookup through the local server; 7 receipts, first receipt wayback (snapshot found)",
+    "proofVerified": "atom proof downloaded in-session: /proof Valid via file input; node scripts/verify-proof.ts reported 7 receipts and evidence verified. Synthetic proof: /proof Valid via paste."
+  },
+  "hooksObserved": "none (no hook instruction arrived in this session; only scripts/ and docs/ were edited)",
+  "mcpUsed": false,
+  "screenReaderPass": false,
+  "videoRecordedOrUploaded": false,
+  "checks": {
+    "npmTest": { "files": 45, "tests": 685, "result": "all passed" },
+    "lint": "passed",
+    "typecheck": "passed (npx next typegen, then npx tsc --noEmit)",
+    "build": "passed",
+    "demoVerify": "passed (before 4/12, after 12/12)",
+    "e2e": "17 checks passed against npx next start -p 3471, server stopped"
+  }
+}

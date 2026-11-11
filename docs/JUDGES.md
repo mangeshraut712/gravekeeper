@@ -1,6 +1,6 @@
 # Judge guide
 
-A map from each judging criterion to evidence in this repository, plus the submission requirements with their real status. Everything here describes `main` as of merge commit `7a55157` (PRs #7 dependency autopsy, #9 proof workbench, #10 performance and share previews, #11 epitaph timeline, #13 review-finding fixes, #12 revival kit export). The revival kit was present in the production JavaScript at https://gravekeeper-drab.vercel.app when checked at 13:06:49 UTC on 2026-11-11, shortly after that merge.
+A map from each judging criterion to evidence in this repository, plus the submission requirements with their real status. Everything here describes `main` as of merge commit `0d944db` (PRs #7 dependency autopsy, #9 proof workbench, #10 performance and share previews, #11 epitaph timeline, #12 revival kit export, #13 review-finding fixes, #14 judge guide and docs, #15 a11y scans of the new panels and demo assets), plus the panel contrast sampling and storyboard stills from branch `feat/contrast-and-storyboard-stills-20261111` where noted. The revival kit was present in the production JavaScript at https://gravekeeper-drab.vercel.app when checked at 13:06:49 UTC on 2026-11-11, shortly after PR #12 merged.
 
 Fastest path: the 60-second walkthrough at the top of [README.md](../README.md#try-it-in-60-seconds), on https://gravekeeper-drab.vercel.app.
 
@@ -43,7 +43,9 @@ Checked on 2026-11-11 (UTC).
 - **Accessibility evidence.** [A11Y_AUDIT.md](A11Y_AUDIT.md): axe in Chromium, Firefox and WebKit found 0 counted violations on the scanned pages and states, plus 4 intentional findings on the deliberately broken Lantern Hill "before" fixture. Contrast over the fog was pixel-sampled (lowest 7.13:1 in the sampled frames). There is also a keyboard path with Escape to cancel, and `role="status"` regions.
 - **Polish measurements.** [PERFORMANCE.md](PERFORMANCE.md) and [LIGHTHOUSE.md](LIGHTHOUSE.md): local lab Lighthouse results, a layout-shift fix (0.0554 to 0.0004 at 375 px) and visible focus on every tab stop.
 - **New panels.** As of 2026-11-11 (branch `feat/a11y-and-demo-assets-20261111`), `npm run a11y` also scans a synthetic signed lookup with the Epitaph, Dependency autopsy and Revival kit panels (collapsed, then with disclosures open, proof verified and kit used) and `/proof` showing a valid and an invalid verdict: 0 counted violations in Chromium, Firefox and WebKit on a local production build. A keyboard-only e2e step covers those panels. Details and limits are in [A11Y_AUDIT.md](A11Y_AUDIT.md#results-panels-and-proof-verdicts-2026-11-11-branch-feata11y-and-demo-assets-20261111).
-- **Limits.** No screen-reader pass. The new panels were scanned with synthetic data only, and contrast was not re-sampled for them. Lighthouse was run on localhost only, not on the deployed site.
+- **Panel contrast.** On branch `feat/contrast-and-storyboard-stills-20261111`, `scripts/contrast-sample.mts --panels` pixel-sampled every text box in the Epitaph, Dependency autopsy and Revival kit panels (synthetic lookup, disclosures open, kit used, local production build, Chromium): lowest 6.74:1, 0 boxes under 4.5:1. Method and limits are in [A11Y_AUDIT.md](A11Y_AUDIT.md#epitaph-dependency-autopsy-and-revival-kit-panels-sampled-2026-11-11-branch-featcontrast-and-storyboard-stills-20261111-chromium-only).
+- **Storyboard stills.** [screenshots/live/storyboard](screenshots/live/storyboard) has the Epitaph table opened, the autopsy table at viewport size, the kit status messages and a `/proof` Valid verdict, each for the synthetic lookup and for a real `atom/atom` lookup on a local production build. Captions are in [screenshots/live/README.md](screenshots/live/README.md).
+- **Limits.** No screen-reader pass. The new panels were scanned and contrast-sampled with synthetic data only, and contrast was sampled in Chromium only. Lighthouse was run on localhost only, not on the deployed site.
 
 ## Innovation
 
@@ -62,5 +64,5 @@ Checked on 2026-11-11 (UTC).
 ## What is not done
 
 - Demo video, blog post and social post: not made. Their URLs are blank in the drafts.
-- Screen-reader pass; contrast re-sampling of the Epitaph, autopsy and kit panels; an OS-level drag test on `/proof`; a scan of a real upstream failure.
+- Screen-reader pass; contrast sampling of the panels with live data or in Firefox and WebKit; an OS-level drag test on `/proof`; a scan of a real upstream failure.
 - Performance measurement of the deployed site.
