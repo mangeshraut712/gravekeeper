@@ -513,3 +513,99 @@ describe("POST /api/resurrect epitaph timeline", () => {
     expect(await verifyProof(body, url)).toBe(true);
   });
 });
+
+describe("POST /api/resurrect CDX snapshot fallback", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const url = "https://github.com/atom/atom";
+
+  function stub(availability: () => unknown, cdx: () => Response | Promise<Response>) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (req: string | URL) => {
+        const href = String(req);
+        if (href.includes("web.archive.org/cdx/")) return cdx();
+        if (href.includes("archive.org/wayback/available")) return availability();
+        return notFound(); // GitHub: not needed for this behaviour
+      }),
+    );
+  }
+
+  it("keeps the availability snapshot untouched when it answers", async () => {
+    stub(() => waybackOk(url), cdxOk);
+    const body = await (await POST(jsonRequest({ url }))).json();
+    expect(body.receipts[0].kind).toBe("wayback");
+    expect(body.wayback.timestamp).toBe("20231015120000");
+    expect(body.wayback).not.toHaveProperty("source");
+    expect(await verifyProof(body, url)).toBe(true);
+  });
+
+  it("fills the snapshot from signed CDX evidence when availability misses", async () => {
+    stub(() => waybackMiss(url), cdxOk);
+    const body = await (await POST(jsonRequest({ url }))).json();
+    expect(body.receipts.map((r: { kind: string }) => r.kind).slice(0, 2)).toEqual([
+      "wayback-miss",
+      "wayback-cdx",
+    ]);
+    expect(body.evidence[0].body).toEqual({ code: "WAYBACK_NO_SNAPSHOT" });
+    expect(body.wayback).toEqual({
+      available: true,
+      url,
+      snapshotUrl: `https://web.archive.org/web/20260101000000/${url}`,
+      timestamp: "20260101000000",
+      status: null,
+      source: "cdx-fallback",
+    });
+    expect(await verifyProof(body, url)).toBe(true);
+  });
+
+  it("rejects a fallback that does not match the signed CDX evidence", async () => {
+    stub(() => waybackMiss(url), cdxOk);
+    const body = await (await POST(jsonRequest({ url }))).json();
+    const other = structuredClone(body);
+    other.wayback.timestamp = "20140622190015";
+    other.wayback.snapshotUrl = `https://web.archive.org/web/20140622190015/${url}`;
+    expect(await verifyProof(other, url)).toBe(false);
+    const dropped = structuredClone(body);
+    dropped.wayback = null;
+    expect(await verifyProof(dropped, url)).toBe(false);
+    const forged = structuredClone(body);
+    delete forged.wayback.source;
+    expect(await verifyProof(forged, url)).toBe(false);
+  });
+
+  it("rejects a snapshot shown on a miss when the capture index is empty", async () => {
+    stub(() => waybackMiss(url), () => new Response("[]", { status: 200 }));
+    const body = await (await POST(jsonRequest({ url }))).json();
+    expect(body.wayback).toBeNull();
+    expect(await verifyProof(body, url)).toBe(true);
+    body.wayback = {
+      available: true,
+      url,
+      snapshotUrl: `https://web.archive.org/web/20260101000000/${url}`,
+      timestamp: "20260101000000",
+      status: null,
+      source: "cdx-fallback",
+    };
+    expect(await verifyProof(body, url)).toBe(false);
+  });
+
+  it("shows no snapshot when the capture index is unavailable", async () => {
+    stub(() => waybackMiss(url), () => new Response("busy", { status: 503 }));
+    const body = await (await POST(jsonRequest({ url }))).json();
+    expect(body.wayback).toBeNull();
+    expect(body.timeline.state).toBe("unavailable");
+    expect(await verifyProof(body, url)).toBe(true);
+  });
+
+  it("keeps the availability failure code when the failure is a timeout", async () => {
+    stub(
+      () => Promise.reject(new DOMException("t", "TimeoutError")),
+      cdxOk,
+    );
+    const body = await (await POST(jsonRequest({ url }))).json();
+    expect(body.receipts[0].kind).toBe("wayback-miss");
+    expect(body.evidence[0].body).toEqual({ code: "NETWORK_TIMEOUT" });
+    expect(body.wayback.source).toBe("cdx-fallback");
+    expect(await verifyProof(body, url)).toBe(true);
+  });
+});

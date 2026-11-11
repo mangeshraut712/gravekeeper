@@ -79,7 +79,10 @@ function snapshotLine(result: ResurrectResponse): string {
   const href = snapshotHref(result.wayback?.snapshotUrl);
   if (!href) return "None found";
   const when = waybackDate(result.wayback?.timestamp);
-  return `[Wayback Machine capture${when ? ` of ${when}` : ""}](${href})`;
+  const link = `[Wayback Machine capture${when ? ` of ${when}` : ""}](${href})`;
+  return result.wayback?.source === "cdx-fallback"
+    ? `${link} (availability service had no snapshot; capture from the latest month in the capture index)`
+    : link;
 }
 
 function repoLink(result: ResurrectResponse): string {

@@ -17,6 +17,7 @@ export function TombstoneCard({
     ?.match(/^(\d{4})(\d{2})(\d{2})/)
     ?.slice(1)
     .join("-");
+  const fromIndex = result.wayback?.source === "cdx-fallback" && snapshot !== null;
   const repoPath = meta
     ? `https://github.com/${encodeURIComponent(meta.owner)}/${encodeURIComponent(meta.repo)}`
     : null;
@@ -99,7 +100,9 @@ export function TombstoneCard({
       </div>
       <p className="mt-4 text-xs leading-5 text-stone-400">
         {snapshot
-          ? "Archived pages may contain outdated or unsafe content."
+          ? (fromIndex
+              ? "The availability service returned no snapshot, so this link is a capture from the latest month in the Internet Archive capture index. "
+              : "") + "Archived pages may contain outdated or unsafe content."
           : "No archive snapshot was returned. It may be unavailable, unarchived, or temporarily unreachable."}
         {meta
           ? " Forking opens GitHub, where you review and confirm with your own account."

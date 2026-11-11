@@ -5,7 +5,7 @@ import {
   isFailureBody,
   isManifestEvidence,
 } from "../lib/deps/autopsy.ts";
-import { buildTimeline, cdxQueryUrl, isCdxEvidence } from "../lib/wayback/timeline.ts";
+import { buildTimeline, cdxQueryUrl, deriveCdxFallback, isCdxEvidence } from "../lib/wayback/timeline.ts";
 
 /** Crypto-only code is browser-safe and does not include a GitHub client or token. */
 export async function verifyProof(
@@ -54,8 +54,8 @@ export async function verifyProof(
             return false;
           break;
         case "wayback-miss":
-          if (result.wayback !== null || !isFailure(evidence.body))
-            return false;
+          // result.wayback is checked after the loop: it is null or the CDX-derived fallback.
+          if (!isFailure(evidence.body)) return false;
           break;
         case "wayback-cdx":
           // The capture index must be the query for this proof's resource.
@@ -105,6 +105,13 @@ export async function verifyProof(
     }
     if (!seen.has("wayback") && !seen.has("wayback-miss")) return false;
     if (seen.has("wayback") && seen.has("wayback-miss")) return false;
+    if (seen.has("wayback-miss")) {
+      // Only the capture index signed in this proof may supply a snapshot after a miss.
+      const expected = seen.has("wayback-cdx")
+        ? deriveCdxFallback(cdxBody, result.receipts[0].url)
+        : null;
+      if (!same(result.wayback ?? null, expected)) return false;
+    }
     if (
       result.github &&
       (!seen.has("github-meta") || !seen.has("github-commits"))

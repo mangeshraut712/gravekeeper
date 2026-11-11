@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { safeSnapshotUrl } from "../../client/proof";
 import fc from "fast-check";
 import {
   CDX_LIMIT,
   buildTimeline,
   cdxQueryUrl,
+  deriveCdxFallback,
   isCdxWildcardUrl,
   isCdxEvidence,
   parseCdxBody,
@@ -190,5 +192,35 @@ describe("timeline properties", () => {
         },
       ),
     );
+  });
+});
+
+describe("deriveCdxFallback", () => {
+  const resource = "https://github.com/atom/atom";
+  const evidence = { limit: CDX_LIMIT, timestamps: ["20140622190015", "20261001120000"] };
+
+  it("uses the latest captured month and a link safeSnapshotUrl accepts", () => {
+    const result = deriveCdxFallback(evidence, resource);
+    expect(result).toEqual({
+      available: true,
+      url: resource,
+      snapshotUrl: `https://web.archive.org/web/20261001120000/${resource}`,
+      timestamp: "20261001120000",
+      status: null,
+      source: "cdx-fallback",
+    });
+    expect(safeSnapshotUrl(result!.snapshotUrl)).toBe(result!.snapshotUrl);
+  });
+
+  it("returns null for no captures, failures and malformed evidence", () => {
+    expect(deriveCdxFallback({ limit: CDX_LIMIT, timestamps: [] }, resource)).toBeNull();
+    expect(deriveCdxFallback({ code: "HTTP_ERROR" }, resource)).toBeNull();
+    expect(deriveCdxFallback({ limit: CDX_LIMIT, timestamps: ["../evil"] }, resource)).toBeNull();
+    expect(deriveCdxFallback(null, resource)).toBeNull();
+  });
+
+  it("does not link an impossible date or an unparseable resource", () => {
+    expect(deriveCdxFallback({ limit: CDX_LIMIT, timestamps: ["20261399000000"] }, resource)).toBeNull();
+    expect(deriveCdxFallback(evidence, "not a url")).toBeNull();
   });
 });

@@ -11,7 +11,7 @@ import { generateKeyPair, exportPublicKey } from "@/lib/receipts/crypto";
 import { buildReceipt } from "@/lib/receipts/chain";
 import { fetchWaybackSnapshot } from "@/lib/wayback/client";
 import { fetchCdxCaptures } from "@/lib/wayback/cdx";
-import { buildTimeline, cdxQueryUrl } from "@/lib/wayback/timeline";
+import { buildTimeline, cdxQueryUrl, deriveCdxFallback } from "@/lib/wayback/timeline";
 import {
   parseGitHubUrl,
   fetchRepoMeta,
@@ -87,7 +87,6 @@ export async function POST(request: NextRequest): Promise<Response> {
       parsed ? fetchRepoMeta(parsed.owner, parsed.repo, request.signal) : null,
     ]);
     if (request.signal.aborted) return canceled();
-    const wayback = waybackResult.ok ? waybackResult.data : null;
     await record(
       waybackResult.ok ? "wayback" : "wayback-miss",
       url,
@@ -97,6 +96,10 @@ export async function POST(request: NextRequest): Promise<Response> {
     const cdxEvidence = cdxResult.ok ? cdxResult.data : { code: cdxResult.code };
     await record("wayback-cdx", cdxQueryUrl(url), cdxEvidence);
     const timeline = buildTimeline(cdxEvidence);
+    // A miss keeps its own receipt; the displayed snapshot may come from the signed capture index.
+    const wayback = waybackResult.ok
+      ? waybackResult.data
+      : deriveCdxFallback(cdxEvidence, url);
     let github: ResurrectResponse["github"] = null;
     let spec: ResurrectResponse["spec"] = null;
     let autopsy: ResurrectResponse["autopsy"] = null;
