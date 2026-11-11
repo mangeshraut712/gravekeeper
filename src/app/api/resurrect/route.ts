@@ -10,6 +10,8 @@ import { normalizePublicUrl } from "@/shared/url";
 import { generateKeyPair, exportPublicKey } from "@/lib/receipts/crypto";
 import { buildReceipt } from "@/lib/receipts/chain";
 import { fetchWaybackSnapshot } from "@/lib/wayback/client";
+import { fetchCdxCaptures } from "@/lib/wayback/cdx";
+import { buildTimeline, cdxQueryUrl } from "@/lib/wayback/timeline";
 import {
   parseGitHubUrl,
   fetchRepoMeta,
@@ -78,9 +80,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       evidence.push({ receiptSeq: receipt.seq, body: payload });
     }
     const parsed = parseGitHubUrl(url);
-    // Archive and metadata are independent. Commits are read only after public metadata succeeds.
-    const [waybackResult, metaResult] = await Promise.all([
+    // Archive, capture index and metadata are independent. Commits are read only after public metadata succeeds.
+    const [waybackResult, cdxResult, metaResult] = await Promise.all([
       fetchWaybackSnapshot(url, request.signal),
+      fetchCdxCaptures(url, request.signal),
       parsed ? fetchRepoMeta(parsed.owner, parsed.repo, request.signal) : null,
     ]);
     if (request.signal.aborted) return canceled();
@@ -90,6 +93,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       url,
       waybackResult.ok ? waybackResult.data : { code: waybackResult.code },
     );
+    // Recorded right after the first receipt so receipts[0] still names the resource.
+    const cdxEvidence = cdxResult.ok ? cdxResult.data : { code: cdxResult.code };
+    await record("wayback-cdx", cdxQueryUrl(url), cdxEvidence);
+    const timeline = buildTimeline(cdxEvidence);
     let github: ResurrectResponse["github"] = null;
     let spec: ResurrectResponse["spec"] = null;
     let autopsy: ResurrectResponse["autopsy"] = null;
@@ -168,6 +175,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       wayback,
       github,
       autopsy,
+      timeline,
       publicKey: await exportPublicKey(publicKey),
     };
     return Response.json(response, {
