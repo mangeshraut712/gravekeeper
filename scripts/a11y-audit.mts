@@ -3,9 +3,12 @@
 //   CHROMIUM_PATH  optional Chromium/Chrome executable (defaults to Playwright's own; chromium only)
 //   --browser / --browsers  engines to scan (default chromium). A browser that cannot launch fails the run.
 //   --lookup       also scan the results state after a real atom/atom lookup (needs network)
-// Always scanned, with /api/resurrect mocked (no network): invalid-URL, server-error, running and canceled states.
+// Always scanned, with /api/resurrect mocked (no network): invalid-URL, server-error, running and canceled states,
+// a synthetic signed lookup (Epitaph, Dependency autopsy, Revival kit), and /proof valid and invalid verdicts.
 import { AxeBuilder } from "@axe-core/playwright";
 import { chromium, firefox, webkit } from "playwright";
+import { buildSyntheticLookup, syntheticRepoUrl } from "./synthetic-lookup.mts";
+import { exportProof } from "../src/client/proof.ts";
 
 const base = process.env.BASE_URL ?? "http://localhost:3000";
 const withLookup = process.argv.includes("--lookup");
@@ -17,6 +20,8 @@ const requested = (flag ? flag.slice(flag.indexOf("=") + 1).split(",") : ["chrom
 for (const b of requested) {
   if (!(b in engines)) throw new Error(`unknown browser "${b}" (use chromium, firefox or webkit)`);
 }
+const synthetic = await buildSyntheticLookup();
+const proofText = exportProof(synthetic as never, syntheticRepoUrl);
 let total = 0;
 const perBrowser: string[] = [];
 for (const engineName of requested as EngineName[]) {
@@ -156,6 +161,68 @@ async function expectStatus(page: import("playwright").Page, text: string, inval
   if (await cancel.count()) throw new Error("Cancel button still present after Escape");
   await settleImpl(page);
   await scan("/ (lookup canceled state)", page);
+  await page.context().close();
+}
+{
+  // 4. Full results state from a SYNTHETIC signed lookup (scripts/synthetic-lookup.mts,
+  // example/abandoned-widget, invented data): Epitaph, Dependency autopsy, revival plan,
+  // receipts and Revival kit all render with data. Disclosures are opened, Verify proof,
+  // Download revival kit and Copy issue body are pressed, and each status message must
+  // appear before axe runs.
+  const ctx = await browser.newContext({ bypassCSP: true, acceptDownloads: true });
+  if (engineName === "chromium") await ctx.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const page = await ctx.newPage();
+  await page.route("**/api/resurrect", (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(synthetic) }));
+  await page.goto(base + "/", { waitUntil: "networkidle" });
+  await page.fill("#resource-url", syntheticRepoUrl);
+  await page.click("button[type=submit]");
+  await page.getByText("Lookup complete").waitFor({ timeout: 15_000 });
+  for (const id of ["epitaph-title", "autopsy-title", "kit-title", "proof-title"]) {
+    await page.locator(`#${id}`).waitFor({ state: "visible" });
+  }
+  if ((await page.locator("#autopsy-table-caption").count()) !== 1) throw new Error("autopsy table missing");
+  await settleImpl(page);
+  await scan("/ (synthetic lookup: Epitaph, autopsy, plan, receipts, kit; collapsed)", page);
+  await page.locator("details").evaluateAll((nodes) => {
+    for (const node of nodes) (node as HTMLDetailsElement).open = true;
+  });
+  await page.getByText("Months with a capture").waitFor({ state: "visible" });
+  await page.getByRole("button", { name: "Verify proof" }).click();
+  await page.getByText(/internally consistent/).first().waitFor({ timeout: 10_000 });
+  const [kitDownload] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "Download revival kit" }).click(),
+  ]);
+  if (kitDownload.suggestedFilename() !== "REVIVAL.md") throw new Error("kit download has the wrong name");
+  await page.locator("#kit-download-status").getByText("REVIVAL.md downloaded").waitFor();
+  await page.getByRole("button", { name: "Copy issue body" }).click();
+  // Clipboard access differs by engine; either outcome is a status message, and an empty region fails.
+  await page.locator("#kit-copy-status").getByText(/Issue body copied|Could not copy/).waitFor({ timeout: 10_000 });
+  await settleImpl(page);
+  await scan("/ (synthetic lookup: all disclosures open, proof verified, kit downloaded, issue body copy status)", page);
+  await ctx.close();
+}
+{
+  // 5. /proof with a verdict: the synthetic lookup's proof file pasted in (valid), then the same
+  // file with one receipt URL changed (invalid). The verdict heading must appear before axe runs.
+  const page = await (await browser.newContext({ bypassCSP: true })).newPage();
+  const verdict = async (text: string, expected: "Valid" | "Invalid") => {
+    await page.fill("#proof-paste", text);
+    await page.getByRole("button", { name: "Verify pasted text" }).click();
+    await page.locator("#proof-result").waitFor({ timeout: 10_000 });
+    const shown = await page.locator("#proof-result").innerText();
+    if (!shown.startsWith(expected)) throw new Error(`/proof expected ${expected}, got: ${shown.slice(0, 60)}`);
+    await settleImpl(page);
+  };
+  await page.goto(base + "/proof", { waitUntil: "networkidle" });
+  await verdict(proofText, "Valid");
+  await scan("/proof (valid synthetic lookup proof)", page);
+  const tampered = JSON.parse(proofText);
+  tampered.receipts[1].url = "https://evil.test/";
+  await page.goto(base + "/proof", { waitUntil: "networkidle" });
+  await verdict(JSON.stringify(tampered), "Invalid");
+  await scan("/proof (tampered proof, invalid)", page);
   await page.context().close();
 }
 await browser.close();
