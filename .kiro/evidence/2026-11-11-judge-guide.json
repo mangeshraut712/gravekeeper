@@ -1,0 +1,51 @@
+{
+  "kind": "kiro-session-metadata",
+  "note": "Metadata only. No transcript, prompts, tokens, environment values or secrets are recorded.",
+  "purpose": "Judge-facing docs: README top section, docs/JUDGES.md, write-up, Devpost draft, demo scripts, KIRO_WORKFLOW corrections",
+  "recordedAt": "2026-11-11",
+  "branch": "docs/judge-guide-20261111",
+  "baseCommit": "129c301",
+  "credits": "recorded by the runner",
+  "exactTokenCountsExposed": false,
+  "wbmUploadPerformed": false,
+  "filesChanged": [
+    "README.md",
+    "docs/JUDGES.md",
+    "docs/KIRO_WORKFLOW.md",
+    "docs/submission/WRITEUP.md",
+    "docs/submission/DEVPOST.md",
+    "docs/DEMO_SCRIPT.md",
+    "KIRO_USAGE.md",
+    ".kiro/evidence/2026-11-11-judge-guide.json"
+  ],
+  "productCodeChanged": false,
+  "factsCheckedReadOnly": {
+    "repoVisibility": "PUBLIC (gh repo view)",
+    "license": "mit (gh repo view licenseInfo)",
+    "kiroIgnored": false,
+    "kiroOnMainViaContentsApi": ["agents", "evidence", "hooks", "settings", "specs", "steering"],
+    "productionHttp200": ["/", "/proof", "/restoration", "/lantern-hill", "/opengraph-image", "/robots.txt", "/sitemap.xml"],
+    "productionLookup": {
+      "url": "https://github.com/atom/atom",
+      "at": "2026-11-11T12:38Z (two calls)",
+      "receiptKinds": ["wayback-miss", "wayback-cdx", "github-meta", "github-commits", "github-manifest", "registry", "spec"],
+      "timelineState": "complete",
+      "autopsyManifest": "package.json"
+    }
+  },
+  "checks": {
+    "npmTest": { "files": 41, "tests": 626, "result": "all passed" },
+    "lint": "passed",
+    "typecheck": "passed (npx next typegen, then npx tsc --noEmit)",
+    "build": "passed",
+    "demoVerify": "passed (before 4/12, after 12/12)",
+    "e2e": "12/12 passed against npx next start -p 3437; server stopped afterwards"
+  },
+  "hooks": "None fired: only docs and .kiro/evidence were edited, and no hook matcher covers them.",
+  "mcp": "No MCP server was used.",
+  "notDone": [
+    "Screenshot refresh",
+    "BLOG_DRAFT.md and SOCIAL_DRAFT.md updates",
+    "Video, blog, social post, Devpost submission (owner only)"
+  ]
+}

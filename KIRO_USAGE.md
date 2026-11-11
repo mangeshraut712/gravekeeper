@@ -303,3 +303,20 @@ Branch `perf/polish-and-share-20261111`, from `4184d6f`. The credit figure for t
 **Limits:** local lab numbers on one machine, simulated mobile throttling, Chromium only for the polish check; the Vercel deployment was not measured; social card rendering on actual networks was not checked; no screen-reader pass.
 
 **Review follow-up (PR #10):** Cursor Bugbot reported that the demo pages inherited the home Twitter text. Reproduced with a failing test, then found with curl that those pages also had no `og:image` / `twitter:image`, because a page-level `openGraph` or `twitter` object replaces the inherited one. Fixed by setting page Twitter text and listing the share images explicitly. After the fix: `npm test` 263 passed, lint, `tsc`, build, e2e and `demo:verify` passed. Codex and Kilo reported no findings.
+
+## Nov 11, 2026 — Judge guide and docs pass (Kiro agent session)
+
+Branch `docs/judge-guide-20261111`, from `main` at `129c301` (PRs #7, #9, #10 and #11 merged). The credit figure for this session is recorded by the runner, not here. No token count or WBM record is claimed. No hook fired in this session (only docs and `.kiro/evidence` were edited, and no hook matcher covers them), and no MCP server was used. No Devpost submission, video, blog publish, or social post was made.
+
+**Kiro-generated (agent wrote and ran these):**
+- README top section rewritten for judges: pitch, a 60-second path on the live app, a feature table with limits for what is on `main`, a Mermaid architecture diagram, setup commands and a "How Kiro built this" section. The existing screenshots and their mocked/live captions are kept; no screenshots were recaptured.
+- `docs/JUDGES.md`: each judging criterion mapped to files and recorded results, plus the submission requirements with their status. The video is pending, the Devpost entry is not submitted, and Best Student Project is not entered.
+- `docs/submission/WRITEUP.md`, `docs/submission/DEVPOST.md` and `docs/DEMO_SCRIPT.md` updated to match the merged features (autopsy, Epitaph, permalinks, `/proof`, share previews) and the evidence files. The demo scripts no longer say the plan ignores dependency files.
+- `docs/KIRO_WORKFLOW.md` corrected against `.kiro/evidence`. Hook statuses now show which hooks were observed. The MCP section now names the `uvx mcp-server-fetch` config and the probe results. The later specs and evidence files are listed. The proof-workbench spec is marked as landing in the same commit as its code (`89a94fa`), not spec-first.
+- Facts checked live and read-only: `gh repo view` (public, MIT detected), `git check-ignore .kiro` (not ignored), the GitHub contents API for `.kiro`, HTTP 200 on seven production paths, and two production `POST /api/resurrect` calls for `atom/atom` at about 12:38 UTC. Both calls returned 7 receipts with a complete timeline and a `package.json` autopsy. The Wayback availability API returned a miss both times.
+
+**Checks:** `npm test` 41 files, 626 tests passed; `npm run lint`; `npx next typegen && npx tsc --noEmit`; `npm run build`; `npm run demo:verify` (4/12 before, 12/12 after); `npm run e2e` against `npx next start -p 3437`, 12/12 passed, server stopped afterwards.
+
+**Hand work:** none beyond the prompt.
+
+**Limits:** PR #12 (revival kit) is open and was not described as merged. `docs/submission/BLOG_DRAFT.md` and `SOCIAL_DRAFT.md` were not updated and still describe the earlier, metadata-only plan. No axe run, screenshot refresh or screen-reader pass was done in this session.
