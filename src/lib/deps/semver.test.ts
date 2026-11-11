@@ -158,6 +158,13 @@ describe("rangeFloor (pypi)", () => {
     expect(classify(rangeFloor("==1.*,>=1.5", "pypi"), "1.5.0", "ok")).toBe("current");
   });
 
+  it("returns no floor when a bound sits outside an ==N.* prefix", () => {
+    expect(rangeFloor("==1.*,>=2.0", "pypi")).toBeNull();
+    expect(rangeFloor("==1.*,==2.0", "pypi")).toBeNull();
+    expect(rangeFloor("==1.2.*,==1.5", "pypi")).toBeNull();
+    expect(rangeFloor("==1.*,==2.*", "pypi")).toBeNull();
+  });
+
   it("property: >=N,!=N.* floors to N+1 and classifies as current against that latest", () => {
     fc.assert(
       fc.property(fc.integer({ min: 0, max: 40 }), (major) => {

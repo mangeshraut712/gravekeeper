@@ -209,6 +209,7 @@ function pypiBumpPastPrefix(prefix: number[]): string | null {
 function pypiFloor(spec: string): string | null {
   let highest: string | null = null;
   const prefixes: number[][] = [];
+  const equalityPrefixes: number[][] = [];
   const exactExclusions: string[] = [];
   const exactPins: string[] = [];
   for (const clause of spec.replace(/^\(|\)$/g, "").split(",")) {
@@ -219,7 +220,15 @@ function pypiFloor(spec: string): string | null {
       const floor = rawVersion.replace(/\.\*$/, "");
       if (!parseVersion(floor)) continue;
       const wildcardEquality = (lower[1] === "==" || lower[1] === "===") && /\.\*$/.test(rawVersion);
-      if ((lower[1] === "==" || lower[1] === "===") && !wildcardEquality) exactPins.push(floor);
+      if (wildcardEquality) {
+        const match = /^(\d+(?:\.\d+)*)\.\*$/.exec(rawVersion);
+        if (match) {
+          const parts = match[1].split(".").map(Number);
+          if (parts.every((n) => Number.isSafeInteger(n))) equalityPrefixes.push(parts);
+        }
+      } else if (lower[1] === "==" || lower[1] === "===") {
+        exactPins.push(floor);
+      }
       if (highest === null || (compareVersions(floor, highest) ?? 0) > 0) highest = floor;
       continue;
     }
@@ -257,8 +266,10 @@ function pypiFloor(spec: string): string | null {
     if ((compareVersions(pin, floor) ?? 0) < 0) return null;
     if (prefixes.some((prefix) => pypiPrefixCovers(prefix, pin))) return null;
     if (exactExclusions.some((v) => (compareVersions(v, pin) ?? 1) === 0)) return null;
+    if (equalityPrefixes.some((prefix) => !pypiPrefixCovers(prefix, pin))) return null;
     return pin;
   }
+  if (equalityPrefixes.some((prefix) => !pypiPrefixCovers(prefix, floor))) return null;
   return floor;
 }
 
