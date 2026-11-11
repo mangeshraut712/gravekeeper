@@ -114,7 +114,7 @@ The verifier checks receipt sequence, predecessor hashes, signatures, evidence d
 
 ## How Kiro was used
 
-See [KIRO_USAGE.md](KIRO_USAGE.md), the committed [.kiro](.kiro) steering/spec/task files, and review metering evidence in [.kiro/evidence](.kiro/evidence). The log distinguishes Kiro-generated work, manual implementation, unsuccessful quota-limited sessions, and Kiro's later read-only review. It does not claim that untested hook or MCP configurations were exercised.
+See [KIRO_USAGE.md](KIRO_USAGE.md), the draft judge write-up in [docs/submission/WRITEUP.md](docs/submission/WRITEUP.md), the committed [.kiro](.kiro) steering/spec/task files, and review metering evidence in [.kiro/evidence](.kiro/evidence). The log distinguishes Kiro-generated work, manual implementation, unsuccessful quota-limited sessions, and Kiro's later read-only review. It does not claim that untested hook or MCP configurations were exercised.
 
 ## License and third-party services
 

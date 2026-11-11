@@ -195,3 +195,5 @@ Branch `feat/judge-ready-a11y-ci-20261111`, from `03c7029`. This run exposed no 
 - Wrote drafts only, under `docs/submission/`: `WRITEUP.md`, `DEVPOST.md`, `BLOG_DRAFT.md`, `SOCIAL_DRAFT.md`. Added a second, longer (~2:30 to 2:45) cut to `docs/DEMO_SCRIPT.md`. No product code changed.
 - Drafts were written from the repo files and this log. Student, startup, Ghost of Kiroween Past and Crew items are left as owner-input blanks and are not claimed.
 - Remaining for Mangesh: record and upload the video, publish the blog, post socially, fill in the URLs, confirm Student eligibility, and submit on Devpost. A screen reader pass is still not done.
+
+**Correction (added later):** the CLI stream-json metadata for the submission-drafts session at 16b6742 showed **2.390755344776119 credits** for the whole session (one credit entry, unit credit). The entry above said no figure was exposed; this is the figure. It is provider-reported credits, not a token count or WBM record.
