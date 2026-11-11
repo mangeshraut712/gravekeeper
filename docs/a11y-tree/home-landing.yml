@@ -1,0 +1,62 @@
+- link "Skip to lookup":
+  - /url: "#lookup"
+- banner:
+  - link "Gravekeeper":
+    - /url: /
+  - navigation "Main navigation":
+    - link "How it works":
+      - /url: "#how-it-works"
+    - link "Source code ↗":
+      - /url: https://github.com/mangeshraut712/gravekeeper
+- main:
+  - paragraph: Digital archaeology for the living web
+  - heading "Good code deserves a second life." [level=1]:
+    - text: Good code deserves
+    - emphasis: a second life.
+  - paragraph: Unearth forgotten websites and abandoned repositories. Recover their history, make a revival plan, and keep a verifiable trail of what you found.
+  - link "Try a real restoration":
+    - /url: /restoration
+  - link "Restore a 1999-style page":
+    - /url: /lantern-hill
+  - region "What shall we bring back?":
+    - heading "What shall we bring back?" [level=2]
+    - text: One URL. A new beginning. Repository or website URL
+    - textbox "Repository or website URL":
+      - /placeholder: https://github.com/owner/forgotten-project
+    - button "Unearth project"
+    - status
+    - paragraph: Public URLs only. Your URL is sent to the Internet Archive and, for GitHub repositories, GitHub. Do not enter private links or secrets. No account needed.
+    - text: Need a starting point?
+    - button "atom/atom"
+    - button "facebookarchive/flux"
+  - region "The excavation":
+    - heading "The excavation" [level=2]
+    - text: No lookups yet
+    - heading "Every abandoned project has a story." [level=3]
+    - paragraph: Enter a URL above to discover its past and figure out what comes next. Your findings will appear here.
+  - region "From forgotten to found":
+    - heading "From forgotten to found" [level=2]
+    - article:
+      - text: 01 /
+      - heading "Unearth the evidence" [level=3]
+      - paragraph: Look for an archived snapshot and read public repository metadata and recent commit history.
+    - article:
+      - text: 02 /
+      - heading "Find a way forward" [level=3]
+      - paragraph: Get a checklist from repository metadata and the versions declared in the root manifest. It is not a security audit; review licenses and vulnerabilities yourself.
+    - article:
+      - text: 03 /
+      - heading "Keep the receipts" [level=3]
+      - paragraph: Download signed, linked records you can verify offline. Evidence of integrity, not proof of authorship.
+- paragraph: Gravekeeper · Built for Kiroween 2026 Open source. No ghosts in the fine print.
+- contentinfo:
+  - navigation "Site":
+    - link "Home":
+      - /url: /
+    - link "Restoration":
+      - /url: /restoration
+    - link "Lantern Hill":
+      - /url: /lantern-hill
+    - link "Check a proof":
+      - /url: /proof
+- alert

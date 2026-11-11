@@ -45,7 +45,7 @@ Checks beyond axe in the same session (Chromium only):
 
 No counted violation was found, so no component was changed. Limits for this pass:
 
-- No screen-reader pass (VoiceOver, NVDA or other) was done. The status regions are checked for existence and text, not for how a screen reader announces them.
+- No real screen-reader pass (VoiceOver, NVDA or other) was done; see the accessibility-tree pass below for what was done instead. The status regions are checked for existence and text, not for how a screen reader announces them.
 - The panels were scanned with synthetic data only. The live `atom/atom` lookup (`--lookup`) was not re-run in this pass, and contrast was not re-sampled for the new panels; their color-contrast nodes are axe "needs review" items, not measured passes.
 - Autopsy notes for partial, truncated and no-manifest states, and the Epitaph loading, empty, unavailable and truncated states, are covered by static-markup tests, not by a browser scan.
 - axe covers part of WCAG 2.1 A/AA. This is not a conformance claim.
@@ -152,9 +152,26 @@ An earlier scan reported one `color-contrast` violation (2.13:1) on the revival-
 
 ### Not covered
 
-- axe finds roughly a third of WCAG issues automatically; this is not a full conformance claim. No screen reader (VoiceOver/NVDA) pass was done.
+- axe finds roughly a third of WCAG issues automatically; this is not a full conformance claim. No screen reader (VoiceOver/NVDA) pass was done; an accessibility-tree dump (below) was.
 - Firefox and WebKit were scanned with axe; no manual testing in them. The error and Cancel states are scanned with a mocked API; a real upstream failure was not scanned. The `Download proof` failure message (shown in its own status region) is covered by a unit test, not an axe scan.
 - Reduced motion: confirmed by code (`motion-reduce:hidden` on fog, `motion-reduce:transition-none` on accordion chevrons, global `prefers-reduced-motion` reset in `globals.css`) and by unit tests for the fog; not visually re-verified in a browser with the OS setting on.
+
+## Accessibility-tree pass (2026-11-11, Chromium, local production build)
+
+This is **not** a VoiceOver, NVDA or JAWS pass. No OS screen reader or OS accessibility feature was started; the browser was headless. `npm run a11y:tree` (`scripts/a11y-tree.mts`) drives Chromium through five states and writes Playwright ARIA snapshots (the roles, accessible names, states and reading order Chromium computes) to [a11y-tree](a11y-tree): the landing page, a synthetic signed lookup (`example/abandoned-widget`, invented data) collapsed and then with every disclosure open, proof verified, revival kit downloaded and issue body copied, and `/proof` empty, Valid and Invalid. The script also fails if an interactive element has no accessible name, a page has other than one `h1`, a heading level jumps by more than one, a verdict word is missing from the tree, or a kit/verification status message is not in the tree. It passed on the final tree.
+
+What the snapshots show:
+
+- Landmarks: one `banner`, one `main`, one `contentinfo` (the site footer, with a labelled `Site` navigation) and the `Main navigation` on the home page. `/proof` has no `banner`, only `main` and the footer. Heading order is `h1`, then `h2`/`h3`/`h4` with no skipped levels in every state.
+- Result sections are labelled `region`s (`Epitaph`, `Dependency autopsy`, `A path back to life`, `Leave a paper trail`, `Take the plan home`). The Epitaph chart is a `figure` whose name carries the busiest year and counts, and its detail table has a caption and row headers. Tables have captions and column headers.
+- Status text is in the tree: `Proof internally consistent: signatures, links, and included data match.`, `REVIVAL.md downloaded. Proof SHA-256 d67dddc27e74…` and `Issue body copied.` on the lookup, and `Valid. The proof is internally consistent.` / `Invalid. Verification failed.` on `/proof`. The Invalid state also gets a `region "Invalid: verification failed"` with an `h2`.
+- Findings, one fixed:
+  1. **Fixed.** Each receipt `<summary>` was exposed as `01wayback3e7e8cd9c226…`: the sequence number, kind and hash fragment were separate inline elements with no space between them, and accessible-name computation does not add one. A static-markup test in `ReceiptChainViewer.test.tsx` failed first; the summary now reads `01 wayback 3e7e8cd9c226…`.
+  2. Not changed. The credit line ("Gravekeeper · Built for Kiroween 2026 / Open source…") on the home page is a bare paragraph outside `main` and outside the footer landmark, so it is the only content not inside a landmark. It is still reachable in browse mode; moving it into the footer is a design change I did not make.
+  3. Not changed. Next.js's empty route announcer shows up as a trailing `alert`; it is framework behaviour.
+  4. Not changed. Chromium exposes the file `<input>` in the `/proof` drop zone as a `button` with the same text as the visible label, so the label text appears twice in the tree. Its name is correct.
+  5. Not changed. On `/proof` after a check, the verdict is announced by the polite status line and is also in the result region's heading, so a reader may hear it twice. The duplication is deliberate (the status line is the live announcement).
+- Limits: Chromium's tree only. It shows what the browser exposes, not what any screen reader says, how it handles live-region timing, or how it navigates tables and disclosures. Firefox and WebKit trees were not dumped. Reading order was judged from the snapshot order (which follows the DOM), not by listening. The data is synthetic; the live-lookup trees were not dumped.
 
 ## Keyboard path (verified with Playwright key events on the built app)
 

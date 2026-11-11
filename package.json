@@ -12,6 +12,7 @@
     "demo:kit": "sh scripts/build-restoration-kit.sh",
     "demo:baseline": "node scripts/verify-restoration.mts --baseline",
     "a11y": "node scripts/a11y-audit.mts",
+    "a11y:tree": "node scripts/a11y-tree.mts",
     "e2e": "node scripts/e2e-smoke.mts",
     "lighthouse": "node scripts/lighthouse.mts"
   },
