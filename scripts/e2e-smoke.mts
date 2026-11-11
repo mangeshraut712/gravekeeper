@@ -18,6 +18,7 @@ import { escapeMarkdown } from "../src/lib/revival/markdown.ts";
 import { generateRevivalSpec } from "../src/lib/spec/generator.ts";
 import { CDX_LIMIT, buildTimeline, cdxQueryUrl } from "../src/lib/wayback/timeline.ts";
 import fixtures from "../src/lib/restoration/fixtures.json" with { type: "json" };
+import { buildSyntheticLookup, syntheticRepoUrl } from "./synthetic-lookup.mts";
 
 const base = process.env.BASE_URL ?? "http://localhost:3000";
 const verifier = new URL("./verify-proof.ts", import.meta.url).pathname;
@@ -286,6 +287,69 @@ await step("revival kit: REVIVAL.md names the downloaded proof's SHA-256 and eve
     assert(markdown.includes(copied), "copied issue body is not the issue section of REVIVAL.md");
     const boxes = copied.split("\n").filter((line) => line.startsWith("- [ ] ")).length;
     assert(boxes === spec.revivalSteps.length, `expected ${spec.revivalSteps.length} checkboxes, saw ${boxes}`);
+  } finally {
+    await ctx.close();
+  }
+});
+
+await step("keyboard only: Epitaph table, autopsy region and revival kit work in reading order with visible focus", async () => {
+  const ctx = await browser.newContext({ acceptDownloads: true });
+  try {
+    await ctx.grantPermissions(["clipboard-read", "clipboard-write"], { origin: new URL(base).origin });
+    const page = await ctx.newPage();
+    const full = await buildSyntheticLookup(); // includes manifest + registry, so the autopsy renders
+    await page.route("**/api/resurrect", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(full) }));
+    await page.goto(base + "/", { waitUntil: "networkidle" });
+    await page.fill("#resource-url", syntheticRepoUrl);
+    await page.keyboard.press("Enter");
+    await page.getByText("Lookup complete").waitFor({ timeout: 15_000 });
+    assert((await page.evaluate(() => document.activeElement?.id)) === "results-title", "focus did not move to the results heading");
+    // Tab from the results heading and record which section each stop belongs to.
+    const stops: { section: string; label: string; visible: boolean }[] = [];
+    for (let i = 0; i < 22; i++) {
+      await page.keyboard.press("Tab");
+      stops.push(await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement;
+        const style = getComputedStyle(el);
+        const visible = (style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0) || style.boxShadow !== "none";
+        return {
+          section: el.closest("section[aria-labelledby]")?.getAttribute("aria-labelledby") ?? "",
+          label: (el.getAttribute("aria-labelledby") ? "region" : el.textContent ?? "").trim().slice(0, 40),
+          visible,
+        };
+      }));
+    }
+    const order = stops.map((s) => s.section).filter((s, i, all) => s && s !== all[i - 1]);
+    const expected = ["resource-title", "epitaph-title", "autopsy-title", "plan-title", "proof-title", "kit-title"];
+    assert(expected.every((id, i) => order.indexOf(id) >= 0 && (i === 0 || order.indexOf(id) > order.indexOf(expected[i - 1]))),
+      `section tab order is ${order.join(" > ")}`);
+    const panelStops = stops.filter((s) => ["epitaph-title", "autopsy-title", "kit-title"].includes(s.section));
+    const hidden = panelStops.filter((s) => !s.visible).map((s) => `${s.section}:${s.label}`);
+    assert(hidden.length === 0, `no visible focus on ${hidden.join(", ")}`);
+    // Epitaph: Enter on the summary opens the table alternative.
+    const summary = page.locator("section[aria-labelledby='epitaph-title'] summary");
+    await summary.focus();
+    await page.keyboard.press("Enter");
+    await page.locator("section[aria-labelledby='epitaph-title'] tbody tr").first().waitFor({ state: "visible" });
+    // Autopsy: the scrolling table region takes focus and is named by its caption.
+    const region = page.locator("section[aria-labelledby='autopsy-title'] [role=region]");
+    await region.focus();
+    assert((await region.getAttribute("aria-labelledby")) === "autopsy-table-caption", "autopsy region is not named by its caption");
+    assert(await region.evaluate((el) => el === document.activeElement), "autopsy table region did not take focus");
+    // Kit: Enter downloads, Space copies; both outcomes are announced in their own region.
+    const kit = page.locator("section[aria-labelledby='kit-title']");
+    await kit.getByRole("button", { name: "Download revival kit" }).focus();
+    const [download] = await Promise.all([page.waitForEvent("download", { timeout: 15_000 }), page.keyboard.press("Enter")]);
+    assert(download.suggestedFilename() === "REVIVAL.md", `unexpected filename ${download.suggestedFilename()}`);
+    await page.locator("#kit-download-status").getByText("REVIVAL.md downloaded.").waitFor({ timeout: 5_000 });
+    assert(await download.path().then((p) => readFile(p, "utf8")).then((md) => md.includes("## Dependency autopsy")),
+      "REVIVAL.md has no Dependency autopsy section");
+    await kit.getByRole("button", { name: "Copy issue body" }).focus();
+    await page.keyboard.press("Space");
+    await page.locator("#kit-copy-status").getByText("Issue body copied.").waitFor({ timeout: 5_000 });
+    assert((await page.locator("#kit-download-status").innerText()).startsWith("REVIVAL.md downloaded."),
+      "copy result replaced the download result");
   } finally {
     await ctx.close();
   }
