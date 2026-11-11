@@ -319,7 +319,7 @@ Branch `fix/review-findings-20261111`, from main `7c2973f`. The credit figure fo
 - Rejected with reasons in the review file: rate limiting (no server storage, deployment-level), dist-tag note wording (would break existing proofs), 403-as-not-found (intended), `NETWORK_TIMEOUT` labelling (proof format), PreviewFrame poll, PyPI body size, and `verifyProof` hardening (documented trust limit).
 - `node_modules` in this worktree was a symlink to another checkout, which Turbopack refused to resolve. Only the symlink was removed, and `npm ci` was run locally.
 
-**Checks run:** `npm test` (35 files, 535 passed), `npm run lint`, `npx next typegen && npx tsc --noEmit`, `npm run build`, `npm run demo:verify` (4/12 before, 12/12 after), and, against `next start` on ports 3457/3458, `npm run e2e` (all passed) and `npm run a11y` (Chromium, 0 counted violations, plus the 4 intentional findings on the "before" fixture).
+**Checks run:** `npm test` (35 files, 535 passed), `npm run lint`, `npx next typegen && npx tsc --noEmit`, `npm run build`, `npm run demo:verify` (4/12 before, 12/12 after), and, against `next start` on ports 3457/3458, `npm run e2e` (all passed) and `npm run a11y` (Chromium, 0 counted violations, plus the 4 intentional findings on the "before" fixture). After merging `origin/main` (`129c301`, PRs #9 and #11) every check was run again: `npm test` (41 files, 649 passed), lint, `tsc`, build, `demo:verify` (4/12 before, 12/12 after), e2e and a11y on port 3459. All passed.
 
 **Hooks, observed:** after each `src/` save, the `keep-tasks-in-sync` prompt arrived. No unchecked `tasks.md` item was completed, so `tasks.md` was not changed. The `npm test` save hook's output was not attached, so its result was not observed; tests were run by hand.
 
