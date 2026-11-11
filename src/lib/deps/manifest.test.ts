@@ -175,6 +175,19 @@ describe("repeated PyPI requirements", () => {
     expect(data.packages[0]?.spec.startsWith(">=1.0.0")).toBe(true);
     expect(data.skippedLines).toBeGreaterThan(0);
   });
+
+  it("merges a late repeat in a large unique list without quadratic cost", () => {
+    const count = 8_000;
+    const lines = Array.from({ length: count }, (_, i) => `pkg-${String(i).padStart(4, "0")}`);
+    lines.push("pkg-0000>=2.0");
+    const started = Date.now();
+    const data = ok(parseRequirementsTxt(lines.join("\n")));
+    expect(Date.now() - started).toBeLessThan(1_000);
+    expect(data.totalDeclared).toBe(count);
+    expect(data.truncated).toBe(true);
+    expect(data.packages[0]).toEqual({ name: "pkg-0000", spec: ">=2.0", group: "requirements" });
+    expect(data.packages).toHaveLength(MAX_PACKAGES);
+  });
 });
 
 describe("parsePyprojectToml", () => {

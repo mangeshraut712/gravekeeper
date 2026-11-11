@@ -102,9 +102,11 @@ function addOrMergePypi(
   requirement: { name: string; spec: string },
   group: DeclaredDependency["group"],
   skipped: { n: number },
+  byName: Map<string, number>,
 ): void {
-  const index = all.findIndex((pkg) => pkg.name === requirement.name);
-  if (index === -1) {
+  const index = byName.get(requirement.name);
+  if (index === undefined) {
+    byName.set(requirement.name, all.length);
     all.push({ ...requirement, group });
     return;
   }
@@ -131,6 +133,7 @@ export function parseRequirementsTxt(text: string): Result<ParsedManifest> {
   const logical = text.replace(/^\uFEFF/, "").replace(/\\\r?\n/g, " ").split(/\r?\n/);
   const all: DeclaredDependency[] = [];
   const skipped = { n: 0 };
+  const byName = new Map<string, number>();
   for (const raw of logical) {
     const line = raw.replace(/(^|\s)#.*$/, "").trim();
     if (!line) continue;
@@ -139,7 +142,7 @@ export function parseRequirementsTxt(text: string): Result<ParsedManifest> {
       skipped.n++;
       continue;
     }
-    addOrMergePypi(all, requirement, "requirements", skipped);
+    addOrMergePypi(all, requirement, "requirements", skipped, byName);
   }
   return { ok: true, data: finish("pypi", all, skipped.n) };
 }
@@ -190,13 +193,14 @@ export function parsePyprojectToml(text: string): Result<ParsedManifest> {
   if (!entries) return parseError("pyproject.toml [project].dependencies is not a string array.");
   const all: DeclaredDependency[] = [];
   const skipped = { n: 0 };
+  const byName = new Map<string, number>();
   for (const entry of entries) {
     const requirement = parseRequirement(entry);
     if (!requirement || !withinLimits(requirement.name, requirement.spec)) {
       skipped.n++;
       continue;
     }
-    addOrMergePypi(all, requirement, "project", skipped);
+    addOrMergePypi(all, requirement, "project", skipped, byName);
   }
   return { ok: true, data: finish("pypi", all, skipped.n) };
 }
