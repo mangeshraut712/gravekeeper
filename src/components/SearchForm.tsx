@@ -6,6 +6,29 @@ import type { ResurrectResponse } from "@/types";
 import { normalizePublicUrl } from "@/shared/url";
 import { button, primary } from "./styles";
 
+const LOOKUP_FAILED = "The lookup failed. Please try again.";
+const INCOMPLETE = "The server returned an incomplete response. Please retry.";
+
+/**
+ * Turn a /api/resurrect response into a lookup result, or throw an Error whose
+ * message is safe to show. Non-JSON bodies (platform timeout or error pages) never
+ * surface a raw JSON SyntaxError.
+ */
+export async function readLookupResponse(response: Response): Promise<ResurrectResponse> {
+  const data: unknown = await response.json().catch(() => null);
+  const record = typeof data === "object" && data !== null ? (data as Record<string, unknown>) : null;
+  if (!response.ok)
+    throw new Error(typeof record?.error === "string" ? record.error : LOOKUP_FAILED);
+  if (
+    !record ||
+    !Array.isArray(record.receipts) ||
+    !Array.isArray(record.evidence) ||
+    typeof record.publicKey !== "string"
+  )
+    throw new Error(INCOMPLETE);
+  return record as unknown as ResurrectResponse;
+}
+
 /** Lookup form. Owns request state; reports results to the wrapper. Escape cancels a running lookup. */
 export function SearchForm({
   onLoadingChange,
@@ -16,18 +39,38 @@ export function SearchForm({
 }) {
   const [url, setUrl] = useState("");
   const [error, setError] = useState("");
+  // Only a failed URL validation marks the field invalid; cancel and server errors do not.
+  const [invalid, setInvalid] = useState(false);
   const [loading, setLoadingState] = useState(false);
   const pending = useRef<AbortController | null>(null);
+  const input = useRef<HTMLInputElement>(null);
+  const cancelButton = useRef<HTMLButtonElement>(null);
+  const wasLoading = useRef(false);
   function setLoading(value: boolean) {
     setLoadingState(value);
     onLoadingChange(value);
   }
   useEffect(() => () => pending.current?.abort(), []);
+  // The input and submit button are disabled while loading, which would drop keyboard
+  // focus to <body>. Move it to Cancel, and back to the input when the lookup ends
+  // unless something else (the results heading) has taken focus.
+  useEffect(() => {
+    if (loading) {
+      wasLoading.current = true;
+      cancelButton.current?.focus();
+      return;
+    }
+    if (!wasLoading.current) return;
+    wasLoading.current = false;
+    const active = document.activeElement;
+    if (!active || active === document.body) input.current?.focus();
+  }, [loading]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending.current) return;
     const normalized = normalizePublicUrl(url);
     if (!normalized) {
+      setInvalid(true);
       setError(
         "Enter a public HTTP(S) URL without credentials, query strings, or local addresses.",
       );
@@ -36,6 +79,7 @@ export function SearchForm({
     const controller = new AbortController();
     pending.current = controller;
     setLoading(true);
+    setInvalid(false);
     setError("");
     onResult(null, normalized);
     const timeout = setTimeout(() => controller.abort("timeout"), 35_000);
@@ -46,23 +90,9 @@ export function SearchForm({
         body: JSON.stringify({ url: normalized }),
         signal: controller.signal,
       });
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(
-          typeof data.error === "string"
-            ? data.error
-            : "The lookup failed. Please try again.",
-        );
-      if (
-        !Array.isArray(data.receipts) ||
-        !Array.isArray(data.evidence) ||
-        typeof data.publicKey !== "string"
-      )
-        throw new Error(
-          "The server returned an incomplete response. Please retry.",
-        );
+      const data = await readLookupResponse(response);
       if (pending.current !== controller) return;
-      onResult(data as ResurrectResponse, normalized);
+      onResult(data, normalized);
     } catch (cause) {
       if (pending.current !== controller) return;
       setError(
@@ -107,6 +137,7 @@ export function SearchForm({
         </label>
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
+            ref={input}
             id="resource-url"
             type="url"
             name="url"
@@ -115,7 +146,7 @@ export function SearchForm({
             placeholder="https://github.com/owner/forgotten-project"
             maxLength={2048}
             disabled={loading}
-            aria-invalid={Boolean(error)}
+            aria-invalid={invalid}
             aria-describedby="lookup-privacy lookup-error"
             required
             className="min-h-12 min-w-0 flex-1 rounded-md border border-stone-600 bg-[#10140e] px-4 font-mono text-sm text-stone-100 placeholder:text-stone-400 disabled:opacity-60"
@@ -132,6 +163,7 @@ export function SearchForm({
             </button>
             {loading && (
               <button
+                ref={cancelButton}
                 type="button"
                 onClick={cancel}
                 className={`${button} min-h-12`}
@@ -174,6 +206,7 @@ export function SearchForm({
             onClick={() => {
               setUrl(example);
               setError("");
+              setInvalid(false);
             }}
             className="min-h-8 font-mono text-stone-300 underline decoration-stone-600 underline-offset-4 hover:text-amber-200 disabled:opacity-50"
           >
