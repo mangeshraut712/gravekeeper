@@ -150,20 +150,21 @@ Implementation note (Nov 6, 2026 UTC): the UI is consolidated in `src/components
 ---
 
 ### Task 14 — FogOverlay and ambient effects (`src/components/FogOverlay.tsx`)
-- [ ] `'use client'` Client Component.
-- [ ] CSS keyframe animation for drifting fog using Tailwind `@keyframes` in globals.css.
-- [ ] Hidden via `motion-reduce:hidden` (US-07 AC-3).
-- [ ] `aria-hidden="true"` (US-07 AC-2).
+- [x] `'use client'` Client Component.
+- [x] CSS keyframe animation for drifting fog using Tailwind `@keyframes` in globals.css.
+- [x] Hidden via `motion-reduce:hidden` (US-07 AC-3).
+- [x] `aria-hidden="true"` (US-07 AC-2).
 - **Refs:** US-07
 
 ---
 
 ### Task 15 — Home page assembly (`src/app/page.tsx`)
 - [x] Server Component page.
-- [ ] Import and compose: `FogOverlay`, `SearchForm`, `TombstoneCard`, `ReceiptChainViewer`, `RevivalSpecPanel`.
+- [x] Import and compose `FogOverlay` on the home page. Search, tombstone, receipts, and revival plan still live in `Gravekeeper.tsx` rather than as separate files.
+- [ ] Extract `SearchForm`, `TombstoneCard`, `ReceiptChainViewer`, and `RevivalSpecPanel` into their own files.
 - [ ] Manage result state via a `'use client'` wrapper if needed (or use URL search params for SSR-friendly state).
 - [x] Haunted graveyard layout: dark background, tombstone grid, candlelight amber accents.
-- [ ] `<title>` and Open Graph metadata via Next.js `export const metadata`.
+- [x] `<title>` and Open Graph metadata via Next.js `export const metadata` in `src/app/layout.tsx`.
 - **Refs:** US-01, US-07
 
 ---

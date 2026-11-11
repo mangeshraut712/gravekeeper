@@ -1,0 +1,27 @@
+{
+  "purpose": "Bounded read-only review of FogOverlay, home page composition, and fog CSS",
+  "recordedAt": "2026-11-10T14:51:07+00:00",
+  "source": "Kiro CLI stream-json metadata",
+  "engine": "v2",
+  "sessionId": "d07e79e4-2ad2-40da-9bfe-7d3c815c1d88",
+  "agent": "gravekeeper-review",
+  "meteringUsage": [
+    {
+      "value": 0.08405773300165836,
+      "unit": "credit",
+      "unitPlural": "credits"
+    },
+    {
+      "value": 0.3214796817578772,
+      "unit": "credit",
+      "unitPlural": "credits"
+    }
+  ],
+  "reportedCreditsTotal": 0.4055374147595356,
+  "turnDurationMs": 24427,
+  "exactTokenCountsExposed": false,
+  "wbmUploadPerformed": false,
+  "scope": "Source review only; Kiro did not run tests, render the page, or change files.",
+  "conclusion": "No bugs found in the five reviewed files. Suggested tightening the home-page markup assertions so aria-hidden and reduced-motion classes are bound to the fog overlay tag, and noting that use client is unnecessary but harmless.",
+  "timestampSource": "Kiro runFinished metadata and local session end time, converted to UTC"
+}
