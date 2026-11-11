@@ -210,12 +210,14 @@ function pypiFloor(spec: string): string | null {
   let highest: string | null = null;
   const prefixes: number[][] = [];
   const exactExclusions: string[] = [];
+  const exactPins: string[] = [];
   for (const clause of spec.replace(/^\(|\)$/g, "").split(",")) {
     const text = clause.trim();
     const lower = /^(===|==|~=|>=|>)\s*(\S+)$/.exec(text);
     if (lower) {
       const floor = lower[2].replace(/\.\*$/, "");
       if (!parseVersion(floor)) continue;
+      if (lower[1] === "==" || lower[1] === "===") exactPins.push(floor);
       if (highest === null || (compareVersions(floor, highest) ?? 0) > 0) highest = floor;
       continue;
     }
@@ -231,6 +233,11 @@ function pypiFloor(spec: string): string | null {
     if (parseVersion(raw.replace(/\.\*$/, ""))) exactExclusions.push(raw.replace(/\.\*$/, ""));
   }
   if (highest === null) return null;
+  const uniquePins: string[] = [];
+  for (const pin of exactPins) {
+    if (!uniquePins.some((existing) => (compareVersions(existing, pin) ?? 1) === 0)) uniquePins.push(pin);
+  }
+  if (uniquePins.length > 1) return null;
   let floor: string = highest;
   for (let i = 0; i < 8; i++) {
     const covering = prefixes.find((prefix) => pypiPrefixCovers(prefix, floor));
@@ -243,6 +250,13 @@ function pypiFloor(spec: string): string | null {
   if (prefixes.some((prefix) => pypiPrefixCovers(prefix, floor))) return null;
   // Exact != that lands on the floor cannot be bumped reliably.
   if (exactExclusions.some((v) => (compareVersions(v, floor) ?? 1) === 0)) return null;
+  if (uniquePins.length === 1) {
+    const pin = uniquePins[0];
+    if ((compareVersions(pin, floor) ?? 0) < 0) return null;
+    if (prefixes.some((prefix) => pypiPrefixCovers(prefix, pin))) return null;
+    if (exactExclusions.some((v) => (compareVersions(v, pin) ?? 1) === 0)) return null;
+    return pin;
+  }
   return floor;
 }
 

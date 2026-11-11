@@ -6,6 +6,7 @@ import {
   parseManifest,
   parsePackageJson,
   parsePyprojectToml,
+  mergePypiSpecs,
   parseRequirement,
   parseRequirementsTxt,
 } from "./manifest";
@@ -127,7 +128,7 @@ describe("parseRequirementsTxt", () => {
     const data = ok(parseRequirementsTxt(text));
     expect(data.ecosystem).toBe("pypi");
     expect(data.packages).toEqual([
-      { name: "django", spec: "==3.2.4", group: "requirements" },
+      { name: "django", spec: "==3.2.4,>=4", group: "requirements" },
       { name: "requests", spec: ">=2.0,<3", group: "requirements" },
       { name: "numpy", spec: "", group: "requirements" },
     ]);
@@ -141,6 +142,28 @@ describe("parseRequirementsTxt", () => {
   it("caps at the package limit", () => {
     const text = Array.from({ length: 45 }, (_, i) => `pkg${i}==1.0`).join("\n");
     expect(ok(parseRequirementsTxt(text))).toMatchObject({ totalDeclared: 45, truncated: true });
+  });
+});
+
+describe("mergePypiSpecs", () => {
+  it("joins distinct clauses and keeps a bare name from weakening a bound", () => {
+    expect(mergePypiSpecs(">=1.0", ">=4.0")).toBe(">=1.0,>=4.0");
+    expect(mergePypiSpecs(">=1.0", "")).toBe(">=1.0");
+    expect(mergePypiSpecs("", ">=4.0")).toBe(">=4.0");
+    expect(mergePypiSpecs(">=1.0", ">=1.0")).toBe(">=1.0");
+  });
+});
+
+describe("repeated PyPI requirements", () => {
+  it("combines unconditional constraints for the same project", () => {
+    const data = ok(parseRequirementsTxt("Django>=1.0\nDjango>=4.0\n"));
+    expect(data.packages).toEqual([{ name: "django", spec: ">=1.0,>=4.0", group: "requirements" }]);
+  });
+
+  it("does the same in pyproject.toml", () => {
+    const text = '[project]\ndependencies = ["Django>=1.0", "Django>=4.0"]\n';
+    const data = ok(parsePyprojectToml(text));
+    expect(data.packages).toEqual([{ name: "django", spec: ">=1.0,>=4.0", group: "project" }]);
   });
 });
 

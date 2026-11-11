@@ -88,6 +88,24 @@ export function normalizePypiName(name: string): string {
   return name.toLowerCase().replace(/[-_.]+/g, "-");
 }
 
+/** Join repeated requirement lines for the same project, e.g. >=1.0 then >=4.0. */
+export function mergePypiSpecs(current: string, incoming: string): string {
+  const a = current.replace(/^\(|\)$/g, "").trim();
+  const b = incoming.replace(/^\(|\)$/g, "").trim();
+  if (!a) return b;
+  if (!b) return a;
+  return a === b ? a : `${a},${b}`;
+}
+
+function addOrMergePypi(all: DeclaredDependency[], requirement: { name: string; spec: string }, group: DeclaredDependency["group"]): void {
+  const index = all.findIndex((pkg) => pkg.name === requirement.name);
+  if (index === -1) {
+    all.push({ ...requirement, group });
+    return;
+  }
+  all[index] = { ...all[index], spec: mergePypiSpecs(all[index].spec, requirement.spec) };
+}
+
 /** Parse one PEP 508 requirement. Returns null for direct references and anything unparseable. */
 export function parseRequirement(line: string): { name: string; spec: string } | null {
   const withoutMarker = line.split(";")[0].trim();
@@ -101,7 +119,6 @@ export function parseRequirement(line: string): { name: string; spec: string } |
 
 export function parseRequirementsTxt(text: string): Result<ParsedManifest> {
   const logical = text.replace(/^\uFEFF/, "").replace(/\\\r?\n/g, " ").split(/\r?\n/);
-  const seen = new Set<string>();
   const all: DeclaredDependency[] = [];
   let skipped = 0;
   for (const raw of logical) {
@@ -112,9 +129,7 @@ export function parseRequirementsTxt(text: string): Result<ParsedManifest> {
       skipped++;
       continue;
     }
-    if (seen.has(requirement.name)) continue;
-    seen.add(requirement.name);
-    all.push({ ...requirement, group: "requirements" });
+    addOrMergePypi(all, requirement, "requirements");
   }
   return { ok: true, data: finish("pypi", all, skipped) };
 }
@@ -163,7 +178,6 @@ export function parsePyprojectToml(text: string): Result<ParsedManifest> {
   if (!key) return { ok: true, data: finish("pypi", [], 0) };
   const entries = readStringArray(table, key.index + key[0].length - 1);
   if (!entries) return parseError("pyproject.toml [project].dependencies is not a string array.");
-  const seen = new Set<string>();
   const all: DeclaredDependency[] = [];
   let skipped = 0;
   for (const entry of entries) {
@@ -172,9 +186,7 @@ export function parsePyprojectToml(text: string): Result<ParsedManifest> {
       skipped++;
       continue;
     }
-    if (seen.has(requirement.name)) continue;
-    seen.add(requirement.name);
-    all.push({ ...requirement, group: "project" });
+    addOrMergePypi(all, requirement, "project");
   }
   return { ok: true, data: finish("pypi", all, skipped) };
 }

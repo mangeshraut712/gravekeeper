@@ -142,6 +142,16 @@ describe("rangeFloor (pypi)", () => {
     expect(rangeFloor(">=1.0,!=1.0", "pypi")).toBeNull();
   });
 
+  it.each(["==1.0,==4.0", "==3.2.4,>=4", "===1.0,==2.0"])(
+    "returns no floor for unsatisfiable exact pins: %s",
+    (spec) => expect(rangeFloor(spec, "pypi")).toBeNull(),
+  );
+
+  it("keeps the stronger lower bound when repeated constraints are combined", () => {
+    expect(rangeFloor(">=1.0,>=4.0", "pypi")).toBe("4.0");
+    expect(classify(rangeFloor(">=1.0,>=4.0", "pypi"), "4.0.0", "ok")).toBe("current");
+  });
+
   it("property: >=N,!=N.* floors to N+1 and classifies as current against that latest", () => {
     fc.assert(
       fc.property(fc.integer({ min: 0, max: 40 }), (major) => {
