@@ -32,9 +32,9 @@ Complete in order. Each task lists the requirements it covers (see `requirements
 ## Phase 2 — IO
 
 ### Task 5 — Manifest fetch (`fetchRootManifest` in `src/lib/github/client.ts`)
-- [ ] Probe `package.json`, `requirements.txt`, `pyproject.toml` on the default branch via the raw contents API, with the optional token header, 10 s timeout and cancel signal.
-- [ ] Map 404 on all → `MANIFEST_NOT_FOUND`; rate limit → `GITHUB_RATE_LIMIT`; size cap → `PARSE_ERROR`.
-- [ ] Mocked-fetch tests.
+- [x] Probe `package.json`, `requirements.txt`, `pyproject.toml` on the default branch via the raw contents API, with the optional token header, 10 s timeout and cancel signal.
+- [x] Map 404 on all → `MANIFEST_NOT_FOUND`; rate limit → `GITHUB_RATE_LIMIT`; size cap → `PARSE_ERROR`.
+- [x] Mocked-fetch tests.
 - **Refs:** DA-01
 
 ### Task 6 — Registry client (`src/lib/deps/registry.ts`)

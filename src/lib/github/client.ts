@@ -8,8 +8,9 @@
  * All functions return a typed Result<T> — never throw.
  */
 
-import type { Commit, GitHubRepoMeta, Result } from "@/types/index";
+import type { Commit, GitHubRepoMeta, ManifestPath, Result } from "@/types/index";
 import { normalizePublicUrl, isGitHubRepository } from "@/shared/url";
+import { sha256hex } from "@/lib/receipts/chain";
 
 const GITHUB_API_BASE = "https://api.github.com";
 const TIMEOUT_MS = 10_000;
@@ -361,6 +362,103 @@ export async function fetchCommits(
   }));
 
   return { ok: true, data: commits };
+}
+
+// ---------------------------------------------------------------------------
+// fetchRootManifest
+// ---------------------------------------------------------------------------
+
+export const MANIFEST_PATHS: readonly ManifestPath[] = [
+  "package.json",
+  "requirements.txt",
+  "pyproject.toml",
+];
+export const MAX_MANIFEST_BYTES = 512 * 1024;
+
+export type RootManifest = {
+  path: ManifestPath;
+  url: string;
+  text: string;
+  rawSha256: string;
+};
+
+function isRateLimited(response: Response): boolean {
+  return (
+    response.status === 429 ||
+    (response.status === 403 &&
+      (response.headers?.get("x-ratelimit-remaining") === "0" ||
+        Boolean(response.headers?.get("retry-after"))))
+  );
+}
+
+/** Base URL of the contents API for a repository (used as the receipt URL when no manifest is found). */
+export function contentsUrl(owner: string, repo: string): string {
+  return `${GITHUB_API_BASE}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents`;
+}
+
+/**
+ * Read the first root manifest found on the default branch, in the order
+ * package.json, requirements.txt, pyproject.toml, via the raw contents API.
+ */
+export async function fetchRootManifest(
+  owner: string,
+  repo: string,
+  branch: string,
+  signal?: AbortSignal,
+): Promise<Result<RootManifest>> {
+  for (const path of MANIFEST_PATHS) {
+    const url = `${contentsUrl(owner, repo)}/${path}?ref=${encodeURIComponent(branch)}`;
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        headers: { ...baseHeaders(), Accept: "application/vnd.github.raw+json" },
+        signal: signal
+          ? AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT_MS)])
+          : AbortSignal.timeout(TIMEOUT_MS),
+      });
+    } catch (err) {
+      return fetchError(err) as Result<RootManifest>;
+    }
+    if (response.status === 404) continue;
+    if (isRateLimited(response))
+      return {
+        ok: false,
+        error: "GitHub API rate limit exceeded.",
+        code: "GITHUB_RATE_LIMIT",
+      };
+    if (!response.ok)
+      return {
+        ok: false,
+        error: `GitHub API returned HTTP ${response.status}`,
+        code: "HTTP_ERROR",
+      };
+    const declared = Number(response.headers?.get("content-length") ?? 0);
+    if (declared > MAX_MANIFEST_BYTES)
+      return { ok: false, error: `${path} is larger than 512 KiB.`, code: "PARSE_ERROR" };
+    let bytes: Uint8Array;
+    try {
+      bytes = new Uint8Array(await response.arrayBuffer());
+    } catch (err) {
+      if (err instanceof DOMException) return fetchError(err) as Result<RootManifest>;
+      return { ok: false, error: `Failed to read ${path}.`, code: "PARSE_ERROR" };
+    }
+    if (bytes.byteLength > MAX_MANIFEST_BYTES)
+      return { ok: false, error: `${path} is larger than 512 KiB.`, code: "PARSE_ERROR" };
+    return {
+      ok: true,
+      data: {
+        path,
+        url,
+        text: new TextDecoder().decode(bytes),
+        rawSha256: await sha256hex(bytes),
+      },
+    };
+  }
+  return {
+    ok: false,
+    error: "No package.json, requirements.txt or pyproject.toml at the repository root.",
+    code: "MANIFEST_NOT_FOUND",
+  };
 }
 
 // ---------------------------------------------------------------------------
