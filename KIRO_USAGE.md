@@ -368,3 +368,11 @@ Branch `docs/judge-guide-20261111`, from `main` at `129c301` (PRs #7, #9, #10 an
 ## Nov 11, 2026 — Judge guide follow-up (hand work)
 
 Not a Kiro session. After PR #12 (`7a55157`) and PR #13 merged, this branch was updated with a normal merge of `origin/main` (every `KIRO_USAGE.md` entry kept). The 60-second path and both demo scripts said **Resurrect**; the live button is **Unearth project**, so those labels were corrected. The revival kit is now described as a merged feature (it was in the production JavaScript at 13:06:49 UTC). Credit usage is not claimed here. Checks after the edit: `npm test` 44 files, 682 passed; lint; typegen + tsc; build; `demo:verify` (4/12 before, 12/12 after). No Devpost submission, video upload, blog publish, or social post was made.
+
+## Nov 11, 2026 — Judge guide, second pass after the kit merge (Kiro agent session)
+
+Same Kiro session as the judge-guide entry above. The credit figure is recorded by the runner. No hook fired and no MCP server was used. No Devpost submission, video, blog publish, or social post was made.
+
+- While PR #14 CI ran, the hand commit above (`dd8a700`) was pushed to this branch. The agent fast-forwarded to it with `git pull --no-rebase` (no force-push, all `KIRO_USAGE.md` entries kept). The agent's first drafts had used the wrong button label (**Resurrect**); `dd8a700` corrected it.
+- Kiro then updated `docs/KIRO_WORKFLOW.md` and `docs/submission/WRITEUP.md` for what PRs #12 and #13 added: the `revival-kit` spec (`f52061d`), the Nov 11 `gravekeeper-review` run (`2026-11-11-review-findings.json`, 5.63 credits; findings fixed, partly fixed or rejected per that file), the two new evidence files, and the hook counts recorded in them. `.kiro/evidence/2026-11-11-judge-guide.json` gained a `followUp` note.
+- Checks on the merged tree: `npm test` 44 files, 682 passed; lint; typegen + tsc; build; `demo:verify` (4/12 before, 12/12 after); `npm run e2e` against `npx next start -p 3438`, 16 checks passed, server stopped.

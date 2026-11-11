@@ -47,5 +47,10 @@
     "Screenshot refresh",
     "BLOG_DRAFT.md and SOCIAL_DRAFT.md updates",
     "Video, blog, social post, Devpost submission (owner only)"
-  ]
+  ],
+  "followUp": {
+    "context": "While PR #14 CI ran, PRs #12 and #13 merged and a hand commit (dd8a700) merged main into this branch, corrected the button label to 'Unearth project' and described the revival kit as merged. The agent fast-forwarded to it (no force-push).",
+    "agentEdits": "KIRO_WORKFLOW.md and WRITEUP.md: revival-kit spec, the Nov 11 review run and its evidence file, updated hook counts.",
+    "missedByAgent": "The first README and demo-script drafts said 'Resurrect'; the live button label is 'Unearth project'. Fixed in dd8a700 by hand."
+  }
 }
