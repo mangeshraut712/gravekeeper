@@ -53,7 +53,7 @@ The lookup row above was re-run on 2026-11-11 against the production build after
 
 ### Scan coverage for error and cancel states
 
-These run on every `npm run a11y` (no flag, no network). `/api/resurrect` is mocked with Playwright `page.route`, so the states are deterministic. The script throws, and the run fails, if a state is not actually reached: it waits for the exact status text, checks `aria-invalid="true"` on the input, checks the Cancel button is visible while running and gone after Escape, and checks the invalid-URL case made no request.
+These run on every `npm run a11y` (no flag, no network). `/api/resurrect` is mocked with Playwright `page.route`, so the states are deterministic. The script throws, and the run fails, if a state is not actually reached: it waits for the exact status text, checks `aria-invalid` on the input (`"true"` only for the invalid-URL state, `"false"` after a server error or cancel, since the Nov 11 review fix), checks the Cancel button is visible while running and gone after Escape, and checks the invalid-URL case made no request.
 
 - Invalid URL ("not a url"): status text "Enter a public HTTP(S) URL…".
 - Server error: mocked 404 with a fixed JSON error message shown in the status region.
