@@ -81,7 +81,17 @@ export function parsePackageJson(text: string): Result<ParsedManifest> {
 const OPERATOR = "(?:===|==|~=|!=|<=|>=|<|>)";
 const CLAUSE = `${OPERATOR}\\s*[A-Za-z0-9.*+!_-]+`;
 const SPECIFIER_RE = new RegExp(`^\\(?\\s*(?:${CLAUSE}(?:\\s*,\\s*${CLAUSE})*)?\\s*\\)?$`);
-const REQUIREMENT_RE = /^([A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)\s*(?:\[[^\]]*\])?\s*(.*)$/;
+// `[\s\S]*` (not `.*`) so a stray \r or \u2028 cannot fail the tail and force
+// quadratic backtracking through the name group.
+const REQUIREMENT_RE = /^([A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)\s*(?:\[[^\]]*\])?\s*([\s\S]*)$/;
+/** Longer requirement lines are skipped before any regex runs. */
+export const MAX_REQUIREMENT_LINE = 1_024;
+
+/** Drop a `#` comment that starts the line or follows whitespace, without backtracking. */
+function stripComment(raw: string): string {
+  const match = /(?:^|\s)#/.exec(raw);
+  return match ? raw.slice(0, match.index) : raw;
+}
 
 /** PEP 503 normalised project name. */
 export function normalizePypiName(name: string): string {
@@ -120,6 +130,7 @@ function addOrMergePypi(
 
 /** Parse one PEP 508 requirement. Returns null for direct references and anything unparseable. */
 export function parseRequirement(line: string): { name: string; spec: string } | null {
+  if (line.length > MAX_REQUIREMENT_LINE) return null;
   const withoutMarker = line.split(";")[0].trim();
   if (!withoutMarker || withoutMarker.includes("@") || withoutMarker.includes("://")) return null;
   const match = REQUIREMENT_RE.exec(withoutMarker);
@@ -135,7 +146,11 @@ export function parseRequirementsTxt(text: string): Result<ParsedManifest> {
   const skipped = { n: 0 };
   const byName = new Map<string, number>();
   for (const raw of logical) {
-    const line = raw.replace(/(^|\s)#.*$/, "").trim();
+    if (raw.length > MAX_REQUIREMENT_LINE) {
+      skipped.n++;
+      continue;
+    }
+    const line = stripComment(raw).trim();
     if (!line) continue;
     const requirement = line.startsWith("-") ? null : parseRequirement(line);
     if (!requirement || !withinLimits(requirement.name, requirement.spec)) {
@@ -187,7 +202,9 @@ export function parsePyprojectToml(text: string): Result<ParsedManifest> {
   let end = lines.findIndex((line, index) => index > header && /^\s*\[/.test(line));
   if (end === -1) end = lines.length;
   const table = lines.slice(header + 1, end).join("\n");
-  const key = /^\s*dependencies\s*=\s*\[/m.exec(table);
+  // Horizontal whitespace only: `\s*` with the m flag crosses newlines and is O(n^2)
+  // on a table of blank lines. TOML keeps a key, `=` and the opening `[` on one line.
+  const key = /^[ \t]*dependencies[ \t]*=[ \t]*\[/m.exec(table);
   if (!key) return { ok: true, data: finish("pypi", [], 0) };
   const entries = readStringArray(table, key.index + key[0].length - 1);
   if (!entries) return parseError("pyproject.toml [project].dependencies is not a string array.");
