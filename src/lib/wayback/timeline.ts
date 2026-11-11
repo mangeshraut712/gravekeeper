@@ -5,7 +5,7 @@
  * (Node native TypeScript). No network, no environment reads.
  */
 
-import type { CdxEvidence, EpitaphTimeline, TimelineYear } from "@/types";
+import type { CdxEvidence, EpitaphTimeline, TimelineYear, WaybackResult } from "@/types";
 
 /** One row per captured month; 1200 rows is 100 years. */
 export const CDX_LIMIT = 1200;
@@ -134,4 +134,26 @@ export function timestampToIso(timestamp: string): string | null {
   if (!TIMESTAMP.test(timestamp)) return null;
   const iso = `${timestamp.slice(0, 4)}-${timestamp.slice(4, 6)}-${timestamp.slice(6, 8)}T${timestamp.slice(8, 10)}:${timestamp.slice(10, 12)}:${timestamp.slice(12, 14)}Z`;
   return Number.isNaN(new Date(iso).getTime()) ? null : iso;
+}
+
+/**
+ * Snapshot derived from signed CDX evidence when the availability API missed.
+ * CDX is collapsed to one row per month, so this is a capture from the latest
+ * captured month, not the availability API's "closest" snapshot. Returns null
+ * when there is no capture or the constructed URL is not a plain web.archive.org link.
+ */
+export function deriveCdxFallback(body: unknown, resource: string): WaybackResult | null {
+  if (!isCdxEvidence(body) || body.timestamps.length === 0) return null;
+  const timestamp = body.timestamps[body.timestamps.length - 1];
+  if (timestampToIso(timestamp) === null) return null;
+  const snapshotUrl = `https://web.archive.org/web/${timestamp}/${resource}`;
+  try {
+    const url = new URL(snapshotUrl);
+    if (url.protocol !== "https:" || url.hostname !== "web.archive.org" || url.username || url.password || url.port)
+      return null;
+    new URL(resource);
+  } catch {
+    return null;
+  }
+  return { available: true, url: resource, snapshotUrl, timestamp, status: null, source: "cdx-fallback" };
 }

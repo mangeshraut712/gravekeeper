@@ -105,4 +105,25 @@ describe("TombstoneCard", () => {
     expect(html).not.toContain("Open archived snapshot");
     expect(html).toContain("No archive snapshot was returned");
   });
+
+  it("says when the snapshot came from the capture index", () => {
+    const html = renderToStaticMarkup(
+      <TombstoneCard
+        result={{
+          ...base,
+          wayback: {
+            available: true,
+            url: "https://github.com/octo/ghost",
+            snapshotUrl: "https://web.archive.org/web/20261001120000/https://github.com/octo/ghost",
+            timestamp: "20261001120000",
+            status: null,
+            source: "cdx-fallback",
+          },
+        }}
+        url="https://github.com/octo/ghost"
+      />,
+    );
+    expect(html).toContain("Open archived snapshot");
+    expect(html).toContain("latest month in the Internet Archive capture index");
+  });
 });

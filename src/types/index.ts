@@ -32,6 +32,8 @@ export type WaybackResult = {
   snapshotUrl: string | null;
   timestamp: string | null;    // e.g. "20231015120000"
   status: string | null;       // HTTP status of the original archived page
+  /** Present only when the snapshot was derived from signed CDX evidence after an availability miss. */
+  source?: 'cdx-fallback';
 };
 
 // Internet Archive CDX life span (epitaph timeline)

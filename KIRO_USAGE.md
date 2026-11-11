@@ -394,3 +394,15 @@ Branch `feat/a11y-and-demo-assets-20261111`, from main `f6b7b40`. Evidence: `.ki
 **Checks:** `npm test` 45 files, 685 passed; `npm run lint`; `npx next typegen && npx tsc --noEmit`; `npm run build`; `npm run demo:verify` (4/12 before, 12/12 after); `npm run e2e` against `npx next start -p 3467`, 17 checks passed; `npm run a11y` (Chromium) on the same build, 0 counted violations. Server stopped afterwards.
 
 **Limits:** no screen-reader pass. The new panels were scanned with synthetic data only; the live `--lookup` scan was not re-run and contrast was not re-sampled for them. Which copy status Firefox and WebKit showed was not recorded. The polish check and keyboard e2e step ran in Chromium only.
+
+## Nov 11, 2026 — CDX snapshot fallback (Kiro agent session)
+
+Branch `feat/cdx-snapshot-fallback-20261111`, from `0d944db`. Evidence: `.kiro/evidence/2026-11-11-cdx-snapshot-fallback.json`. The credit figure is recorded by the runner; the agent saw none. No MCP server was used. No Devpost submission, video, blog publish, or social post was made.
+
+**Kiro-generated:** tests first (route, `deriveCdxFallback`, card, kit), then `deriveCdxFallback` in `timeline.ts`, an optional `source: "cdx-fallback"` on `WaybackResult`, the route filling `response.wayback` on an availability miss, and `verifyProof` recomputing the fallback from the signed `wayback-cdx` evidence (shown snapshot on a miss must equal it, else invalid). Receipts are unchanged: `wayback-miss` keeps the real failure code. Card and kit say when a link came from the capture index. Docs updated with the limits (monthly collapse, not the "closest" snapshot).
+
+**Hooks, observed:** the tasks.md sync hook fired on the test save (no task completed); the spec-drift hook fired, and the epitaph-timeline design was updated. The `npm test` hook output was not observed; tests were run by hand.
+
+**Checks:** `npm test` 45 files, 696 passed; lint; `tsc`; build; `demo:verify`; `npm run e2e` (17 passed) on a production build, server stopped. `node_modules` was a symlink into another worktree and was replaced with a local `npm ci` (symlink only).
+
+**Local lookup:** `atom/atom` on the local build: availability answered (snapshot 2026-10-27) and CDX returned 136 months, so the fallback did not trigger live; the offline verifier accepted the dumped proof. Fallback is covered by mocked tests only. Production was not re-checked and no screenshots were retaken.

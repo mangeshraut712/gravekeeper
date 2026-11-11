@@ -1,0 +1,13 @@
+{
+  "session": "cdx-snapshot-fallback",
+  "date": "2026-11-11",
+  "branch": "feat/cdx-snapshot-fallback-20261111",
+  "startedFrom": "0d944db",
+  "credits": "recorded by the runner; not exposed to the agent",
+  "mcpUsed": false,
+  "hooksObserved": ["keep-tasks-in-sync (no task completed)", "spec drift check (epitaph-timeline design updated)"],
+  "changed": ["src/types/index.ts", "src/lib/wayback/timeline.ts", "src/client/proof.ts", "src/app/api/resurrect/route.ts", "src/components/TombstoneCard.tsx", "src/lib/revival/markdown.ts", "docs"],
+  "checks": {"npm test": "45 files, 696 passed", "lint": "pass", "tsc": "pass", "build": "pass", "demo:verify": "pass", "e2e": "17 passed on port 3441"},
+  "localLookup": {"resource": "https://github.com/atom/atom", "availability": "snapshot 20261027223315", "cdx": "complete, 136 months, lastSeen 20261016204610", "fallbackTriggered": false, "offlineVerifier": "exit 0"},
+  "limits": ["fallback verified by mocked tests only", "production not re-checked", "no screenshots retaken"]
+}
