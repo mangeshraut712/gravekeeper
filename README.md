@@ -8,6 +8,12 @@ Gravekeeper is a digital-archaeology workbench for public websites and forgotten
 
 A public Hobby deployment is at https://gravekeeper-drab.vercel.app (`GITHUB_TOKEN` and `FORK_API_SECRET` unset). This is a preview host for development and judging, not a contest submission.
 
+- Home / lookup: https://gravekeeper-drab.vercel.app
+- Restoration case: https://gravekeeper-drab.vercel.app/restoration
+- Lantern Hill fixture: https://gravekeeper-drab.vercel.app/lantern-hill
+
+A ~90 second demo walkthrough is in [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md). Accessibility scan results and the keyboard path are in [docs/A11Y_AUDIT.md](docs/A11Y_AUDIT.md) (`npm run a11y`). CI (`.github/workflows/ci.yml`) runs tests, lint, typecheck, and build on every push and pull request.
+
 ## What works
 
 - Live Internet Archive and public GitHub lookups, with partial results when a source is unavailable.
