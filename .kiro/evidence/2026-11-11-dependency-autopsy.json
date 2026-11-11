@@ -11,7 +11,11 @@
   },
   "spec": {
     "path": ".kiro/specs/dependency-autopsy/",
-    "files": ["requirements.md", "design.md", "tasks.md"],
+    "files": [
+      "requirements.md",
+      "design.md",
+      "tasks.md"
+    ],
     "committedBeforeCode": "e8b6285",
     "relatedSpecUpdated": ".kiro/specs/resurrect/design.md (new ReceiptKind values, MANIFEST_NOT_FOUND, autopsy and evidence fields)"
   },
@@ -26,10 +30,15 @@
     "8 Verification",
     "9 Revival plan",
     "10 DependencyAutopsyPanel",
-    "11 Verify and document"
+    "11 Verify and document",
+    "12 PR #7 review fixes"
   ],
   "tests": {
-    "beforeMerge": { "files": 32, "tests": 431, "result": "all passed" },
+    "beforeMerge": {
+      "files": 32,
+      "tests": 431,
+      "result": "all passed"
+    },
     "lint": "passed (npm run lint, no output)",
     "typecheck": "passed (npx next typegen, then npx tsc --noEmit)",
     "build": "passed (npm run build)",
@@ -40,23 +49,49 @@
     "atom/atom": {
       "http": 200,
       "seconds": 3.8,
-      "receiptKinds": ["wayback", "github-meta", "github-commits", "github-manifest", "registry", "spec"],
+      "receiptKinds": [
+        "wayback",
+        "github-meta",
+        "github-commits",
+        "github-manifest",
+        "registry",
+        "spec"
+      ],
       "manifest": "package.json",
       "totalDeclared": 157,
       "checked": 40,
       "truncated": true,
-      "counts": { "current": 10, "minor-behind": 3, "major-behind": 5, "unknown": 22, "not-found": 0 },
+      "counts": {
+        "current": 10,
+        "minor-behind": 3,
+        "major-behind": 5,
+        "unknown": 22,
+        "not-found": 0
+      },
       "offlineVerifier": "Internally consistent: 6 receipts"
     },
     "facebookarchive/flux": {
       "http": 200,
       "seconds": 5.4,
-      "receiptKinds": ["wayback", "github-meta", "github-commits", "github-manifest", "registry", "spec"],
+      "receiptKinds": [
+        "wayback",
+        "github-meta",
+        "github-commits",
+        "github-manifest",
+        "registry",
+        "spec"
+      ],
       "manifest": "package.json",
       "totalDeclared": 22,
       "checked": 22,
       "truncated": false,
-      "counts": { "current": 2, "minor-behind": 6, "major-behind": 14, "unknown": 0, "not-found": 0 },
+      "counts": {
+        "current": 2,
+        "minor-behind": 6,
+        "major-behind": 14,
+        "unknown": 0,
+        "not-found": 0
+      },
       "offlineVerifier": "Internally consistent: 6 receipts; rejected (exit 1) after one autopsy status was edited"
     }
   },
@@ -73,5 +108,36 @@
   "notInScope": [
     "KIRO_USAGE.md, README.md, docs/A11Y_AUDIT.md, docs/submission/WRITEUP.md and scripts/a11y-audit.mts were not edited (owned by a parallel session).",
     "No axe scan was run for the new panel."
-  ]
+  ],
+  "reviewFixes": {
+    "source": "Codex code review on PR #7 (two P2 findings). No Cursor Bugbot findings were present when checked.",
+    "findings": [
+      {
+        "file": "src/lib/deps/autopsy.ts:67",
+        "issue": "spec > 256 chars accepted by parser but rejected by evidence validator, nulling the autopsy and failing verifyProof",
+        "fix": "shared MAX_NAME_LENGTH/MAX_SPEC_LENGTH/MAX_PACKAGES; parsers skip and count over-limit entries",
+        "commit": "e00b40d",
+        "testsFirst": "unit test, fast-check property (any parsed package.json yields a non-null autopsy), route test with verifyProof"
+      },
+      {
+        "file": "src/lib/deps/semver.ts:136",
+        "issue": "first lower bound used instead of the strongest within an npm comparator set",
+        "fix": "floor = max lower bound per set, min across ||",
+        "commit": "5fec660",
+        "testsFirst": "unit tests and fast-check property (max within set, min across ||)"
+      }
+    ],
+    "failingTestsBeforeFix": 8,
+    "tests": {
+      "files": 32,
+      "tests": 442,
+      "result": "all passed"
+    },
+    "lint": "passed",
+    "typecheck": "passed",
+    "build": "passed",
+    "demoVerify": "passed (exit 0)",
+    "mergeFromMain": "origin/main unchanged (already up to date); no conflicts",
+    "realLookupsRerun": false
+  }
 }
