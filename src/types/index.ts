@@ -8,7 +8,9 @@ export type ReceiptKind =
   | 'spec'
   | 'fork'
   | 'fixture'
-  | 'restoration';
+  | 'restoration'
+  | 'github-manifest'
+  | 'registry';
 
 export type Receipt = {
   seq: number;             // 0-based, monotonically increasing
@@ -77,6 +79,56 @@ export type RevivalSpec = {
   generatedAt: string; // ISO 8601 UTC
 };
 
+// Dependency autopsy types
+
+export type Ecosystem = 'npm' | 'pypi';
+
+export type DependencyStatus =
+  | 'current'
+  | 'minor-behind'
+  | 'major-behind'
+  | 'unknown'
+  | 'not-found';
+
+export type DeclaredDependency = {
+  name: string;
+  spec: string; // exactly as declared ("" when unpinned)
+  group: 'dependencies' | 'devDependencies' | 'requirements' | 'project';
+};
+
+export type ManifestPath = 'package.json' | 'requirements.txt' | 'pyproject.toml';
+
+export type ManifestEvidence = {
+  path: ManifestPath;
+  ecosystem: Ecosystem;
+  rawSha256: string; // SHA-256 hex of the raw manifest bytes from GitHub
+  totalDeclared: number;
+  skippedLines: number;
+  truncated: boolean;
+  packages: DeclaredDependency[]; // at most 40
+};
+
+export type RegistryOutcome = 'ok' | 'not-found' | 'error' | 'skipped';
+
+export type RegistryEvidence = {
+  registry: string;
+  results: { name: string; latest: string | null; outcome: RegistryOutcome }[];
+};
+
+export type AutopsyDependency = DeclaredDependency & {
+  floor: string | null;
+  latest: string | null;
+  status: DependencyStatus;
+  note: string | null;
+};
+
+export type DependencyAutopsy = {
+  state: 'complete' | 'partial' | 'no-manifest' | 'unavailable';
+  manifest: Omit<ManifestEvidence, 'packages'> | null;
+  dependencies: AutopsyDependency[];
+  counts: Record<DependencyStatus, number>;
+};
+
 export type RestorationChange = {
   rule: string;
   summary: string;
@@ -109,6 +161,7 @@ export type ResurrectResponse = {
   } | null;
   publicKey: string;           // base64url-encoded Ed25519 public key for offline verification
   restoration?: RestorationResult | null;
+  autopsy?: DependencyAutopsy | null; // absent in proofs made before the dependency autopsy
 };
 
 // Error handling
@@ -121,7 +174,8 @@ export type ErrorCode =
   | 'GITHUB_RATE_LIMIT'
   | 'WAYBACK_NO_SNAPSHOT'
   | 'CRYPTO_ERROR'
-  | 'FORK_FAILED';
+  | 'FORK_FAILED'
+  | 'MANIFEST_NOT_FOUND';
 
 export type Result<T> =
   | { ok: true; data: T }

@@ -5,8 +5,8 @@ Complete in order. Each task lists the requirements it covers (see `requirements
 ## Phase 1 — Pure library
 
 ### Task 1 — Types
-- [ ] Add `github-manifest` and `registry` to `ReceiptKind`, `MANIFEST_NOT_FOUND` to `ErrorCode`.
-- [ ] Add `Ecosystem`, `DependencyStatus`, `DeclaredDependency`, `ManifestEvidence`, `RegistryOutcome`, `RegistryEvidence`, `AutopsyDependency`, `DependencyAutopsy`; add optional `autopsy` to `ResurrectResponse`.
+- [x] Add `github-manifest` and `registry` to `ReceiptKind`, `MANIFEST_NOT_FOUND` to `ErrorCode`.
+- [x] Add `Ecosystem`, `DependencyStatus`, `DeclaredDependency`, `ManifestEvidence`, `RegistryOutcome`, `RegistryEvidence`, `AutopsyDependency`, `DependencyAutopsy`; add optional `autopsy` to `ResurrectResponse`.
 - **Refs:** DA-02, DA-04, DA-05
 
 ### Task 2 — Version comparator (`src/lib/deps/semver.ts`)
