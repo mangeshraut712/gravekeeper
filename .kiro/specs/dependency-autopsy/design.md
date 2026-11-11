@@ -28,7 +28,7 @@ Receipt order for a full GitHub lookup: `wayback | wayback-miss`, `github-meta`,
 | File | Exports | Notes |
 |---|---|---|
 | `src/lib/deps/semver.ts` | `parseVersion`, `compareVersions`, `rangeFloor`, `classify`, `majorOf` | Pure. No imports at runtime. Shared with the browser and offline verifier. |
-| `src/lib/deps/manifest.ts` | `parsePackageJson`, `parseRequirementsTxt`, `parsePyprojectToml`, `parseManifest`, `MAX_PACKAGES` | Pure. Returns `Result<ParsedManifest>`. |
+| `src/lib/deps/manifest.ts` | `parsePackageJson`, `parseRequirementsTxt`, `parsePyprojectToml`, `parseManifest`, `MAX_PACKAGES` | Pure. Returns `Result<ParsedManifest>`. Uses the same `MAX_PACKAGES`, `MAX_NAME_LENGTH` (214) and `MAX_SPEC_LENGTH` (256) as the evidence validator in `autopsy.ts`; entries over a limit are skipped and counted, so parser output is always valid evidence. |
 | `src/lib/deps/registry.ts` | `fetchLatestVersion`, `lookupLatestVersions`, `isValidPackageName` | Server only. Mocked fetch in tests. |
 | `src/lib/deps/autopsy.ts` | `buildAutopsy` | Pure. Imported by `src/client/proof.ts` with an explicit relative `.ts` path, like `chain.ts`. |
 | `src/lib/github/client.ts` | `fetchRootManifest` | Contents API, `Accept: application/vnd.github.raw+json`. |
@@ -100,7 +100,7 @@ Returns `{ epoch, release: number[], pre: (number|string)[] | null }` or `null`.
 4. `pre` identifiers pairwise: numbers numerically, numbers below strings, strings by code unit; a shorter prefix ranks lower. PEP 440 `dev` is mapped to sort before `a`.
 
 `rangeFloor(spec, ecosystem)`:
-- npm: returns `null` for `""`, `*`, `x`, `latest`, tags, `git…`, `http(s):`, `file:`, `link:`, `workspace:`, `npm:` aliases, `owner/repo` shorthands. Splits on `||` and returns the lowest alternative floor. In each alternative, the floor comes from the first `>=`, `>`, `=`, `^`, `~` or bare comparator; hyphen ranges use the left side; `x`/`*` parts become `0`. A range with only `<`/`<=` has no floor.
+- npm: returns `null` for `""`, `*`, `x`, `latest`, tags, `git…`, `http(s):`, `file:`, `link:`, `workspace:`, `npm:` aliases, `owner/repo` shorthands. Splits on `||` and returns the lowest alternative floor. Each alternative is an intersection, so its floor is the highest lower bound among its `>=`, `>`, `=`, `^`, `~` and bare comparators (`>=1.0.0 >=2.0.0` → `2.0.0`); hyphen ranges use the left side; `x`/`*` parts become `0` and a bare `*` adds no bound. A range with only `<`/`<=` has no floor.
 - PyPI: lower bounds from `==`, `===`, `>=`, `~=`, `>`; `==1.2.*` → `1.2`; the highest lower bound wins. `<`, `<=`, `!=` alone give no floor.
 
 `classify(floor, latest, outcome)` implements DA-04.2. `severity` orders `current < minor-behind < major-behind`.
@@ -147,7 +147,9 @@ All lib functions return `Result<T>` or per-item outcomes; none throw. The route
 2. **Transitivity**: `a ≤ b ∧ b ≤ c ⇒ a ≤ c`.
 3. **Reflexivity / padding**: `compareVersions(v, v) === 0`; `compareVersions("x.y", "x.y.0") === 0`.
 4. **Classification monotonicity**: for fixed `latest`, `floor1 ≤ floor2 ⇒ severity(classify(floor1)) ≥ severity(classify(floor2))`.
-5. **Floor soundness**: for `^v`, `~v`, `>=v`, `==v`, `rangeFloor` equals `v` up to zero padding.
+5. **Floor soundness**: also, for npm, the floor is the maximum lower bound within a comparator set and the minimum across `||`.
+5a. **Parser/validator agreement**: any `package.json` the parser accepts yields a non-null autopsy.
+5b. **Floor soundness (single bound)**: for `^v`, `~v`, `>=v`, `==v`, `rangeFloor` equals `v` up to zero padding.
 6. **Parser cap**: for any generated `package.json`, `packages.length ≤ 40`, `totalDeclared` equals the deduplicated entry count, and `truncated ⇔ totalDeclared > 40`.
 7. **Tamper detection**: changing any field of a generated autopsy (status, latest, declared spec, counts, state) or of either evidence body makes `verifyProof` return `false`.
 

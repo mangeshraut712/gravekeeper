@@ -35,7 +35,8 @@ Terms:
 3. **[Unwanted]** IF a `requirements.txt` line is an option (`-r`, `-e`, `--index-url`), a direct URL or path, or otherwise cannot be parsed, THEN the system SHALL skip it and count it in `skippedLines`.
 4. **[Event-driven]** WHEN the manifest is `pyproject.toml`, THEN the system SHALL read the quoted strings of the `dependencies` array in the `[project]` table only.
 5. **[Unwanted]** IF `package.json` is not valid JSON or not an object, THEN the system SHALL record `PARSE_ERROR` and return no dependency rows.
-6. **[Ubiquitous]** The system SHALL keep at most 40 packages per lookup, report the total declared count, and set `truncated` when the cap applied.
+6. **[Unwanted]** IF a package name is longer than 214 characters or its spec is longer than 256 characters, THEN the system SHALL skip it and count it in `skippedLines`, so one entry cannot invalidate the lookup.
+7. **[Ubiquitous]** The system SHALL keep at most 40 packages per lookup, report the total declared count, and set `truncated` when the cap applied.
 
 ### DA-03 — Look up the latest version
 

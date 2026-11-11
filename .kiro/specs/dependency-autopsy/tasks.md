@@ -73,3 +73,10 @@ Complete in order. Each task lists the requirements it covers (see `requirements
 - [x] Real lookups of `atom/atom` and `facebookarchive/flux` against a local production build; record counts.
 - [x] `docs/DEPENDENCY_AUTOPSY.md`; `.kiro/evidence/2026-11-11-dependency-autopsy.json`.
 - **Refs:** all
+
+## Phase 5 — Review fixes (PR #7)
+
+### Task 12 — Codex review findings
+- [x] Shared `MAX_NAME_LENGTH` / `MAX_SPEC_LENGTH` / `MAX_PACKAGES` between parsers and the evidence validator; over-limit entries are skipped and counted (failing unit, property and route tests written first).
+- [x] npm floor is the strongest lower bound within a comparator set and the lowest across `||` (failing unit and property tests written first).
+- **Refs:** DA-02.6, DA-04.1, DA-05.3
