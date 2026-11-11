@@ -83,7 +83,7 @@ export function TombstoneCard({
               target="_blank"
               rel="noopener noreferrer"
             >
-              View repository ↗
+              View repository <span aria-hidden="true">↗</span>
             </a>
             <a
               className={button}
@@ -91,7 +91,7 @@ export function TombstoneCard({
               target="_blank"
               rel="noopener noreferrer"
             >
-              Fork on GitHub ↗
+              Fork on GitHub <span aria-hidden="true">↗</span>
             </a>
           </>
         )}

@@ -147,3 +147,11 @@ Branch `feat/judge-ready-a11y-ci-20261111`, from main `9899869`. No credit figur
 - Playwright downloaded its own Chromium build (`npx playwright install chromium`) during the session.
 - An early scan flagged one contrast violation that turned out to be axe sampling a mid-fade animation; the script now waits for finite animations, and no styles were changed for it.
 - The pass was not reviewed by a second Kiro review agent.
+
+## Nov 11, 2026 — Component tests and small a11y follow-up (kiro-cli session)
+
+Branch `feat/judge-ready-a11y-ci-20261111`. No credit figure, token count, or WBM record is available for this session, so none is claimed. No hook or MCP execution is claimed. No Devpost submission, video, or social post was made.
+
+- Added static-markup tests (`renderToStaticMarkup`, no new dependencies) for `SearchForm`, `TombstoneCard`, `ReceiptChainViewer`, and `RevivalSpecPanel`. Behavior that needs a DOM (invalid-URL error text, example-button clicks, disabled-while-loading, verify/download clicks) is not covered by these tests.
+- `TombstoneCard`: the decorative arrows on "View repository" and "Fork on GitHub" are now `aria-hidden`, matching the snapshot link. Visible text unchanged.
+- `tasks.md` Task 15: replaced a stale bullet that said the sections still lived in `Gravekeeper.tsx` with the current composition.

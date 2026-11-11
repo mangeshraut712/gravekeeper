@@ -162,7 +162,7 @@ Implementation note (Nov 6, 2026 UTC): the UI is consolidated in `src/components
 
 ### Task 15 — Home page assembly (`src/app/page.tsx`)
 - [x] Server Component page.
-- [x] Import and compose `FogOverlay` on the home page. Search, tombstone, receipts, and revival plan still live in `Gravekeeper.tsx` rather than as separate files.
+- [x] `src/app/page.tsx` is a Server Component that composes `FogOverlay` and the `Gravekeeper` client wrapper. `SearchForm`, `TombstoneCard`, `ReceiptChainViewer`, and `RevivalSpecPanel` live in their own files.
 - [x] Extract `SearchForm`, `TombstoneCard`, `ReceiptChainViewer`, and `RevivalSpecPanel` into their own files (shared `Mark.tsx`, `styles.ts`).
 - [x] Result state is managed by the `'use client'` wrapper `Gravekeeper.tsx`.
 - [x] Haunted graveyard layout: dark background, tombstone grid, candlelight amber accents.
