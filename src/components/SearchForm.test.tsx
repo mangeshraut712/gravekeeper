@@ -21,6 +21,10 @@ describe("SearchForm initial markup", () => {
     expect(html).toContain("Public URLs only.");
   });
 
+  it("reserves status-line height so loading text does not shift the page", () => {
+    expect(html).toMatch(/<p id="lookup-error" role="status" class="[^"]*\bmin-h-10\b[^"]*\bmd:min-h-5\b/);
+  });
+
   it("renders an enabled submit button with an aria-hidden arrow and no cancel", () => {
     expect(html).toContain("Unearth project");
     expect(html).toContain('<span aria-hidden="true">↗</span>');
