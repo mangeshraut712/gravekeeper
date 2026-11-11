@@ -38,9 +38,9 @@ Complete in order. Each task lists the requirements it covers (see `requirements
 - **Refs:** DA-01
 
 ### Task 6 — Registry client (`src/lib/deps/registry.ts`)
-- [ ] `fetchLatestVersion` for npm and PyPI; `isValidPackageName`.
-- [ ] `lookupLatestVersions` with concurrency 4, per-request timeout, batch deadline, cancel signal, `skipped` for non-registry specs.
-- [ ] Mocked-fetch tests: success, 404, 500, timeout, bad JSON, concurrency limit, scoped name encoding, skipped specs.
+- [x] `fetchLatestVersion` for npm and PyPI; `isValidPackageName`.
+- [x] `lookupLatestVersions` with concurrency 4, per-request timeout, batch deadline, cancel signal, `skipped` for non-registry specs.
+- [x] Mocked-fetch tests: success, 404, 500, timeout, bad JSON, concurrency limit, scoped name encoding, skipped specs.
 - **Refs:** DA-03
 
 ## Phase 3 — Integration
