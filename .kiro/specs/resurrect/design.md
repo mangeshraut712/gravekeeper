@@ -36,7 +36,11 @@ type ReceiptKind =
   | 'github-meta'
   | 'github-commits'
   | 'spec'
-  | 'fork';
+  | 'fork'
+  | 'fixture'          // Lantern Hill fixture (see "Bundled restoration")
+  | 'restoration'      // Lantern Hill restored HTML
+  | 'github-manifest'  // root dependency manifest (see .kiro/specs/dependency-autopsy)
+  | 'registry';        // batched npm/PyPI latest-version lookups (dependency autopsy)
 
 interface Receipt {
   seq: number;           // 0-based, monotonically increasing
@@ -130,6 +134,7 @@ interface RevivalSpec {
 ```typescript
 interface ResurrectResponse {
   receipts: Receipt[];
+  evidence: { receiptSeq: number; body: unknown }[]; // exact normalized payload hashed by each receipt
   spec: RevivalSpec | null;   // null for Wayback-only lookups
   wayback: WaybackResult | null;
   github: {
@@ -137,6 +142,8 @@ interface ResurrectResponse {
     commits: Commit[];
   } | null;
   publicKey: string;          // base64url-encoded Ed25519 public key for offline verification
+  restoration?: RestorationResult | null;
+  autopsy?: DependencyAutopsy | null; // GitHub lookups only; defined in .kiro/specs/dependency-autopsy/design.md
 }
 ```
 
@@ -172,7 +179,8 @@ type ErrorCode =
   | 'GITHUB_RATE_LIMIT'
   | 'WAYBACK_NO_SNAPSHOT'
   | 'CRYPTO_ERROR'
-  | 'FORK_FAILED';
+  | 'FORK_FAILED'
+  | 'MANIFEST_NOT_FOUND'; // no root manifest on the default branch (dependency autopsy)
 ```
 
 The Route Handler inspects each `Result` and:

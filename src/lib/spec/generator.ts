@@ -8,7 +8,16 @@
  * Deterministic: same inputs always produce the same output (modulo `generatedAt`).
  */
 
-import type { Commit, GitHubRepoMeta, RevivalSpec, RevivalStep, StaleDep } from '@/types/index';
+import type {
+  AutopsyDependency,
+  Commit,
+  DependencyAutopsy,
+  GitHubRepoMeta,
+  RevivalSpec,
+  RevivalStep,
+  StaleDep,
+} from '@/types/index';
+import { majorOf } from '../deps/semver.ts';
 
 // ---------------------------------------------------------------------------
 // Language-specific framework / tooling hints
@@ -86,6 +95,153 @@ function globalStaleDeps(
 }
 
 // ---------------------------------------------------------------------------
+// Dependency steps
+// ---------------------------------------------------------------------------
+
+type StepText = Omit<RevivalStep, 'order'>;
+
+/** Packages that identify a framework, highest priority first. */
+const FRAMEWORK_PACKAGES: [string, string][] = [
+  ['next', 'Next.js'],
+  ['@angular/core', 'Angular'],
+  ['nuxt', 'Nuxt'],
+  ['vue', 'Vue'],
+  ['svelte', 'Svelte'],
+  ['react', 'React'],
+  ['express', 'Express'],
+  ['django', 'Django'],
+  ['flask', 'Flask'],
+  ['fastapi', 'FastAPI'],
+];
+
+function frameworkFromAutopsy(autopsy: DependencyAutopsy | null): string | null {
+  if (!autopsy) return null;
+  const names = new Set(autopsy.dependencies.map((item) => item.name));
+  return FRAMEWORK_PACKAGES.find(([name]) => names.has(name))?.[1] ?? null;
+}
+
+function genericDependencyAdvice(language: string | null): string {
+  return language === 'JavaScript' || language === 'TypeScript'
+    ? 'Run `npm audit` and `npx npm-check-updates` to identify and update stale packages. ' +
+        'Pin exact versions for reproducible builds.'
+    : language === 'Python'
+      ? 'Run `pip list --outdated` or use `pip-audit` / `safety` to find vulnerable packages. ' +
+        'Consider switching to a modern dependency manager like `uv` or `poetry`.'
+      : language === 'Ruby'
+        ? 'Run `bundle outdated` and `bundle update` to refresh gems. ' +
+          'Run `bundle audit` to check for known vulnerabilities.'
+        : 'Audit dependencies for outdated or unmaintained packages using the ecosystem tooling for ' +
+          `${language ?? 'this language'}.`;
+}
+
+function listNames(items: AutopsyDependency[], render: (item: AutopsyDependency) => string): string {
+  return items.map(render).join(', ');
+}
+
+const declared = (item: AutopsyDependency) => item.spec || '(unpinned)';
+
+/** Revival steps for dependencies. Always at least one step. */
+export function dependencySteps(
+  language: string | null,
+  autopsy: DependencyAutopsy | null,
+): StepText[] {
+  if (!autopsy || autopsy.state === 'no-manifest' || autopsy.state === 'unavailable' || !autopsy.manifest) {
+    const reason = !autopsy
+      ? 'No dependency manifest was read.'
+      : autopsy.state === 'no-manifest'
+        ? 'No package.json, requirements.txt or pyproject.toml was found at the repository root.'
+        : 'The root dependency manifest could not be read.';
+    return [
+      {
+        title: 'Audit and update dependencies (metadata only)',
+        description: `${reason} ${genericDependencyAdvice(language)}`,
+      },
+    ];
+  }
+
+  const { path } = autopsy.manifest;
+  const rows = autopsy.dependencies;
+  const major = rows.filter((item) => item.status === 'major-behind');
+  const minor = rows.filter((item) => item.status === 'minor-behind');
+  const review = rows.filter((item) => item.status === 'unknown' || item.status === 'not-found');
+  const steps: StepText[] = [];
+
+  for (const item of major.slice(0, 5)) {
+    const latestMajor = majorOf(item.latest ?? '');
+    steps.push({
+      title: `Upgrade ${item.name} ${declared(item)} → ${latestMajor}.x (major behind)`,
+      description:
+        `${path} declares ${item.name} ${declared(item)}; the registry's latest is ${item.latest}. ` +
+        `Read the changelog for breaking changes between ${majorOf(item.floor ?? '')}.x and ${latestMajor}.x, ` +
+        'upgrade on a branch, and run the tests.',
+    });
+  }
+  if (major.length > 5) {
+    const rest = major.slice(5);
+    steps.push({
+      title: `Upgrade ${rest.length} more major-behind package${rest.length === 1 ? '' : 's'}`,
+      description: `Also a major release behind: ${listNames(rest, (item) => `${item.name} ${declared(item)} → ${item.latest}`)}.`,
+    });
+  }
+  if (minor.length > 0) {
+    steps.push({
+      title: `Update ${minor.length} minor-behind package${minor.length === 1 ? '' : 's'}`,
+      description:
+        `Same major line, older floor: ${listNames(minor, (item) => `${item.name} ${declared(item)} → ${item.latest}`)}. ` +
+        'These are usually low-risk; raise the declared floor and refresh the lockfile.',
+    });
+  }
+  if (review.length > 0 || autopsy.state === 'partial') {
+    const partial =
+      autopsy.state === 'partial'
+        ? ' Some registry lookups failed, so this autopsy is partial; retry later for the missing rows.'
+        : '';
+    steps.push({
+      title: `Review ${review.length} package${review.length === 1 ? '' : 's'} Gravekeeper could not compare`,
+      description:
+        (review.length > 0
+          ? `Check these by hand: ${listNames(review, (item) => `${item.name} (${item.status === 'not-found' ? 'not on the registry' : (item.note ?? 'unknown')})`)}.`
+          : 'No rows need manual review.') + partial,
+    });
+  }
+  if (autopsy.manifest.truncated) {
+    const remaining = autopsy.manifest.totalDeclared - rows.length;
+    steps.push({
+      title: `Check the remaining ${remaining} declared package${remaining === 1 ? '' : 's'}`,
+      description: `${path} declares ${autopsy.manifest.totalDeclared} packages; Gravekeeper compared the first ${rows.length}.`,
+    });
+  }
+  if (steps.length === 0) {
+    steps.push({
+      title: rows.length > 0 ? 'Keep declared dependencies current' : `Review ${path}`,
+      description:
+        rows.length > 0
+          ? `All ${rows.length} packages in ${path} declare the registry's latest major and minor line. Refresh the lockfile and run the tests.`
+          : `${path} declares no dependencies that Gravekeeper reads.`,
+    });
+  }
+  return steps;
+}
+
+function autopsyStaleDeps(autopsy: DependencyAutopsy | null): StaleDep[] {
+  if (!autopsy) return [];
+  return autopsy.dependencies.flatMap((item): StaleDep[] => {
+    if (item.status === 'major-behind' || item.status === 'minor-behind')
+      return [
+        {
+          name: item.name,
+          detectedVersion: item.spec || null,
+          reason: 'outdated',
+          suggestion: `Latest ${item.latest} (${item.status.replace('-', ' ')})`,
+        },
+      ];
+    if (item.status === 'not-found')
+      return [{ name: item.name, detectedVersion: item.spec || null, reason: 'unknown', suggestion: 'Not found on the registry.' }];
+    return [];
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Revival step builders
 // ---------------------------------------------------------------------------
 
@@ -94,6 +250,7 @@ function defaultRevivalSteps(
   meta: GitHubRepoMeta & { language?: string | null },
   commits: Commit[],
   language: string | null,
+  autopsy: DependencyAutopsy | null,
 ): RevivalStep[] {
   const steps: RevivalStep[] = [];
   let order = 1;
@@ -117,23 +274,10 @@ function defaultRevivalSteps(
       'Add badges for build status and license.',
   });
 
-  // Step 3 — Check and update dependencies
-  steps.push({
-    order: order++,
-    title: 'Audit and update dependencies',
-    description:
-      language === 'JavaScript' || language === 'TypeScript'
-        ? 'Run `npm audit` and `npx npm-check-updates` to identify and update stale packages. ' +
-          'Pin exact versions for reproducible builds.'
-        : language === 'Python'
-          ? 'Run `pip list --outdated` or use `pip-audit` / `safety` to find vulnerable packages. ' +
-            'Consider switching to a modern dependency manager like `uv` or `poetry`.'
-          : language === 'Ruby'
-            ? 'Run `bundle outdated` and `bundle update` to refresh gems. ' +
-              'Run `bundle audit` to check for known vulnerabilities.'
-            : 'Audit dependencies for outdated or unmaintained packages using the ecosystem tooling for ' +
-              `${language ?? 'this language'}.`,
-  });
+  // Step 3 — Dependencies: concrete steps from the autopsy, or generic metadata-only advice
+  for (const step of dependencySteps(language, autopsy)) {
+    steps.push({ order: order++, ...step });
+  }
 
   // Step 4 — Restore or add CI
   steps.push({
@@ -204,11 +348,13 @@ function defaultRevivalSteps(
  *
  * @param meta    - Repository metadata (from fetchRepoMeta).
  * @param commits - Recent commits (from fetchCommits).
+ * @param autopsy - Optional dependency autopsy; when absent the dependency step is metadata only.
  * @returns A `RevivalSpec` — pure value, no IO.
  */
 export function generateRevivalSpec(
   meta: GitHubRepoMeta & { language?: string | null },
   commits: Commit[],
+  autopsy: DependencyAutopsy | null = null,
 ): RevivalSpec {
   const language: string | null = meta.language ?? null;
 
@@ -216,9 +362,9 @@ export function generateRevivalSpec(
   const detectedLanguages: string[] =
     language && KNOWN_LANGUAGES.has(language) ? [language] : [];
 
-  const detectedFramework = detectFramework(language);
-  const staleDeps = globalStaleDeps(meta);
-  const revivalSteps = defaultRevivalSteps(meta, commits, language);
+  const detectedFramework = frameworkFromAutopsy(autopsy) ?? detectFramework(language);
+  const staleDeps = [...globalStaleDeps(meta), ...autopsyStaleDeps(autopsy)];
+  const revivalSteps = defaultRevivalSteps(meta, commits, language, autopsy);
 
   return {
     detectedLanguages,

@@ -12,7 +12,8 @@
 
 import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import type { Commit, GitHubRepoMeta } from '@/types/index';
+import type { Commit, DependencyAutopsy, GitHubRepoMeta, ManifestEvidence } from '@/types/index';
+import { buildAutopsy, REGISTRY_BASE } from '@/lib/deps/autopsy';
 import { generateRevivalSpec } from './generator';
 
 // ---------------------------------------------------------------------------
@@ -429,6 +430,132 @@ describe('generateRevivalSpec — property-based tests', () => {
         (meta, commits) => {
           const spec = generateRevivalSpec(meta, commits);
           expect(new Date(spec.generatedAt).toISOString()).toBe(spec.generatedAt);
+        },
+      ),
+      { numRuns: 200 },
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Dependency autopsy input
+// ---------------------------------------------------------------------------
+
+describe('generateRevivalSpec — dependency autopsy', () => {
+  const manifest: ManifestEvidence = {
+    path: 'package.json',
+    ecosystem: 'npm',
+    rawSha256: 'b'.repeat(64),
+    totalDeclared: 4,
+    skippedLines: 0,
+    truncated: false,
+    packages: [
+      { name: 'react', spec: '^16.14.0', group: 'dependencies' },
+      { name: 'lodash', spec: '^4.17.0', group: 'dependencies' },
+      { name: 'ghost-pkg', spec: '^1.0.0', group: 'dependencies' },
+      { name: 'left-pad', spec: '1.3.0', group: 'devDependencies' },
+    ],
+  };
+  const results = [
+    { name: 'react', latest: '19.2.0', outcome: 'ok' as const },
+    { name: 'lodash', latest: '4.17.21', outcome: 'ok' as const },
+    { name: 'ghost-pkg', latest: null, outcome: 'not-found' as const },
+    { name: 'left-pad', latest: '1.3.0', outcome: 'ok' as const },
+  ];
+  const autopsy = buildAutopsy(manifest, { registry: REGISTRY_BASE.npm, results })!;
+  const titles = (a: DependencyAutopsy | null) =>
+    generateRevivalSpec(makeMeta(), [], a).revivalSteps.map((s) => s.title);
+
+  it('names concrete upgrades instead of generic advice', () => {
+    const t = titles(autopsy);
+    expect(t).toContain('Upgrade react ^16.14.0 → 19.x (major behind)');
+    expect(t).toContain('Update 1 minor-behind package');
+    expect(t).toContain('Review 1 package Gravekeeper could not compare');
+    expect(t.some((title) => title.includes('metadata only'))).toBe(false);
+  });
+
+  it('detects the framework from declared packages and flags outdated rows', () => {
+    const spec = generateRevivalSpec(makeMeta({ language: 'JavaScript' }), [], autopsy);
+    expect(spec.detectedFramework).toBe('React');
+    expect(spec.staleDeps.map((d) => [d.name, d.reason])).toEqual([
+      ['react', 'outdated'],
+      ['lodash', 'outdated'],
+      ['ghost-pkg', 'unknown'],
+    ]);
+  });
+
+  it('keeps metadata-only behaviour without a usable manifest', () => {
+    expect(titles(null)).toContain('Audit and update dependencies (metadata only)');
+    const none = buildAutopsy({ code: 'MANIFEST_NOT_FOUND' }, null);
+    const steps = generateRevivalSpec(makeMeta(), [], none).revivalSteps;
+    const step = steps.find((s) => s.title.includes('metadata only'))!;
+    expect(step.description).toMatch(/No package\.json, requirements\.txt or pyproject\.toml/);
+    const unavailable = buildAutopsy({ code: 'GITHUB_RATE_LIMIT' }, null);
+    expect(
+      generateRevivalSpec(makeMeta(), [], unavailable).revivalSteps.some((s) =>
+        s.description.includes('could not be read'),
+      ),
+    ).toBe(true);
+  });
+
+  it('labels a partial autopsy', () => {
+    const partial = buildAutopsy(manifest, {
+      registry: REGISTRY_BASE.npm,
+      results: results.map((r, i) => (i === 0 ? { ...r, latest: null, outcome: 'error' as const } : r)),
+    })!;
+    const step = generateRevivalSpec(makeMeta(), [], partial).revivalSteps.find((s) =>
+      s.title.startsWith('Review'),
+    )!;
+    expect(step.description).toMatch(/partial/);
+    expect(step.description).toMatch(/react \(Registry lookup failed\.\)/);
+  });
+
+  it('groups major upgrades after the first five and notes truncation', () => {
+    const packages = Array.from({ length: 8 }, (_, i) => ({
+      name: `pkg${i}`,
+      spec: '^1.0.0',
+      group: 'dependencies' as const,
+    }));
+    const big = buildAutopsy(
+      { ...manifest, packages, totalDeclared: 50, truncated: true },
+      { registry: REGISTRY_BASE.npm, results: packages.map((p) => ({ name: p.name, latest: '3.0.0', outcome: 'ok' as const })) },
+    )!;
+    const t = titles(big);
+    expect(t.filter((title) => title.startsWith('Upgrade pkg'))).toHaveLength(5);
+    expect(t).toContain('Upgrade 3 more major-behind packages');
+    expect(t).toContain('Check the remaining 42 declared packages');
+  });
+
+  it('says so when every package is current', () => {
+    const current = buildAutopsy(
+      { ...manifest, packages: manifest.packages.slice(3), totalDeclared: 1 },
+      { registry: REGISTRY_BASE.npm, results: results.slice(3) },
+    )!;
+    expect(titles(current)).toContain('Keep declared dependencies current');
+  });
+
+  it('property: steps stay ordered 1..N and at least three with any autopsy', () => {
+    const outcome = fc.constantFrom('ok', 'not-found', 'error', 'skipped');
+    fc.assert(
+      fc.property(
+        fc.array(fc.tuple(fc.constantFrom('^1.0.0', '~2.3.0', '*', 'file:x', ''), outcome, fc.constantFrom('1.0.0', '2.5.1', '9.0.0')), {
+          maxLength: 40,
+        }),
+        (rows) => {
+          const packages = rows.map(([spec], i) => ({ name: `p${i}`, spec, group: 'dependencies' as const }));
+          const a = buildAutopsy(
+            { ...manifest, packages, totalDeclared: packages.length },
+            packages.length
+              ? {
+                  registry: REGISTRY_BASE.npm,
+                  results: rows.map(([, o, v], i) => ({ name: `p${i}`, latest: o === 'ok' ? v : null, outcome: o })),
+                }
+              : null,
+          );
+          expect(a).not.toBeNull();
+          const spec = generateRevivalSpec(makeMeta(), [], a);
+          expect(spec.revivalSteps.length).toBeGreaterThanOrEqual(3);
+          spec.revivalSteps.forEach((s, i) => expect(s.order).toBe(i + 1));
         },
       ),
       { numRuns: 200 },

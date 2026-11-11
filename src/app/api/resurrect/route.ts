@@ -1,6 +1,11 @@
 /** Public, read-only lookup. Each receipt includes its exact normalized evidence. */
 import { NextRequest } from "next/server";
-import type { Receipt, ReceiptKind, ResurrectResponse } from "@/types";
+import type {
+  ManifestEvidence,
+  Receipt,
+  ReceiptKind,
+  ResurrectResponse,
+} from "@/types";
 import { normalizePublicUrl } from "@/shared/url";
 import { generateKeyPair, exportPublicKey } from "@/lib/receipts/crypto";
 import { buildReceipt } from "@/lib/receipts/chain";
@@ -9,10 +14,22 @@ import {
   parseGitHubUrl,
   fetchRepoMeta,
   fetchCommits,
+  fetchRootManifest,
+  contentsUrl,
 } from "@/lib/github/client";
+import { parseManifest } from "@/lib/deps/manifest";
+import { lookupLatestVersions } from "@/lib/deps/registry";
+import { buildAutopsy } from "@/lib/deps/autopsy";
 import { generateRevivalSpec } from "@/lib/spec/generator";
 
 export const maxDuration = 30;
+
+function canceled(): Response {
+  return Response.json(
+    { error: "Lookup canceled.", code: "NETWORK_TIMEOUT" },
+    { status: 499 },
+  );
+}
 
 export async function POST(request: NextRequest): Promise<Response> {
   let body: unknown;
@@ -66,11 +83,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       fetchWaybackSnapshot(url, request.signal),
       parsed ? fetchRepoMeta(parsed.owner, parsed.repo, request.signal) : null,
     ]);
-    if (request.signal.aborted)
-      return Response.json(
-        { error: "Lookup canceled.", code: "NETWORK_TIMEOUT" },
-        { status: 499 },
-      );
+    if (request.signal.aborted) return canceled();
     const wayback = waybackResult.ok ? waybackResult.data : null;
     await record(
       waybackResult.ok ? "wayback" : "wayback-miss",
@@ -79,6 +92,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     );
     let github: ResurrectResponse["github"] = null;
     let spec: ResurrectResponse["spec"] = null;
+    let autopsy: ResurrectResponse["autopsy"] = null;
     if (parsed && metaResult) {
       const metaUrl = `https://api.github.com/repos/${parsed.owner}/${parsed.repo}`;
       await record(
@@ -87,17 +101,17 @@ export async function POST(request: NextRequest): Promise<Response> {
         metaResult.ok ? metaResult.data : { code: metaResult.code },
       );
       if (metaResult.ok) {
-        const commitsResult = await fetchCommits(
-          parsed.owner,
-          parsed.repo,
-          20,
-          request.signal,
-        );
-        if (request.signal.aborted)
-          return Response.json(
-            { error: "Lookup canceled.", code: "NETWORK_TIMEOUT" },
-            { status: 499 },
-          );
+        // Commits and the root manifest are independent once metadata names the default branch.
+        const [commitsResult, manifestResult] = await Promise.all([
+          fetchCommits(parsed.owner, parsed.repo, 20, request.signal),
+          fetchRootManifest(
+            parsed.owner,
+            parsed.repo,
+            metaResult.data.defaultBranch,
+            request.signal,
+          ),
+        ]);
+        if (request.signal.aborted) return canceled();
         await record(
           "github-commits",
           `${metaUrl}/commits?per_page=20`,
@@ -107,8 +121,42 @@ export async function POST(request: NextRequest): Promise<Response> {
           meta: metaResult.data,
           commits: commitsResult.ok ? commitsResult.data : [],
         };
+        let manifest: ManifestEvidence | { code: string };
+        if (manifestResult.ok) {
+          const parsedManifest = parseManifest(
+            manifestResult.data.path,
+            manifestResult.data.text,
+          );
+          manifest = parsedManifest.ok
+            ? {
+                path: manifestResult.data.path,
+                rawSha256: manifestResult.data.rawSha256,
+                ...parsedManifest.data,
+              }
+            : { code: parsedManifest.code };
+        } else {
+          manifest = { code: manifestResult.code };
+        }
+        await record(
+          "github-manifest",
+          manifestResult.ok
+            ? manifestResult.data.url
+            : contentsUrl(parsed.owner, parsed.repo),
+          manifest,
+        );
+        let registry = null;
+        if ("packages" in manifest && manifest.packages.length > 0) {
+          registry = await lookupLatestVersions(
+            manifest.ecosystem,
+            manifest.packages,
+            request.signal,
+          );
+          if (request.signal.aborted) return canceled();
+          await record("registry", registry.registry, registry);
+        }
+        autopsy = buildAutopsy(manifest, registry);
         if (commitsResult.ok) {
-          spec = generateRevivalSpec(metaResult.data, commitsResult.data);
+          spec = generateRevivalSpec(metaResult.data, commitsResult.data, autopsy);
           await record("spec", url, spec);
         }
       }
@@ -119,6 +167,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       spec,
       wayback,
       github,
+      autopsy,
       publicKey: await exportPublicKey(publicKey),
     };
     return Response.json(response, {

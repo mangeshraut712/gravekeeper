@@ -8,6 +8,7 @@ import { ReceiptChainViewer } from "./ReceiptChainViewer";
 import { RevivalSpecPanel } from "./RevivalSpecPanel";
 import { SearchForm } from "./SearchForm";
 import { TombstoneCard } from "./TombstoneCard";
+import { DependencyAutopsyPanel } from "./DependencyAutopsyPanel";
 import { button } from "./styles";
 
 function Graveyard() {
@@ -132,9 +133,13 @@ function Results({ result, url }: { result: ResurrectResponse; url: string }) {
   return (
     <div className="space-y-6">
       <TombstoneCard result={result} url={url} />
+      {result.autopsy && <DependencyAutopsyPanel autopsy={result.autopsy} />}
       <div className="grid items-start gap-6 lg:grid-cols-2">
         {result.spec ? (
-          <RevivalSpecPanel spec={result.spec} />
+          <RevivalSpecPanel
+            spec={result.spec}
+            usesDependencies={Boolean(result.autopsy?.manifest)}
+          />
         ) : (
           <section className="rounded-xl border border-stone-700/70 p-7">
             <h3 className="font-serif text-2xl">No revival plan yet</h3>
@@ -308,7 +313,7 @@ export default function Gravekeeper() {
               [
                 "02",
                 "Find a way forward",
-                "Get a practical, metadata-based checklist. Review dependencies and licenses yourself before reviving a project.",
+                "Get a checklist from repository metadata and the versions declared in the root manifest. It is not a security audit; review licenses and vulnerabilities yourself.",
               ],
               [
                 "03",

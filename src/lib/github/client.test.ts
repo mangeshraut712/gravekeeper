@@ -11,7 +11,10 @@ import {
   fetchRepoMeta,
   parseGitHubUrl,
   createFork,
+  fetchRootManifest,
+  MAX_MANIFEST_BYTES,
 } from "./client";
+import { sha256hex } from "@/lib/receipts/chain";
 
 // ---------------------------------------------------------------------------
 // Helpers to build fake fetch responses
@@ -474,5 +477,118 @@ describe("createFork", () => {
     if (!result.ok) {
       expect(result.code).toBe("GITHUB_NOT_FOUND");
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// fetchRootManifest
+// ---------------------------------------------------------------------------
+
+function raw(status: number, body = "", headers: Record<string, string> = {}): Response {
+  return new Response(status === 404 ? "Not Found" : body, { status, headers });
+}
+
+
+describe("fetchRootManifest", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("reads package.json first from the default branch with the raw media type", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(raw(200, '{"dependencies":{}}'));
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await fetchRootManifest("ghost", "repo", "release/1.x");
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.path).toBe("package.json");
+    expect(result.data.text).toBe('{"dependencies":{}}');
+    expect(result.data.rawSha256).toBe(await sha256hex(new TextEncoder().encode('{"dependencies":{}}')));
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://api.github.com/repos/ghost/repo/contents/package.json?ref=release%2F1.x");
+    expect((init.headers as Record<string, string>).Accept).toBe("application/vnd.github.raw+json");
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to requirements.txt then pyproject.toml", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(raw(404))
+      .mockResolvedValueOnce(raw(404))
+      .mockResolvedValueOnce(raw(200, "[project]"));
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await fetchRootManifest("ghost", "repo", "main");
+    expect(result.ok && result.data.path).toBe("pyproject.toml");
+    expect(fetchMock.mock.calls.map(([url]) => String(url).split("/contents/")[1])).toEqual([
+      "package.json?ref=main",
+      "requirements.txt?ref=main",
+      "pyproject.toml?ref=main",
+    ]);
+  });
+
+  it("returns MANIFEST_NOT_FOUND when no manifest exists", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(raw(404)));
+    const result = await fetchRootManifest("ghost", "repo", "main");
+    expect(!result.ok && result.code).toBe("MANIFEST_NOT_FOUND");
+  });
+
+  it("maps rate limits and other errors without probing further", async () => {
+    const limited = vi.fn().mockResolvedValue(raw(403, "", { "x-ratelimit-remaining": "0" }));
+    vi.stubGlobal("fetch", limited);
+    const a = await fetchRootManifest("ghost", "repo", "main");
+    expect(!a.ok && a.code).toBe("GITHUB_RATE_LIMIT");
+    expect(limited).toHaveBeenCalledTimes(1);
+
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(raw(500)));
+    const b = await fetchRootManifest("ghost", "repo", "main");
+    expect(!b.ok && b.code).toBe("HTTP_ERROR");
+  });
+
+  it("maps timeouts to NETWORK_TIMEOUT", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new DOMException("The operation timed out.", "TimeoutError")),
+    );
+    const result = await fetchRootManifest("ghost", "repo", "main");
+    expect(!result.ok && result.code).toBe("NETWORK_TIMEOUT");
+  });
+
+  it("rejects manifests over 512 KiB by header or body size", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(raw(200, "{}", { "content-length": String(MAX_MANIFEST_BYTES + 1) })),
+    );
+    const a = await fetchRootManifest("ghost", "repo", "main");
+    expect(!a.ok && a.code).toBe("PARSE_ERROR");
+
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(raw(200, "x".repeat(MAX_MANIFEST_BYTES + 1))));
+    const b = await fetchRootManifest("ghost", "repo", "main");
+    expect(!b.ok && b.code).toBe("PARSE_ERROR");
+  });
+
+  it("sends the optional token only when GITHUB_TOKEN is set", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(raw(200, "{}"));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubEnv("GITHUB_TOKEN", "");
+    await fetchRootManifest("ghost", "repo", "main");
+    expect(fetchMock.mock.calls[0][1].headers).not.toHaveProperty("Authorization");
+    vi.stubEnv("GITHUB_TOKEN", "test-token");
+    await fetchRootManifest("ghost", "repo", "main");
+    expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe("Bearer test-token");
+  });
+
+  it("propagates cancellation", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (_url, init: RequestInit) => {
+        init.signal?.throwIfAborted();
+        return raw(200, "{}");
+      }),
+    );
+    const result = await fetchRootManifest("ghost", "repo", "main", controller.signal);
+    expect(!result.ok && result.code).toBe("NETWORK_TIMEOUT");
   });
 });
