@@ -4,7 +4,7 @@ Draft only. No video has been recorded or uploaded, and nothing here has been su
 
 "Reference shot" names a screenshot that exists in this repository. Production shots in `docs/screenshots/live/` were captured on https://gravekeeper-drab.vercel.app at about 13:16–13:17 UTC on 2026-11-11 (see [the caption file](../screenshots/live/README.md)). "None yet" means no screenshot of that beat exists; capture it while recording. Reference shots show what the screen looked like once, not what it will show on the day: a live `atom/atom` lookup depends on GitHub, the Internet Archive and npm, and its numbers change.
 
-In the 13:17 UTC production lookup the Wayback availability API said "None found" while the Epitaph panel showed born Jun 22, 2014, last seen Oct 2026, 136 captured months. If the snapshot is missing again, say so on camera: a partial result is the intended behaviour.
+In the 13:17 UTC production lookup the Wayback availability API said "None found" while the Epitaph panel showed born Jun 22, 2014, last seen Oct 2026, 136 captured months. If the snapshot is missing again, say so on camera: a partial result is the intended behaviour. Since the CDX fallback, a miss with captures in the index shows a capture from the latest captured month and says so; with no captures, "None found" remains. That fallback was verified with mocked tests, not on production.
 
 ## Title card
 
