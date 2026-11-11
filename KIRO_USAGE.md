@@ -162,3 +162,16 @@ Branch `feat/judge-ready-a11y-ci-20261111`. No credit figure, token count, or WB
 
 - Restored the `Open issues / PRs` count on `TombstoneCard`, shown alongside the archive snapshot date (it had been dropped when the card was extracted). Added a static-markup assertion for label and value with `openIssues=42`.
 - `scripts/a11y-audit.mts --lookup` now opens receipt `<details>` inside the proof section (`section[aria-labelledby="proof-title"]`), asserts the receipt body fields are visible, and fails if those selectors are missing. It no longer opens the first page disclosure ("Detected stack"). `docs/A11Y_AUDIT.md` records the corrected coverage; the previously recorded lookup-state axe counts predate this fix and need a re-run to refresh.
+
+## Nov 11, 2026 — PR #5 follow-up: proof status a11y, error/cancel scans (Kiro agent session)
+
+Branch `feat/judge-ready-a11y-ci-20261111`, from `c3cfd8e`. No credit figure or token count was exposed by this session's metadata, so none is claimed. No hook or MCP execution was observed or is claimed. No Devpost submission, video, or social post was made.
+
+**Kiro-generated (agent wrote and ran these):**
+- `ReceiptChainViewer`: new exported `ProofStatus` renders verification and download-error text in two separate `role="status"` regions, so a failed Download proof is announced after verification is valid or invalid. `download()` clears the error at the start of each attempt, so a later success removes it. Tests in `ReceiptChainViewer.test.tsx` (static markup) cover the error with every verification state.
+- `scripts/a11y-audit.mts`: always scans invalid-URL, mocked server-error, running (Cancel visible) and canceled states with `/api/resurrect` mocked; throws if a state is not reached.
+- Ran `npm run a11y` and `npm run a11y -- --lookup` on a production build and refreshed `docs/A11Y_AUDIT.md`. The live `atom/atom` lookup needed network.
+
+**Hand work:** none beyond the prompt.
+
+**Limits:** the "later download succeeds clears the error" path is by code, not a click test (it needs a DOM environment and no new dependency was added). Contrast pixel-sampling was not repeated for the new states. No second Kiro review.
