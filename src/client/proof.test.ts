@@ -17,6 +17,7 @@ import type {
 } from "@/types";
 import { buildAutopsy, REGISTRY_BASE } from "@/lib/deps/autopsy";
 import { generateRevivalSpec } from "@/lib/spec/generator";
+import { CDX_LIMIT, buildTimeline, cdxQueryUrl } from "@/lib/wayback/timeline";
 
 async function fixture(): Promise<ResurrectResponse> {
   const keys = await generateKeyPair();
@@ -372,6 +373,120 @@ describe("autopsy proof verification", () => {
         },
       ),
       { numRuns: 60 },
+    );
+  });
+});
+
+describe("epitaph timeline verification", () => {
+  const resource = "http://www.geocities.com/";
+  const wayback = {
+    available: true,
+    url: resource,
+    snapshotUrl: "https://web.archive.org/web/20091026000000/http://www.geocities.com/",
+    timestamp: "20091026000000",
+    status: "200",
+  };
+  const cdx = {
+    limit: CDX_LIMIT,
+    timestamps: ["19961022173245", "19970222174751", "20091026000000"],
+  };
+
+  async function timelineProof(
+    body: unknown = cdx,
+    cdxUrl = cdxQueryUrl(resource),
+  ): Promise<ResurrectResponse> {
+    const keys = await generateKeyPair();
+    const encode = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
+    const first = await buildReceipt(null, "wayback", resource, encode(wayback), keys.privateKey);
+    const second = await buildReceipt(first, "wayback-cdx", cdxUrl, encode(body), keys.privateKey);
+    return {
+      publicKey: await exportPublicKey(keys.publicKey),
+      receipts: [first, second],
+      evidence: [
+        { receiptSeq: 0, body: wayback },
+        { receiptSeq: 1, body },
+      ],
+      spec: null,
+      wayback,
+      github: null,
+      timeline: buildTimeline(body),
+    };
+  }
+
+  it("accepts a timeline derived from signed capture evidence", async () => {
+    expect(await verifyProof(await timelineProof(), resource)).toBe(true);
+  });
+  it("accepts a signed CDX failure with an unavailable timeline", async () => {
+    const proof = await timelineProof({ code: "NETWORK_TIMEOUT" });
+    expect(proof.timeline?.state).toBe("unavailable");
+    expect(await verifyProof(proof, resource)).toBe(true);
+  });
+  it("still accepts an older proof with neither receipt nor timeline", async () => {
+    const value = await fixture();
+    expect(value.timeline).toBeUndefined();
+    expect(await verifyProof(value)).toBe(true);
+  });
+  it("rejects a timeline without a wayback-cdx receipt", async () => {
+    const value = await fixture();
+    value.timeline = buildTimeline(cdx);
+    expect(await verifyProof(value)).toBe(false);
+  });
+  it("rejects a missing timeline when the receipt exists", async () => {
+    const value = await timelineProof();
+    value.timeline = null;
+    expect(await verifyProof(value)).toBe(false);
+  });
+  it("rejects a capture index for another resource", async () => {
+    const value = await timelineProof(cdx, cdxQueryUrl("http://other.example/"));
+    expect(await verifyProof(value, resource)).toBe(false);
+  });
+  it("rejects malformed signed evidence", async () => {
+    const value = await timelineProof({ limit: CDX_LIMIT, timestamps: ["1996"] });
+    expect(await verifyProof(value, resource)).toBe(false);
+  });
+  it("rejects evidence edited after signing", async () => {
+    const value = await timelineProof();
+    const body = value.evidence[1].body as typeof cdx;
+    body.timestamps = [...body.timestamps.slice(0, 2), "20120101000000"];
+    value.timeline = buildTimeline(body);
+    expect(await verifyProof(value, resource)).toBe(false);
+  });
+  it("property: changing any displayed timeline field fails verification", async () => {
+    const value = await timelineProof();
+    const original = JSON.stringify(value.timeline);
+    await fc.assert(
+      fc.asyncProperty(
+        fc.constantFrom(
+          "state",
+          "firstCapture",
+          "lastSeen",
+          "capturedMonths",
+          "yearsOnRecord",
+          "yearsWithCaptures",
+          "years",
+          "code",
+        ),
+        fc.integer({ min: 0, max: 13 }),
+        async (field, n) => {
+          const timeline = JSON.parse(original) as Record<string, unknown>;
+          const mutated: Record<string, unknown> = {
+            state: n % 2 ? "truncated" : "empty",
+            firstCapture: "19950101000000",
+            lastSeen: `20${10 + n}0101000000`,
+            capturedMonths: 4 + n,
+            yearsOnRecord: 15 + n,
+            yearsWithCaptures: 3 + n,
+            years: [{ year: 1996, months: n + 3 }],
+            code: "HTTP_ERROR",
+          };
+          timeline[field] = mutated[field];
+          fc.pre(JSON.stringify(timeline) !== original);
+          expect(
+            await verifyProof({ ...value, timeline: timeline as never }, resource),
+          ).toBe(false);
+        },
+      ),
+      { numRuns: 40 },
     );
   });
 });

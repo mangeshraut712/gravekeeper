@@ -5,6 +5,7 @@ import {
   isFailureBody,
   isManifestEvidence,
 } from "../lib/deps/autopsy.ts";
+import { buildTimeline, cdxQueryUrl, isCdxEvidence } from "../lib/wayback/timeline.ts";
 
 /** Crypto-only code is browser-safe and does not include a GitHub client or token. */
 export async function verifyProof(
@@ -36,6 +37,7 @@ export async function verifyProof(
     const seen = new Set<string>();
     let manifestBody: unknown;
     let registryBody: unknown = null;
+    let cdxBody: unknown;
     for (const [index, receipt] of result.receipts.entries()) {
       const evidence = result.evidence[index];
       if (evidence.receiptSeq !== index || seen.has(receipt.kind)) return false;
@@ -54,6 +56,15 @@ export async function verifyProof(
         case "wayback-miss":
           if (result.wayback !== null || !isFailure(evidence.body))
             return false;
+          break;
+        case "wayback-cdx":
+          // The capture index must be the query for this proof's resource.
+          if (
+            receipt.url !== cdxQueryUrl(result.receipts[0].url) ||
+            (!isCdxEvidence(evidence.body) && !isFailure(evidence.body))
+          )
+            return false;
+          cdxBody = evidence.body;
           break;
         case "github-meta":
           if (
@@ -100,6 +111,13 @@ export async function verifyProof(
     )
       return false;
     if (result.spec && !seen.has("spec")) return false;
+    // The displayed timeline must be exactly what the signed capture index derives.
+    if (seen.has("wayback-cdx")) {
+      const derived = buildTimeline(cdxBody);
+      if (!derived || !same(derived, result.timeline)) return false;
+    } else if (result.timeline !== undefined && result.timeline !== null) {
+      return false;
+    }
     // The displayed autopsy must be exactly what the signed evidence derives.
     if (seen.has("github-manifest")) {
       const derived = buildAutopsy(manifestBody, registryBody);
