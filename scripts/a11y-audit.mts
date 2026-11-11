@@ -103,11 +103,13 @@ async function settleImpl(page: import("playwright").Page) {
   ]));
   await page.waitForTimeout(300);
 }
-async function expectStatus(page: import("playwright").Page, text: string) {
+// Only a failed URL validation marks the field invalid; server errors and cancel do not.
+async function expectStatus(page: import("playwright").Page, text: string, invalid: boolean) {
   const status = page.locator("#lookup-error");
   await status.getByText(text).waitFor({ state: "visible", timeout: 10_000 });
-  if ((await page.locator("#resource-url").getAttribute("aria-invalid")) !== "true") {
-    throw new Error(`expected aria-invalid=true on the URL input for: ${text}`);
+  const expected = String(invalid);
+  if ((await page.locator("#resource-url").getAttribute("aria-invalid")) !== expected) {
+    throw new Error(`expected aria-invalid=${expected} on the URL input for: ${text}`);
   }
 }
 {
@@ -118,7 +120,7 @@ async function expectStatus(page: import("playwright").Page, text: string) {
   await page.goto(base + "/", { waitUntil: "networkidle" });
   await page.fill("#resource-url", "not a url");
   await page.click("button[type=submit]");
-  await expectStatus(page, "Enter a public HTTP(S) URL");
+  await expectStatus(page, "Enter a public HTTP(S) URL", true);
   if (requested) throw new Error("validation error state made a network request");
   await settleImpl(page);
   await scan("/ (invalid URL error state)", page);
@@ -133,7 +135,7 @@ async function expectStatus(page: import("playwright").Page, text: string) {
   await page.goto(base + "/", { waitUntil: "networkidle" });
   await page.fill("#resource-url", "https://github.com/example/missing");
   await page.click("button[type=submit]");
-  await expectStatus(page, message);
+  await expectStatus(page, message, false);
   await settleImpl(page);
   await scan("/ (lookup error state, mocked 404)", page);
   await page.context().close();
@@ -150,7 +152,7 @@ async function expectStatus(page: import("playwright").Page, text: string) {
   await settleImpl(page);
   await scan("/ (lookup running, Cancel button visible)", page);
   await page.keyboard.press("Escape");
-  await expectStatus(page, "Lookup canceled. You can start another one.");
+  await expectStatus(page, "Lookup canceled. You can start another one.", false);
   if (await cancel.count()) throw new Error("Cancel button still present after Escape");
   await settleImpl(page);
   await scan("/ (lookup canceled state)", page);

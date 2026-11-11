@@ -238,3 +238,57 @@ describe("parseManifest", () => {
     expect(ok(parseManifest("pyproject.toml", "")).ecosystem).toBe("pypi");
   });
 });
+
+// Regression for the 2026-11-11 Kiro review: attacker-controlled manifests up to
+// 512 KiB used to hit O(n^2) regex backtracking. Each input below took seconds before
+// the fix (measured 5-12 s locally); linear parsing finishes in milliseconds.
+describe("manifest parsing stays linear on hostile input", () => {
+  const n = 60_000;
+  function elapsed(fn: () => unknown): number {
+    const start = performance.now();
+    fn();
+    return performance.now() - start;
+  }
+
+  it("pyproject [project] table made of blank lines", () => {
+    const text = "[project]\n" + " \n".repeat(n);
+    let result: ReturnType<typeof parsePyprojectToml> | undefined;
+    expect(elapsed(() => (result = parsePyprojectToml(text)))).toBeLessThan(1_000);
+    expect(ok(result!).packages).toEqual([]);
+  });
+
+  it("still finds an indented dependencies key after blank lines", () => {
+    const data = ok(parsePyprojectToml('[project]\n\n  \n  dependencies = [\n "httpx>=0.24"\n]\n'));
+    expect(data.packages).toEqual([{ name: "httpx", spec: ">=0.24", group: "project" }]);
+  });
+
+  it("requirements line with a long name and a stray carriage return", () => {
+    const text = "a".repeat(n) + ">=1\rb\n";
+    let result: ReturnType<typeof parseRequirementsTxt> | undefined;
+    expect(elapsed(() => (result = parseRequirementsTxt(text)))).toBeLessThan(1_000);
+    expect(ok(result!).packages).toEqual([]);
+    expect(ok(result!).skippedLines).toBe(1);
+  });
+
+  it("requirements line with many ' #' and a stray carriage return", () => {
+    const text = " #".repeat(n / 2) + "\rx\n";
+    let result: ReturnType<typeof parseRequirementsTxt> | undefined;
+    expect(elapsed(() => (result = parseRequirementsTxt(text)))).toBeLessThan(1_000);
+    expect(ok(result!).packages).toEqual([]);
+  });
+
+  it("pyproject entry with a long name and a stray carriage return", () => {
+    const text = `[project]\ndependencies = ["${"a".repeat(n)}>=1\rb"]\n`;
+    let result: ReturnType<typeof parsePyprojectToml> | undefined;
+    expect(elapsed(() => (result = parsePyprojectToml(text)))).toBeLessThan(1_000);
+    expect(ok(result!).skippedLines).toBe(1);
+  });
+
+  it("keeps stripping inline comments", () => {
+    const data = ok(parseRequirementsTxt("requests>=2.0  # http\n# whole line\nflask==1.0\t#x\n"));
+    expect(data.packages.map((p) => [p.name, p.spec])).toEqual([
+      ["requests", ">=2.0"],
+      ["flask", "==1.0"],
+    ]);
+  });
+});

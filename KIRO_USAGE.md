@@ -304,6 +304,50 @@ Branch `perf/polish-and-share-20261111`, from `4184d6f`. The credit figure for t
 
 **Review follow-up (PR #10):** Cursor Bugbot reported that the demo pages inherited the home Twitter text. Reproduced with a failing test, then found with curl that those pages also had no `og:image` / `twitter:image`, because a page-level `openGraph` or `twitter` object replaces the inherited one. Fixed by setting page Twitter text and listing the share images explicitly. After the fix: `npm test` 263 passed, lint, `tsc`, build, e2e and `demo:verify` passed. Codex and Kilo reported no findings.
 
+## Nov 11, 2026 — Revival kit export (Kiro agent session)
+
+Branch `feat/revival-kit-export-20261111`, from `70d5a7d` (PR #11 tip, which includes the merged PR #7 autopsy). Session `sess_5e434b4f-4aaf-4888-a574-82fb093c9f42`. Evidence: `.kiro/evidence/2026-11-11-revival-kit.json`. The credit figure for this session is recorded by the runner; the agent saw none, so none is claimed here. No MCP server was used. No Devpost submission, video, blog publish, or social post was made.
+
+**Kiro-generated (agent wrote and ran these):**
+- Spec first: `.kiro/specs/revival-kit/` (EARS requirements RK-01 to RK-06, design with five correctness properties, tasks), committed before code as `f52061d`.
+- `src/lib/revival/markdown.ts`: pure, deterministic generator for `REVIVAL.md` (facts, snapshot link, five recent commits, every plan step, autopsy table, Epitaph timeline, tracking issue, proof reference) and the "Revival tracking issue" body. `escapeMarkdown()` entity-escapes `& < >`, backslash-escapes Markdown/GitHub punctuation (links, code, emphasis, pipes, `@mentions`, `#refs`, math) and turns line breaks, controls and bidi characters into spaces.
+- `src/client/kit.ts`: `prepareRevivalKit` runs `verifyProof` first, hashes the exact `exportProof` bytes with the existing `sha256hex`, and never throws. No new hashing scheme, no network.
+- `RevivalKitPanel` ("Download revival kit", "Copy issue body", two polite status regions, trust-limit text), shown only when a result has a plan and GitHub metadata.
+- Tests: unit tests for escaping and each section, fast-check properties (every step present in order with one checkbox each, no `<`/`>` from any user field, escape round trip, deterministic output, issue body embedded verbatim), signed-response refusal tests, static-markup component tests, and two e2e steps (download/copy tied to the proof SHA-256; tampered response refused with no download).
+- A real bug found by the tests: `encodeURIComponent` does not encode `(` `)`, so a snapshot URL with parentheses could end the Markdown link early; now mapped explicitly.
+- Real production-build export of `https://github.com/facebookarchive/flux` through the UI with Playwright, recorded verbatim in `docs/REVIVAL_KIT.md` (HTTP 200 in about 9.0 s, 7 receipts, browser and offline verification passed, proof SHA-256 named in the kit).
+
+**Hooks, observed in this session:** the requirements-coverage agent hook fired after `requirements.md` was saved (before design and tasks existed, so everything was uncovered; re-checked after writing them, no gaps). The keep-tasks-in-sync agent hook fired on `src/` saves; `.kiro/specs/resurrect/tasks.md` had no item completed by this work and was left unchanged. Output of the `npm test` and receipts-property command hooks was not observed, so their execution is not claimed; tests were run directly. Files written through shell commands (the docs page) do not trigger save hooks.
+
+**Checks:** `npm test` 40 files, 606 tests passed; `npm run lint`; `npx next typegen && npx tsc --noEmit`; `npm run build`; `npm run demo:verify` (after 12/12, before 4/12); `npm run e2e` against `npx next start -p 3400`, 14/14 passed, server stopped afterwards. After `git pull --no-rebase origin main` brought in PR #10 (one conflict, in this file; all entries kept, newest last): `npm test` 42 files, 616 tests passed; lint, typegen + tsc, build, `demo:verify` and e2e 14/14 passed again.
+
+**Hand work:** none beyond the prompt.
+
+**Limits:** no axe scan, contrast sampling or screen-reader pass for the new panel. The "Copy issue body" clipboard-failure message is covered by static markup only, not a browser test. The kit is not signed itself; it references the signed proof by hash.
+
+**Review follow-up (PR #12):** Codex P2: Safari can drop the user gesture across the WebCrypto awaits before `writeText`, so Copy issue body could fail on a valid proof. Reproduced with failing tests, then added `copyIssueBody()`: when `ClipboardItem` exists the write starts synchronously in the click with a promise-backed item that resolves only after verification (rejects otherwise); without it, verify then `writeText`. Safari itself was not tested; the fix is checked by unit tests and the Chromium e2e. After the fix: `npm test` 42 files, 620 tests; lint, typegen + tsc, build, `demo:verify` and e2e 14/14 passed.
+
+A second `git pull --no-rebase origin main` brought in PRs #9 and #11 (one conflict in this file, all entries kept). On that merged tree: `npm test` 44 files, 659 tests passed; lint, typegen + tsc, build, `demo:verify` (4/12 before, 12/12 after) and e2e 14/14 passed.
+## Nov 11, 2026 — Kiro review of the post-9165fa3 code, then verified fixes (Kiro agent session)
+
+Branch `fix/review-findings-20261111`, from main `7c2973f`. The credit figure for this working session is recorded by the runner, not here. No token count or WBM record is claimed. No Devpost submission, video, blog publish, or social post was made.
+
+**Kiro review (read-only agent):** one bounded `kiro-cli chat --agent gravekeeper-review --no-interactive --trust-all-tools --output-format stream-json` run (session `sess_9c02bc20-a9ed-42b4-9abe-4b19724efb47`, 12:21:19Z to 12:26:47Z). It reviewed 27 listed files changed in `9165fa3..7c2973f`. The stream shows 28 read and 5 search tool calls and no shell, write or MCP calls. The stream-json `session_usage` metadata reported **5.634453310779436 credits** for the review. That figure is provider-reported, not a token count. Kiro found no SSRF, token leakage, HTML injection or proof-verification bypass. It reported quadratic regexes in manifest parsing, an uncapped manifest body read, three SearchForm issues, release-gate matcher gaps, and low-severity items. The summary and every outcome are in `docs/reviews/2026-11-11-kiro-review.md`, and metadata is in `.kiro/evidence/2026-11-11-review-findings.json`.
+
+**Verification and fixes (agent session, tests first):**
+- Timed the regex findings locally. 80k-line or 80k-character inputs took 21.6 s, 9.7 s and 4.9 s. Fixed in `7b62d07`, with regression tests that each took 2.8–12.5 s before the fix.
+- `fetchRootManifest` now streams the body and cancels it once it passes 512 KiB (`ecdbf7f`). The streamed-body test failed first.
+- SearchForm (`088fb1d`): non-JSON error pages show a plain message, `aria-invalid` is set only for URL validation, and focus moves to Cancel while loading and back to the field afterwards. Two new e2e steps failed against a build of the old SearchForm and passed after the fix. The e2e temp directory is now removed.
+- Release gate (`347e2c5`): matches `-P`, `--git-dir <path>`, quoted words and line continuations, runs the checks on unparseable events, and has a 10-minute timeout per check. We did not use Kiro's broader regex because it would match `git stash push`.
+- Autopsy table scroller is labelled by its caption (`d68b5d5`). `scripts/a11y-audit.mts` now expects `aria-invalid="false"` after a server error and after cancel (`3b388bf`).
+- Rejected with reasons in the review file: rate limiting (no server storage, deployment-level), dist-tag note wording (would break existing proofs), 403-as-not-found (intended), `NETWORK_TIMEOUT` labelling (proof format), PreviewFrame poll, PyPI body size, and `verifyProof` hardening (documented trust limit).
+- `node_modules` in this worktree was a symlink to another checkout, which Turbopack refused to resolve. Only the symlink was removed, and `npm ci` was run locally.
+
+**Checks run:** `npm test` (35 files, 535 passed), `npm run lint`, `npx next typegen && npx tsc --noEmit`, `npm run build`, `npm run demo:verify` (4/12 before, 12/12 after), and, against `next start` on ports 3457/3458, `npm run e2e` (all passed) and `npm run a11y` (Chromium, 0 counted violations, plus the 4 intentional findings on the "before" fixture). After merging `origin/main` (`129c301`, PRs #9 and #11) every check was run again: `npm test` (41 files, 649 passed), lint, `tsc`, build, `demo:verify` (4/12 before, 12/12 after), e2e and a11y on port 3459. All passed.
+
+**Hooks, observed:** after each `src/` save, the `keep-tasks-in-sync` prompt arrived. No unchecked `tasks.md` item was completed, so `tasks.md` was not changed. The `npm test` save hook's output was not attached, so its result was not observed; tests were run by hand.
+
+**Limits:** the timings come from one machine. Firefox and WebKit were not rescanned. There was no screen-reader pass. Kiro did not review its own fixes.
 ## Nov 11, 2026 — Judge guide and docs pass (Kiro agent session)
 
 Branch `docs/judge-guide-20261111`, from `main` at `129c301` (PRs #7, #9, #10 and #11 merged). The credit figure for this session is recorded by the runner, not here. No token count or WBM record is claimed. No hook fired in this session (only docs and `.kiro/evidence` were edited, and no hook matcher covers them), and no MCP server was used. No Devpost submission, video, blog publish, or social post was made.

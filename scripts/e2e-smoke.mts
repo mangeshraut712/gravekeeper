@@ -6,14 +6,15 @@
 // the project's own receipt code, the same approach as scripts/capture-screenshots.mts.
 // It checks the UI and the proof round trip, not live GitHub or Wayback behaviour.
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium } from "playwright";
 import type { Browser, Page } from "playwright";
 import type { Receipt } from "../src/types/index.ts";
 import { generateKeyPair, exportPublicKey } from "../src/lib/receipts/crypto.ts";
-import { buildReceipt } from "../src/lib/receipts/chain.ts";
+import { buildReceipt, sha256hex } from "../src/lib/receipts/chain.ts";
+import { escapeMarkdown } from "../src/lib/revival/markdown.ts";
 import { generateRevivalSpec } from "../src/lib/spec/generator.ts";
 import { CDX_LIMIT, buildTimeline, cdxQueryUrl } from "../src/lib/wayback/timeline.ts";
 import fixtures from "../src/lib/restoration/fixtures.json" with { type: "json" };
@@ -146,6 +147,36 @@ await step("invalid URL shows the inline error without a network call", () =>
   }));
 
 let downloaded = "";
+// Regressions for the 2026-11-11 Kiro review (SearchForm findings 4, 6 and 7).
+await step("non-JSON error page shows a plain message and does not mark the URL invalid", () =>
+  withPage(browser, {}, async (page) => {
+    await page.route("**/api/resurrect", (route) =>
+      route.fulfill({ status: 504, contentType: "text/html", body: "<!DOCTYPE html><title>Gateway Timeout</title>" }));
+    await page.goto(base + "/", { waitUntil: "networkidle" });
+    await page.fill("#resource-url", repoUrl);
+    await page.click("form button[type=submit]");
+    await page.locator("#lookup-error").getByText("The lookup failed. Please try again.").waitFor({ timeout: 10_000 });
+    const text = (await page.locator("#lookup-error").textContent()) ?? "";
+    assert(!/JSON|Unexpected token/.test(text), `raw parser error shown: ${text}`);
+    assert((await page.locator("#resource-url").getAttribute("aria-invalid")) === "false", "aria-invalid set for a server error");
+  }));
+
+await step("keyboard focus moves to Cancel while loading and back to the URL field after Escape", () =>
+  withPage(browser, {}, async (page) => {
+    await page.route("**/api/resurrect", () => new Promise(() => {})); // never completes
+    await page.goto(base + "/", { waitUntil: "networkidle" });
+    await page.fill("#resource-url", repoUrl);
+    await page.focus("#resource-url");
+    await page.keyboard.press("Enter");
+    const cancel = page.getByRole("button", { name: "Cancel" });
+    await cancel.waitFor({ timeout: 10_000 });
+    await page.waitForFunction(() => document.activeElement?.textContent === "Cancel", null, { timeout: 5_000 });
+    await page.keyboard.press("Escape");
+    await page.locator("#lookup-error").getByText("Lookup canceled").waitFor({ timeout: 5_000 });
+    await page.waitForFunction(() => document.activeElement?.id === "resource-url", null, { timeout: 5_000 });
+    assert((await page.locator("#resource-url").getAttribute("aria-invalid")) === "false", "aria-invalid set after cancel");
+  }));
+
 await step("lookup renders tombstone, revival steps and proof; Verify and Download proof work", () =>
   withPage(browser, {}, async (page) => {
     await page.route("**/api/resurrect", (route) =>
@@ -154,6 +185,7 @@ await step("lookup renders tombstone, revival steps and proof; Verify and Downlo
     await page.fill("#resource-url", repoUrl);
     await page.click("form button[type=submit]");
     await page.locator("#resource-title").getByText("example/abandoned-widget").waitFor({ timeout: 15_000 });
+    await page.waitForFunction(() => document.activeElement?.id === "results-title", null, { timeout: 5_000 });
     await page.getByText("R.I.P.", { exact: true }).last().waitFor();
     const plan = page.locator("section[aria-labelledby='plan-title']");
     await plan.getByText("Revival steps").waitFor();
@@ -211,6 +243,73 @@ await step("results show the Epitaph timeline with a table alternative", () =>
     const rows = await epitaph.locator("tbody tr").count();
     assert(rows === 6, `expected 6 year rows (2014-2019), saw ${rows}`);
     await epitaph.locator("tbody tr", { hasText: "2017" }).getByText("0", { exact: true }).waitFor();
+  }));
+
+await step("revival kit: REVIVAL.md names the downloaded proof's SHA-256 and every step; Copy issue body announces", async () => {
+  const ctx = await browser.newContext({ acceptDownloads: true });
+  try {
+    await ctx.grantPermissions(["clipboard-read", "clipboard-write"], { origin: new URL(base).origin });
+    const page = await ctx.newPage();
+    await page.route("**/api/resurrect", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(mocked) }));
+    await page.goto(base + "/", { waitUntil: "networkidle" });
+    await page.fill("#resource-url", repoUrl);
+    await page.click("form button[type=submit]");
+    const kit = page.locator("section[aria-labelledby='kit-title']");
+    await kit.waitFor({ timeout: 15_000 });
+    const proof = page.locator("section[aria-labelledby='proof-title']");
+    const [proofDownload] = await Promise.all([
+      page.waitForEvent("download", { timeout: 10_000 }),
+      proof.getByRole("button", { name: /Download proof/ }).click(),
+    ]);
+    const proofFile = join(work, "kit-proof.json");
+    await proofDownload.saveAs(proofFile);
+    const [kitDownload] = await Promise.all([
+      page.waitForEvent("download", { timeout: 15_000 }),
+      kit.getByRole("button", { name: "Download revival kit" }).click(),
+    ]);
+    assert(kitDownload.suggestedFilename() === "REVIVAL.md", `unexpected filename ${kitDownload.suggestedFilename()}`);
+    const kitFile = join(work, "REVIVAL.md");
+    await kitDownload.saveAs(kitFile);
+    await page.locator("#kit-download-status").getByText("REVIVAL.md downloaded.").waitFor({ timeout: 5_000 });
+    const markdown = await readFile(kitFile, "utf8");
+    const proofSha = await sha256hex(new Uint8Array(await readFile(proofFile)));
+    assert(markdown.includes(`- Proof SHA-256: \`${proofSha}\``), "REVIVAL.md does not name the downloaded proof's SHA-256");
+    for (const s of spec.revivalSteps)
+      assert(markdown.includes(`${s.order}. **${escapeMarkdown(s.title)}.**`), `REVIVAL.md is missing step ${s.order}`);
+    assert(markdown.includes("## Epitaph timeline"), "REVIVAL.md has no Epitaph timeline");
+    assert(!/[<>]/.test(markdown), "REVIVAL.md contains < or >");
+    await kit.getByRole("button", { name: "Copy issue body" }).click();
+    await page.locator("#kit-copy-status").getByText("Issue body copied.").waitFor({ timeout: 5_000 });
+    const copied = await page.evaluate(() => navigator.clipboard.readText());
+    assert(copied.startsWith("### Revival tracking issue"), "clipboard is not the issue body");
+    assert(markdown.includes(copied), "copied issue body is not the issue section of REVIVAL.md");
+    const boxes = copied.split("\n").filter((line) => line.startsWith("- [ ] ")).length;
+    assert(boxes === spec.revivalSteps.length, `expected ${spec.revivalSteps.length} checkboxes, saw ${boxes}`);
+  } finally {
+    await ctx.close();
+  }
+});
+
+await step("revival kit is refused when displayed data differs from the signed evidence", () =>
+  withPage(browser, {}, async (page) => {
+    const tampered = structuredClone(mocked);
+    tampered.github.meta.description = "Edited after signing.";
+    await page.route("**/api/resurrect", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(tampered) }));
+    await page.goto(base + "/", { waitUntil: "networkidle" });
+    await page.fill("#resource-url", repoUrl);
+    await page.click("form button[type=submit]");
+    const kit = page.locator("section[aria-labelledby='kit-title']");
+    await kit.waitFor({ timeout: 15_000 });
+    let downloads = 0;
+    page.on("download", () => downloads++);
+    await kit.getByRole("button", { name: "Download revival kit" }).click();
+    await page.locator("#kit-download-status").getByText("Revival kit not created: the proof did not verify.").waitFor({ timeout: 10_000 });
+    await kit.getByRole("button", { name: "Copy issue body" }).click();
+    await page.locator("#kit-copy-status").getByText("Issue body not copied: the proof did not verify.").waitFor({ timeout: 10_000 });
+    await page.waitForTimeout(500);
+    assert(downloads === 0, `expected no download, saw ${downloads}`);
   }));
 
 await step("permalink ?url= runs the lookup once, keeps the link, and Copy link announces", async () => {
@@ -297,6 +396,7 @@ await step("/lantern-hill: Verify HTML receipts reports valid", () =>
   }));
 
 await browser.close();
+await rm(work, { recursive: true, force: true });
 if (failures.length) {
   console.error(`\nRESULT: ${failures.length} e2e check(s) failed:\n- ${failures.join("\n- ")}`);
   process.exit(1);
