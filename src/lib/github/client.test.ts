@@ -567,6 +567,45 @@ describe("fetchRootManifest", () => {
     expect(!b.ok && b.code).toBe("PARSE_ERROR");
   });
 
+  it("stops reading a body without content-length once it passes 512 KiB", async () => {
+    // Regression for the 2026-11-11 Kiro review: chunked or compressed responses carry
+    // no usable content-length, and the whole body used to be buffered before the cap.
+    const chunk = new Uint8Array(64 * 1024);
+    let pulled = 0;
+    let canceled = false;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled += 1;
+        if (pulled > 1_000) return controller.close(); // ~64 MiB if never canceled
+        controller.enqueue(chunk);
+      },
+      cancel() {
+        canceled = true;
+      },
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(body, { status: 200 })));
+    const result = await fetchRootManifest("ghost", "repo", "main");
+    expect(!result.ok && result.code).toBe("PARSE_ERROR");
+    expect(canceled).toBe(true);
+    expect(pulled * chunk.byteLength).toBeLessThanOrEqual(MAX_MANIFEST_BYTES + 2 * chunk.byteLength);
+  });
+
+  it("reads a streamed body under the limit in full", async () => {
+    const text = "requests>=2\n".repeat(1_000);
+    const bytes = new TextEncoder().encode(text);
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(bytes.slice(0, 5_000));
+        controller.enqueue(bytes.slice(5_000));
+        controller.close();
+      },
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(body, { status: 200 })));
+    const result = await fetchRootManifest("ghost", "repo", "main");
+    expect(result.ok && result.data.text).toBe(text);
+    expect(result.ok && result.data.rawSha256).toBe(await sha256hex(bytes));
+  });
+
   it("sends the optional token only when GITHUB_TOKEN is set", async () => {
     const fetchMock = vi.fn().mockResolvedValue(raw(200, "{}"));
     vi.stubGlobal("fetch", fetchMock);

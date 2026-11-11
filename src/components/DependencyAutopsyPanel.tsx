@@ -124,12 +124,12 @@ export function DependencyAutopsyPanel({ autopsy }: { autopsy: DependencyAutopsy
           </dl>
           <div
             role="region"
-            aria-labelledby="autopsy-title"
+            aria-labelledby="autopsy-table-caption"
             tabIndex={0}
             className="mt-5 max-h-[28rem] overflow-auto rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-200"
           >
             <table className="w-full min-w-[34rem] border-collapse text-sm">
-              <caption className="sr-only">
+              <caption id="autopsy-table-caption" className="sr-only">
                 Declared dependencies, latest registry version and status
               </caption>
               <thead>

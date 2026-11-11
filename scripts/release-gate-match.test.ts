@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isReleaseCommand } from "./release-gate-match.mjs";
+import { commandFromEvent, isReleaseCommand } from "./release-gate-match.mjs";
 
 describe("isReleaseCommand", () => {
   it.each([
@@ -22,6 +22,15 @@ describe("isReleaseCommand", () => {
     ["env assignment prefix", "GIT_TRACE=1 git push"],
     ["gh with repo flag", "gh pr create -R owner/repo --fill"],
     ["absolute git path", "/usr/bin/git push"],
+    // Forms reported by the 2026-11-11 Kiro review.
+    ["git -P push", "git -P push"],
+    ["git -p push", "git -p push origin main"],
+    ["git --git-dir <path> push", "git --git-dir .git push"],
+    ["git --work-tree <dir> push", "git --work-tree dir push"],
+    ["git -C quoted dir with space", 'git -C "my dir" push'],
+    ["quoted git", '"git" push'],
+    ["quoted push", "git 'push' origin"],
+    ["line continuation", "git \\\npush origin main"],
   ])("matches %s", (_name, command) => {
     expect(isReleaseCommand(command)).toBe(true);
   });
@@ -38,5 +47,19 @@ describe("isReleaseCommand", () => {
     ["empty", ""],
   ])("does not match %s", (_name, command) => {
     expect(isReleaseCommand(command)).toBe(false);
+  });
+});
+
+describe("commandFromEvent", () => {
+  it("reads the shell command from a hook event", () => {
+    expect(commandFromEvent('{"tool_input":{"command":"git push"}}')).toBe("git push");
+    expect(commandFromEvent('{"tool_input":{}}')).toBe("");
+    expect(commandFromEvent("")).toBe("");
+  });
+
+  // The gate claims to fail closed, so an event it cannot parse must not pass silently.
+  it("returns null for an event it cannot parse", () => {
+    expect(commandFromEvent("{not json")).toBeNull();
+    expect(commandFromEvent("[]")).toBeNull();
   });
 });
