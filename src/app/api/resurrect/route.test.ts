@@ -483,7 +483,7 @@ describe("POST /api/resurrect epitaph timeline", () => {
     const body = await (await POST(jsonRequest({ url }))).json();
     expect(body.receipts.map((r: { kind: string }) => r.kind)).toEqual(["wayback", "wayback-cdx"]);
     expect(body.receipts[1].url).toBe(
-      "https://web.archive.org/cdx/search/cdx?url=http%3A%2F%2Fwww.geocities.com%2F&output=json&fl=timestamp,statuscode&collapse=timestamp:6&limit=1200",
+      "https://web.archive.org/cdx/search/cdx?url=http%3A%2F%2Fwww.geocities.com%2F&output=json&fl=timestamp,statuscode&collapse=timestamp:6&limit=1200&matchType=exact",
     );
     expect(calls).toContain(body.receipts[1].url);
     expect(body.timeline.firstCapture).toBe("20140622190015");

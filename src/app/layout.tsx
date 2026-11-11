@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { SiteFooter } from "@/components/SiteFooter";
 import {
   siteDescription,
   siteName,
@@ -39,7 +40,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className="min-h-full antialiased">
-      <body>{children}</body>
+      <body>
+        {children}
+        <SiteFooter />
+      </body>
     </html>
   );
 }

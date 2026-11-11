@@ -14,11 +14,16 @@ export const CDX_MAX_BYTES = 512 * 1024;
 const TIMESTAMP = /^(19|20)\d{12}$/;
 const STATUS = /^(\d{3}|-)$/;
 
+/** CDX treats a trailing /* as a prefix query; those must not be sent. */
+export function isCdxWildcardUrl(url: string): boolean {
+  return url.includes("*");
+}
+
 export function cdxQueryUrl(url: string): string {
   return (
     "https://web.archive.org/cdx/search/cdx?url=" +
     encodeURIComponent(url) +
-    `&output=json&fl=timestamp,statuscode&collapse=timestamp:6&limit=${CDX_LIMIT}`
+    `&output=json&fl=timestamp,statuscode&collapse=timestamp:6&limit=${CDX_LIMIT}&matchType=exact`
   );
 }
 

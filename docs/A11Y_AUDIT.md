@@ -34,6 +34,7 @@ Browser-specific issue found while adding this: in headless Firefox the 200 ms `
 
 | Page / state | Violations | Rules passed | Needs manual review |
 |---|---|---|---|
+| `/proof` (empty state) | 0 | 23 | 0 |
 | `/` (initial) | 0 | 22 | 1 (color-contrast, 16 nodes) |
 | `/` after a real `atom/atom` lookup, proof-section receipt details open | 0 | 27 | 1 (color-contrast, 13 nodes) |
 | `/` invalid-URL error state | 0 | 22 | 1 (color-contrast, 13 nodes) |
@@ -92,6 +93,24 @@ Caveats, so these numbers are not over-read:
 - In the live result, the `#d6b12a` backdrop is under the "Open archived snapshot" link, which paints its own amber background (dark `#0c0a09` text, 9.58:1). It is not fog.
 - The first run of this script produced misleading failures (amber/grey leftovers from placeholder text, underlines and the focused input). Those were measurement artefacts and were fixed in the script before the numbers above were taken.
 - Contrast was only measured in Chromium. Decorative non-text characters (arrows) are `aria-hidden` and have no contrast requirement. Opacity set on a parent element is not accounted for beyond the computed text colour.
+
+### Fog fix and phase sweep (2026-11-11, Chromium, local production build)
+
+The fog alphas in `globals.css` were reduced (peaks 0.14/0.10/0.10/0.12 to 0.06/0.045/0.045/0.055). `src/components/FogOverlay.test.tsx` now parses those values from the CSS and asserts that, even if all four gradients overlapped at one point, `#a6a09b` (the lightest muted text) stays at 4.5:1 or better (computed worst case about 5.4:1).
+
+`scripts/fog-sweep.mts` pauses both fog animations and renders 12 x 12 phase pairs of their own cycles (144 frames per viewport), with all content hidden, and keeps the brightest pixel:
+
+| Viewport | Brightest fog pixel (new CSS) | `#a6a09b` on it | Same sweep with the old alphas injected |
+|---|---|---|---|
+| 1440x900 | `#1b1e18` | 6.52:1 | `#292a23`, 5.60:1 |
+| 390x844 | `#1b1f18` | 6.47:1 | `#292b23`, 5.55:1 |
+
+What this shows and does not show:
+
+- With the old CSS the sweep did not reproduce `#55514c`. Fog over the flat page colour peaked at `#292a23` (5.60:1), which already passed. So the earlier "up to about `#55514c`" figure was not caused by these fog layers alone; where it came from was not identified. The alpha reduction is a margin, not the fix for a failure that was reproduced.
+- The sweep covers 144 of the continuous phase pairs, not all of them, and the fog over page areas that paint their own glow or background is not included. Only Chromium.
+- `scripts/contrast-sample.mts` was re-run on the new build: initial, invalid-URL, mocked-error, running and canceled states all gave lowest ratio 7.13:1 (`#a6a09b` on `#111510`), 0 boxes under 4.5:1. As before, the fog did not reach under any text box in those frames, so this re-run is a regression check, not proof by itself; the sweep and the unit test carry the claim.
+- The live-result state was not re-sampled in this pass.
 
 ### A false positive worth knowing about
 

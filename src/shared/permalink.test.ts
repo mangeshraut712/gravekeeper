@@ -29,6 +29,7 @@ describe("readPermalink", () => {
     "https://user:pass@example.com/",
     "https://example.com/?token=secret",
     "https://example.com:8443/",
+    "https://example.com/*",
     "",
   ])("rejects %j without a lookup", (value) => {
     expect(readPermalink("?url=" + encodeURIComponent(value))).toEqual({ kind: "rejected" });

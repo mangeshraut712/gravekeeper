@@ -4,6 +4,7 @@ import {
   CDX_LIMIT,
   buildTimeline,
   cdxQueryUrl,
+  isCdxWildcardUrl,
   isCdxEvidence,
   parseCdxBody,
   timestampToIso,
@@ -15,8 +16,14 @@ const body = (rows: string[][]) => JSON.stringify([HEADER, ...rows]);
 describe("cdxQueryUrl", () => {
   it("encodes the resource and asks for monthly collapse with a limit", () => {
     expect(cdxQueryUrl("http://www.geocities.com/")).toBe(
-      "https://web.archive.org/cdx/search/cdx?url=http%3A%2F%2Fwww.geocities.com%2F&output=json&fl=timestamp,statuscode&collapse=timestamp:6&limit=1200",
+      "https://web.archive.org/cdx/search/cdx?url=http%3A%2F%2Fwww.geocities.com%2F&output=json&fl=timestamp,statuscode&collapse=timestamp:6&limit=1200&matchType=exact",
     );
+  });
+
+  it("flags trailing /* and other asterisks as CDX wildcards", () => {
+    expect(isCdxWildcardUrl("https://example.com/*")).toBe(true);
+    expect(isCdxWildcardUrl("https://example.com/foo*")).toBe(true);
+    expect(isCdxWildcardUrl("https://example.com/")).toBe(false);
   });
 });
 

@@ -1,0 +1,24 @@
+{
+  "purpose": "Proof workbench, restoration property tests, fog contrast margin, Lighthouse pass",
+  "recordedAt": "2026-11-11",
+  "branch": "feat/proof-restoration-20261111",
+  "baseCommit": "4184d6f",
+  "source": "Kiro agent session; no stream-json metering was exposed",
+  "reportedCreditsTotal": null,
+  "exactTokenCountsExposed": false,
+  "wbmUploadPerformed": false,
+  "hookOrMcpExecutionClaimed": false,
+  "observed": {
+    "unitTests": "287 passed in 30 files (vitest)",
+    "lint": "eslint clean",
+    "typecheck": "tsc --noEmit clean",
+    "build": "next build succeeded; /proof prerendered static",
+    "a11y": "npm run a11y, Chromium only: 0 violations on /, /restoration, /lantern-hill, /proof and mocked states; 4 intentional findings on the before fixture",
+    "proofSmoke": "scripts/proof-smoke.mts 9/9 in Chromium",
+    "e2e": "npm run e2e passed",
+    "demoVerify": "npm run demo:verify ran; output showed FAIL -> PASS lines for the fixtures",
+    "fogSweep": "144 phase pairs per viewport; new CSS brightest fog pixel #1b1e18 (6.52:1 for #a6a09b); old CSS injected: #292a23 (5.60:1)",
+    "lighthouse": "13.6.0, median of 3, local production build, mobile emulation: 100/100/100/100 on four pages after fixing CLS 0.113 on /lantern-hill"
+  },
+  "notObserved": "Screen reader pass, OS-level drag and drop, non-Chromium browsers for the new checks, deployed-site Lighthouse"
+}

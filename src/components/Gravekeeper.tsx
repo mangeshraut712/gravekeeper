@@ -357,10 +357,10 @@ export default function Gravekeeper() {
           </div>
         </section>
       </main>
-      <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 border-t border-stone-700/50 px-5 py-6 text-xs text-stone-400 sm:px-8">
-        <p>Gravekeeper · Built for Kiroween 2026</p>
-        <p>Open source. No ghosts in the fine print.</p>
-      </footer>
+      <p className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 pb-2 pt-6 text-xs text-stone-400 sm:px-8">
+        <span>Gravekeeper · Built for Kiroween 2026</span>
+        <span>Open source. No ghosts in the fine print.</span>
+      </p>
     </div>
   );
 }
