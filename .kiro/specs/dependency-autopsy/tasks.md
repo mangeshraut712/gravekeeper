@@ -56,8 +56,8 @@ Complete in order. Each task lists the requirements it covers (see `requirements
 - **Refs:** DA-05
 
 ### Task 9 — Revival plan (`src/lib/spec/generator.ts`)
-- [ ] Optional `autopsy` argument; concrete upgrade, grouped and review steps; metadata-only fallback; partial note; framework from packages.
-- [ ] Unit tests and the existing properties with an autopsy argument.
+- [x] Optional `autopsy` argument; concrete upgrade, grouped and review steps; metadata-only fallback; partial note; framework from packages.
+- [x] Unit tests and the existing properties with an autopsy argument.
 - **Refs:** DA-06
 
 ## Phase 4 — Interface and docs
