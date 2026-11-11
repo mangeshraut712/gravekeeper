@@ -23,7 +23,7 @@ The work logged in KIRO_USAGE.md was done with `kiro-cli` (chat sessions, some w
 All four are in `.kiro/agents/` and pass `kiro-cli agent validate` (`docs/KIRO_WORKFLOW.md`).
 
 - `gravekeeper`: the implementation agent. Resources are the steering files, the three spec files and KIRO_USAGE.md; tools include read/write/shell/grep/glob and `@fetch`/`@github`; `includeMcpJson` is true. Its prompt restates the repo rules (Result, single hashing scheme, mocked fetch, no secrets, no co-author trailers, no Devpost submission).
-- `gravekeeper-review`: read-only (glob, grep, read; no shell, no write, no MCP). Used for bounded source reviews. Three reviews are logged: two on Nov 6 and one on Nov 10 (fog overlay). They did not run tests or change files.
+- `gravekeeper-review`: read-only (glob, grep, read; no shell, no write, no MCP). Used for bounded source reviews. Four reviews are logged: two on Nov 6, one on Nov 10 (fog overlay) and one on Nov 11 over all code added since `9165fa3` (`.kiro/evidence/2026-11-11-review-findings.json`, 5.63 credits). They did not run tests or change files. The Nov 11 review reported denial-of-service paths in manifest parsing and fetching, SearchForm issues and release-gate matcher gaps. Each finding was checked independently; most were fixed in PR #13, some were rejected after checking, and the review notes say which (`docs/reviews/2026-11-11-kiro-review.md`).
 - `gravekeeper-a11y`: read plus a shell limited to `npm run a11y` and simple reads; file writes denied. One observed run on Nov 11 scanned a local production build (`.kiro/evidence/2026-11-11-a11y-agent-run.json`, 0.229 credits).
 - `gravekeeper-docs`: writes allowed only under `docs/**` and `.kiro/specs/**`. Configured and validated; no run is recorded.
 
@@ -41,9 +41,9 @@ Six hooks in five files are in `.kiro/hooks/` (table and matchers in `docs/KIRO_
 
 Configuration alone is not execution evidence. What the evidence files record:
 
-- `keep-tasks-md-in-sync` delivered its prompt after `src/` saves in four sessions (`2026-11-11-hook-mcp-exercise.json`, `-dependency-autopsy.json`, `-epitaph-timeline.json`, `-perf-polish.json`). It never ticked a box, because none of those changes completed an open task.
+- `keep-tasks-md-in-sync` delivered its prompt after `src/` saves in five sessions (`2026-11-11-hook-mcp-exercise.json`, `-dependency-autopsy.json`, `-epitaph-timeline.json`, `-perf-polish.json`, `-revival-kit.json`). It never ticked a box, because none of those changes completed an open task.
 - `check-spec-drift` fired twice and `.kiro/specs/resurrect/design.md` was updated each time (new receipt kinds and response fields for the autopsy and the timeline).
-- `spec-requirements-coverage` fired once, after the epitaph requirements were saved, and found no gaps.
+- `spec-requirements-coverage` fired twice, after the epitaph and revival-kit requirements were saved, and found no gaps.
 - `pre-release-gate` fired once before a `git push --dry-run`; the checks passed, so the call went ahead (`2026-11-11-kiro-workflow-depth.json`). The blocking path was tested by running the script directly, not through Kiro.
 - The `npm test` command hook's output was never attached to a session, so its result is not claimed; the suite was run by hand each time. `receipts-property-tests-on-save` has no recorded run.
 

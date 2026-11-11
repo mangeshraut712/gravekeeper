@@ -35,13 +35,14 @@ Later features each have their own `requirements.md`, `design.md` and `tasks.md`
 | `dependency-autopsy/` | manifest and registry receipts, version floors, upgrade steps (PR #7) | `e8b6285` | `2026-11-11-dependency-autopsy.json` |
 | `epitaph-timeline/` | CDX capture timeline and `/?url=` permalinks (PR #11) | `d44a06d` | `2026-11-11-epitaph-timeline.json` |
 | `proof-workbench/` | in-browser `/proof` checker (PR #9) | no: spec and code landed in the same commit, `89a94fa` | `2026-11-11-proof-restoration.json` |
+| `revival-kit/` | `REVIVAL.md` and tracking-issue export after a verified lookup (PR #12) | `f52061d` | `2026-11-11-revival-kit.json` |
 
 ## Custom agents (`.kiro/agents/`)
 
 | Agent | Tools | Limits | Status |
 |---|---|---|---|
 | `gravekeeper` | read, write, shell, grep, glob, thinking, todo, introspect, `@github`, `@fetch` | loads steering + resurrect spec + `KIRO_USAGE.md`; includes `mcp.json` | Observed: 2026-11-11 run that exercised the pre-release gate (`.kiro/evidence/2026-11-11-kiro-workflow-depth.json`) |
-| `gravekeeper-review` | read, grep, glob | no shell, no write, no MCP | Observed: three review runs (`2026-11-06-review-metering.json`, `2026-11-10-fog-review.json`) |
+| `gravekeeper-review` | read, grep, glob | no shell, no write, no MCP | Observed: four review runs (`2026-11-06-review-metering.json`, `2026-11-10-fog-review.json`, `2026-11-11-review-findings.json`) |
 | `gravekeeper-a11y` | read, grep, glob, shell | shell allowed for `npm run a11y` and simple reads; `fs_write` denied; rm, git commit/push/reset, npm install, sudo denied | Observed: one run on 2026-11-11, 0.229 credits (`2026-11-11-a11y-agent-run.json`) |
 | `gravekeeper-docs` | read, grep, glob, write | `fs_write` allowed only for `docs/**` and `.kiro/specs/**`, denied elsewhere | Configured. `kiro-cli agent validate` passes; not run yet |
 
@@ -54,10 +55,10 @@ CLI 3.2.0 file hooks fire only for changes the agent makes, not editor saves.
 | Hook | Trigger | Matcher | Action | Status |
 |---|---|---|---|---|
 | `run-src-tests-on-save` | PostFileSave | `src/(lib\|components)/…\.(ts\|tsx)$` | command `npm test` | Configured. Its matching saves were logged, but its output was never attached to a session, so a result is not claimed (`2026-11-11-hook-mcp-exercise.json`) |
-| `keep-tasks-md-in-sync` | PostFileSave | `src/(lib\|app)/…` | agent prompt: tick finished tasks | Observed: prompt delivered after `src/` saves in four sessions; it ticked nothing, because no open task was completed (`2026-11-11-hook-mcp-exercise.json`, `-dependency-autopsy.json`, `-epitaph-timeline.json`, `-perf-polish.json`) |
+| `keep-tasks-md-in-sync` | PostFileSave | `src/(lib\|app)/…` | agent prompt: tick finished tasks | Observed: prompt delivered after `src/` saves in five sessions; it ticked nothing, because no open task was completed (`2026-11-11-hook-mcp-exercise.json`, `-dependency-autopsy.json`, `-epitaph-timeline.json`, `-perf-polish.json`, `-revival-kit.json`) |
 | `check-spec-drift` | PostFileSave | `src/(types\|app/api)/…` | agent prompt: update design/tasks if contracts drifted | Observed twice: `resurrect/design.md` was updated after a `src/types/index.ts` save and after a route test save (`-dependency-autopsy.json`, `-epitaph-timeline.json`) |
 | `receipts-property-tests-on-save` | PostFileSave | `src/(lib/receipts\|client)/…` | command `npx vitest run src/lib/receipts src/client` | Configured |
-| `spec-requirements-coverage` | PostFileSave | `.kiro/specs/*/requirements.md` | agent prompt: every requirement id covered by design.md and tasks.md | Observed once: fired after `epitaph-timeline/requirements.md` was saved; no gaps found (`-epitaph-timeline.json`) |
+| `spec-requirements-coverage` | PostFileSave | `.kiro/specs/*/requirements.md` | agent prompt: every requirement id covered by design.md and tasks.md | Observed twice: fired after `epitaph-timeline/requirements.md` and `revival-kit/requirements.md` were saved; no gaps found (`-epitaph-timeline.json`, `-revival-kit.json`) |
 | `pre-release-gate` | PreToolUse | `shell` | command `node scripts/pre-release-gate.mjs`: for `git push` or `gh pr create`, runs `npm test`, `npm run lint`, `npm run demo:verify`; exit 2 blocks the call | Observed: fired in a 2026-11-11 headless run (`hook_update` status `completed`) before a `git push --dry-run`; checks passed, so the call went ahead. The block path was tested by running the script directly, not through Kiro. The command matcher is in `scripts/release-gate-match.mjs` and covered by `scripts/release-gate-match.test.ts`, which was added after review found that multiline and indented pushes slipped past it |
 
 Why the gate is a PreToolUse hook: the Kiro docs say CLI V3 lists `Manual` hooks but `/hooks` cannot invoke them, so a user-triggered release hook would never run from the CLI. A PreToolUse hook on shell commands is the supported way to gate an action.
@@ -88,6 +89,8 @@ Metadata only: purpose, agent, session id, provider-reported credits from stream
 | `2026-11-11-proof-restoration.json` | proof workbench, restoration properties, fog margin, Lighthouse | not exposed |
 | `2026-11-11-perf-polish.json` | Lighthouse before/after, share previews, polish checks | recorded by the runner |
 | `2026-11-11-epitaph-timeline.json` | epitaph timeline session, real lookups, observed hooks | not exposed |
+| `2026-11-11-revival-kit.json` | revival kit session, checks and observed hooks | recorded by the runner |
+| `2026-11-11-review-findings.json` | read-only `gravekeeper-review` pass over code since `9165fa3`, then fixes (PR #13); notes in `docs/reviews/2026-11-11-kiro-review.md` | 5.6345 |
 | `2026-11-11-judge-guide.json` | this judge guide and docs pass | recorded by the runner |
 
 ## Related checks outside Kiro
