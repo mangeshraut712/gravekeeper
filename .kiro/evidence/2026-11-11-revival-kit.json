@@ -50,6 +50,19 @@
       "build": "passed",
       "demoVerify": "passed",
       "e2e": "14/14 passed on port 3400, server stopped"
+    },
+    "afterSecondMerge": {
+      "merged": "origin/main 129c301 (PRs #9 and #11), conflict in KIRO_USAGE.md only, all entries kept",
+      "npmTest": {
+        "files": 44,
+        "tests": 659,
+        "result": "all passed"
+      },
+      "lint": "passed",
+      "typecheck": "passed",
+      "build": "passed",
+      "demoVerify": "passed",
+      "e2e": "14/14 passed on port 3400, server stopped"
     }
   },
   "realLookup": {
