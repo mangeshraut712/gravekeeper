@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { ResurrectResponse } from "@/types";
 import { normalizePublicUrl } from "@/shared/url";
+import { readPermalink } from "@/shared/permalink";
 import { button, primary } from "./styles";
 
 /** Lookup form. Owns request state; reports results to the wrapper. Escape cancels a running lookup. */
@@ -25,8 +26,11 @@ export function SearchForm({
   useEffect(() => () => pending.current?.abort(), []);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    await run(url);
+  }
+  async function run(raw: string) {
     if (pending.current) return;
-    const normalized = normalizePublicUrl(url);
+    const normalized = normalizePublicUrl(raw);
     if (!normalized) {
       setError(
         "Enter a public HTTP(S) URL without credentials, query strings, or local addresses.",
@@ -80,6 +84,23 @@ export function SearchForm({
       }
     }
   }
+  // Permalink: read ?url= once after mount. Only public URLs are looked up.
+  const openPermalink = useEffectEvent(() => {
+    const request = readPermalink(window.location.search);
+    if (request.kind === "lookup") {
+      setUrl(request.url);
+      void run(request.url);
+    } else if (request.kind === "rejected") {
+      setError(
+        "This link's URL was not looked up: it is not a public HTTP(S) URL without credentials, query strings, or local addresses.",
+      );
+    }
+  });
+  useEffect(() => {
+    // Deferred, and cleared on unmount, so a development double mount still runs it once.
+    const timer = setTimeout(openPermalink, 0);
+    return () => clearTimeout(timer);
+  }, []);
   const cancel = useCallback(() => {
     const controller = pending.current;
     pending.current = null;
