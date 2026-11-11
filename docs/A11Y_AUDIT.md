@@ -10,6 +10,7 @@ npx playwright install chromium firefox webkit   # once
 BASE_URL=http://localhost:3100 npm run a11y -- --lookup                              # Chromium (default)
 BASE_URL=http://localhost:3100 npm run a11y -- --browsers=chromium,firefox,webkit --lookup
 BASE_URL=http://localhost:3100 node scripts/contrast-sample.mts --lookup             # contrast re-sample (Chromium)
+BASE_URL=http://localhost:3100 node scripts/contrast-sample.mts --panels             # Epitaph, autopsy and kit panels (synthetic lookup)
 ```
 
 `--browser=<name>` or `--browsers=a,b,c` selects engines. A browser that cannot launch exits with code 2; nothing is skipped silently.
@@ -46,7 +47,7 @@ Checks beyond axe in the same session (Chromium only):
 No counted violation was found, so no component was changed. Limits for this pass:
 
 - No screen-reader pass (VoiceOver, NVDA or other) was done. The status regions are checked for existence and text, not for how a screen reader announces them.
-- The panels were scanned with synthetic data only. The live `atom/atom` lookup (`--lookup`) was not re-run in this pass, and contrast was not re-sampled for the new panels; their color-contrast nodes are axe "needs review" items, not measured passes.
+- The panels were scanned with synthetic data only. The live `atom/atom` lookup (`--lookup`) was not re-run in this pass. Their color-contrast nodes are axe "needs review" items; a later branch (`feat/contrast-and-storyboard-stills-20261111`) pixel-sampled the three panels (lowest 6.74:1, synthetic data, Chromium only; see [the panel contrast section](#epitaph-dependency-autopsy-and-revival-kit-panels-sampled-2026-11-11-branch-featcontrast-and-storyboard-stills-20261111-chromium-only)).
 - Autopsy notes for partial, truncated and no-manifest states, and the Epitaph loading, empty, unavailable and truncated states, are covered by static-markup tests, not by a browser scan.
 - axe covers part of WCAG 2.1 A/AA. This is not a conformance claim.
 
@@ -145,6 +146,27 @@ What this shows and does not show:
 - The sweep covers 144 of the continuous phase pairs, not all of them, and the fog over page areas that paint their own glow or background is not included. Only Chromium.
 - `scripts/contrast-sample.mts` was re-run on the new build: initial, invalid-URL, mocked-error, running and canceled states all gave lowest ratio 7.13:1 (`#a6a09b` on `#111510`), 0 boxes under 4.5:1. As before, the fog did not reach under any text box in those frames, so this re-run is a regression check, not proof by itself; the sweep and the unit test carry the claim.
 - The live-result state was not re-sampled in this pass.
+
+### Epitaph, Dependency autopsy and Revival kit panels (sampled 2026-11-11, branch `feat/contrast-and-storyboard-stills-20261111`, Chromium only)
+
+Run against a local production build (`npm run build && npx next start -p 3471`) with `BASE_URL=http://localhost:3471 node scripts/contrast-sample.mts --panels`. `--panels` mocks `/api/resurrect` with the SYNTHETIC signed lookup from `scripts/synthetic-lookup.mts` (`example/abandoned-widget`, invented data), opens every `<details>`, presses **Download revival kit** and **Copy issue body**, waits for both status messages, and then samples only text inside each panel's `<section>`. Motion is not reduced, so the fog is animating underneath.
+
+The method differs from the one above in one way. These panels paint an opaque `#171b16` background, and the fog layer is `z-0` below the `z-10` content. Stripping component backgrounds would therefore measure the text against a backdrop that is never visible behind it. So `--panels` keeps backgrounds (badges and the panel itself), makes only text, borders, shadows and outlines transparent, includes button labels, and takes the brightest pixel inside each text box over three frames 1.5 s apart. `CONTRAST_LIST=1` prints every box.
+
+| Panel (synthetic lookup, disclosures open, kit used) | Text boxes | Brightest backdrop under any text | Lowest ratio | Boxes under 4.5:1 |
+|---|---|---|---|---|
+| Epitaph (summary, figure captions, opened year table) | 30 | `#171b16` | 6.74:1 (`#a6a09b` intro text) | 0 |
+| Dependency autopsy (summary counts, table, status badges, notes) | 43 | `#2e2d19` (the "Major behind" badge, `#fee685` text on it) | 6.74:1 (`#a6a09b` intro text) | 0 |
+| Revival kit (intro, both buttons, both status messages) | 10 | `#171b16` | 6.74:1 (`#a6a09b` intro text) | 0 |
+
+All sampled text meets the 4.5:1 normal-text threshold, so the 3:1 large-text threshold is met too. No palette change was needed and none was made.
+
+Limits:
+
+- Synthetic data only. A live `atom/atom` result has more rows and longer notes in the same colours, but it was not sampled.
+- In every sampled frame the backdrop under each panel's text was the panel colour or a badge's own background. That is expected because the panels are opaque above the fog, and it means this run says nothing new about the fog.
+- Chromium only, three frames, 1440x900 only. Hover and focus colours were not sampled (the pointer is moved away first). The Epitaph bar chart is `aria-hidden` SVG with a text alternative, and non-text contrast of its bars and of the panel borders was not measured.
+- This is a measurement of the listed states, not a WCAG conformance claim.
 
 ### A false positive worth knowing about
 
