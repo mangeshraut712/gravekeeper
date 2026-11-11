@@ -84,6 +84,13 @@ function githubCommitsOk() {
   };
 }
 
+function cdxOk() {
+  return new Response(
+    '[["timestamp","statuscode"],["20140622190015","301"],["20260101000000","200"]]',
+    { status: 200 },
+  );
+}
+
 function notFound() {
   return new Response("Not Found", { status: 404 });
 }
@@ -201,6 +208,7 @@ describe("POST /api/resurrect", () => {
     const url = "https://github.com/ghost/gravekeeper";
     const fetchMock = vi.fn().mockImplementation(async (req: string | URL) => {
       const href = String(req);
+      if (href.includes("web.archive.org/cdx/")) return cdxOk();
       if (href.includes("archive.org")) return waybackOk(url);
       if (href.includes("/contents/")) return notFound();
       if (href.includes("/commits")) return githubCommitsOk();
@@ -215,12 +223,18 @@ describe("POST /api/resurrect", () => {
     expect(body.github?.meta.fullName).toBe("ghost/gravekeeper");
     expect(body.spec?.revivalSteps.length).toBeGreaterThanOrEqual(3);
     expect(body.evidence).toHaveLength(body.receipts.length);
-    expect(body.evidence[1].body).toEqual(body.github.meta);
-    expect(body.evidence[3].body).toEqual({ code: "MANIFEST_NOT_FOUND" });
-    expect(body.evidence[4].body).toEqual(body.spec);
+    expect(body.evidence[1].body).toEqual({
+      limit: 1200,
+      timestamps: ["20140622190015", "20260101000000"],
+    });
+    expect(body.evidence[2].body).toEqual(body.github.meta);
+    expect(body.evidence[4].body).toEqual({ code: "MANIFEST_NOT_FOUND" });
+    expect(body.evidence[5].body).toEqual(body.spec);
+    expect(body.timeline).toMatchObject({ state: "complete", yearsOnRecord: 13, capturedMonths: 2 });
     expect(body.autopsy.state).toBe("no-manifest");
     expect(body.receipts.map((r: { kind: string }) => r.kind)).toEqual([
       "wayback",
+      "wayback-cdx",
       "github-meta",
       "github-commits",
       "github-manifest",
@@ -271,7 +285,7 @@ describe("POST /api/resurrect", () => {
           const verified = await verifyChain(body.receipts, pk);
           expect(verified.valid).toBe(true);
           expect(await verifyProof(body)).toBe(true);
-          expect(body.receipts.length).toBeGreaterThanOrEqual(5);
+          expect(body.receipts.length).toBeGreaterThanOrEqual(6);
         },
       ),
       { numRuns: 15 },
@@ -321,16 +335,17 @@ describe("POST /api/resurrect", () => {
       const body = await (await POST(jsonRequest({ url: repoUrl }))).json();
       expect(body.receipts.map((r: { kind: string }) => r.kind)).toEqual([
         "wayback-miss",
+        "wayback-cdx",
         "github-meta",
         "github-commits",
         "github-manifest",
         "registry",
         "spec",
       ]);
-      expect(body.receipts[3].url).toBe(
+      expect(body.receipts[4].url).toBe(
         "https://api.github.com/repos/ghost/gravekeeper/contents/package.json?ref=main",
       );
-      expect(body.receipts[4].url).toBe("https://registry.npmjs.org/");
+      expect(body.receipts[5].url).toBe("https://registry.npmjs.org/");
       expect(body.autopsy.state).toBe("complete");
       expect(body.autopsy.counts).toEqual({
         current: 1,
@@ -390,7 +405,7 @@ describe("POST /api/resurrect", () => {
     it("records an unreadable manifest and keeps the metadata-only plan", async () => {
       vi.stubGlobal("fetch", routeFetch({ manifest: { "package.json": "{not json" } }));
       const body = await (await POST(jsonRequest({ url: repoUrl }))).json();
-      expect(body.evidence[3].body).toEqual({ code: "PARSE_ERROR" });
+      expect(body.evidence[4].body).toEqual({ code: "PARSE_ERROR" });
       expect(body.autopsy.state).toBe("unavailable");
       expect(body.receipts.map((r: { kind: string }) => r.kind)).not.toContain("registry");
       expect(body.spec.revivalSteps.map((s: { title: string }) => s.title)).toContain(
@@ -441,5 +456,60 @@ describe("POST /api/resurrect", () => {
       expect((await POST(request)).status).toBe(499);
       expect(registryCalls).toBeLessThanOrEqual(4);
     });
+  });
+});
+
+describe("POST /api/resurrect epitaph timeline", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const url = "http://www.geocities.com/";
+
+  function stub(cdx: () => Response | Promise<Response>) {
+    const calls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (req: string | URL) => {
+        const href = String(req);
+        calls.push(href);
+        if (href.includes("web.archive.org/cdx/")) return cdx();
+        if (href.includes("archive.org")) return waybackOk(url);
+        throw new Error(`unexpected fetch: ${href}`);
+      }),
+    );
+    return calls;
+  }
+
+  it("records the capture index as the second receipt and binds the timeline", async () => {
+    const calls = stub(cdxOk);
+    const body = await (await POST(jsonRequest({ url }))).json();
+    expect(body.receipts.map((r: { kind: string }) => r.kind)).toEqual(["wayback", "wayback-cdx"]);
+    expect(body.receipts[1].url).toBe(
+      "https://web.archive.org/cdx/search/cdx?url=http%3A%2F%2Fwww.geocities.com%2F&output=json&fl=timestamp,statuscode&collapse=timestamp:6&limit=1200&matchType=exact",
+    );
+    expect(calls).toContain(body.receipts[1].url);
+    expect(body.timeline.firstCapture).toBe("20140622190015");
+    expect(body.timeline.lastSeen).toBe("20260101000000");
+    expect(await verifyProof(body, url)).toBe(true);
+  });
+
+  it("returns an empty timeline when the index has no captures", async () => {
+    stub(() => new Response("[]", { status: 200 }));
+    const body = await (await POST(jsonRequest({ url }))).json();
+    expect(body.timeline.state).toBe("empty");
+    expect(await verifyProof(body, url)).toBe(true);
+  });
+
+  it.each([
+    ["HTTP_ERROR", () => new Response("busy", { status: 503 })],
+    ["PARSE_ERROR", () => new Response("<html>", { status: 200 })],
+    ["NETWORK_TIMEOUT", () => Promise.reject(new DOMException("t", "TimeoutError"))],
+  ])("keeps the lookup and records %s when CDX fails", async (code, cdx) => {
+    stub(cdx as () => Promise<Response>);
+    const res = await POST(jsonRequest({ url }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.wayback.available).toBe(true);
+    expect(body.evidence[1].body).toEqual({ code });
+    expect(body.timeline).toMatchObject({ state: "unavailable", code });
+    expect(await verifyProof(body, url)).toBe(true);
   });
 });

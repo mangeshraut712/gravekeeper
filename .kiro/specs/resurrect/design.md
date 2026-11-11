@@ -40,7 +40,8 @@ type ReceiptKind =
   | 'fixture'          // Lantern Hill fixture (see "Bundled restoration")
   | 'restoration'      // Lantern Hill restored HTML
   | 'github-manifest'  // root dependency manifest (see .kiro/specs/dependency-autopsy)
-  | 'registry';        // batched npm/PyPI latest-version lookups (dependency autopsy)
+  | 'registry'         // batched npm/PyPI latest-version lookups (dependency autopsy)
+  | 'wayback-cdx';     // Internet Archive CDX monthly capture index (see .kiro/specs/epitaph-timeline)
 
 interface Receipt {
   seq: number;           // 0-based, monotonically increasing
@@ -144,6 +145,7 @@ interface ResurrectResponse {
   publicKey: string;          // base64url-encoded Ed25519 public key for offline verification
   restoration?: RestorationResult | null;
   autopsy?: DependencyAutopsy | null; // GitHub lookups only; defined in .kiro/specs/dependency-autopsy/design.md
+  timeline?: EpitaphTimeline | null;  // any lookup; derived from the wayback-cdx receipt, defined in .kiro/specs/epitaph-timeline/design.md
 }
 ```
 

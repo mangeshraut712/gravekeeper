@@ -13,6 +13,7 @@ The work logged in KIRO_USAGE.md was done with `kiro-cli` (chat sessions, some w
 ## Spec-driven work versus vibe coding
 
 - Spec-driven: the receipt chain and API logic. `.kiro/specs/resurrect/` has `requirements.md` (7 user stories, EARS acceptance criteria), `design.md` (data models, canonical JSON hashing, six correctness properties, error model) and `tasks.md` (17 tasks in 4 phases). Kiro worked through tasks in order and the checkboxes were ticked as they completed (some by hand; see below). The design was later reconciled with shipped behavior (evidence payloads, Lantern Hill export format).
+- Spec-driven (Nov 11): the Epitaph timeline. `.kiro/specs/epitaph-timeline/` was committed before code. Each lookup now reads the Internet Archive CDX index for first capture, last seen and captured months per year, signs it as a `wayback-cdx` receipt that both verifiers rebuild, and results can be shared as `/?url=` permalinks. In a real production-build run, `atom/atom` gave a 2014–2026 timeline; the `www.geocities.com` index did not answer within the 10-second limit, and the panel showed that error (`docs/EPITAPH_TIMELINE.md`).
 - Less spec-driven: UI polish and the haunted-graveyard look. The log planned this as vibe coding; the UI was later consolidated and then split into components under task 10-15, and much of the visual work, the first workbench interface, URL validation and the operator-only fork guard were implemented outside Kiro (KIRO_USAGE.md, Nov 6 entry).
 
 ## Custom agents
