@@ -71,8 +71,25 @@ describe("rangeFloor (npm)", () => {
     ["^1.0.0 || ^2.0.0", "1.0.0"],
     ["^2.0.0 || ^1.5.0", "1.5.0"],
     ["^1.0.0-beta.1", "1.0.0-beta.1"],
+    // Exclusive partials and X-ranges: npm raises the last precise component
+    // (>1 and >1.x admit 2.0.0, not 1.0.0). Fully specified >1.2.3 is unchanged.
+    [">1", "2.0.0"],
+    [">1.x", "2.0.0"],
+    [">1.*", "2.0.0"],
+    [">v1", "2.0.0"],
+    [">1.2", "1.3.0"],
+    [">1.2.x", "1.3.0"],
+    [">1.2.3", "1.2.3"],
+    [">=1", "1"],
+    [">=1.x", "1.0"],
   ])("%s → %s", (spec, floor) => {
     expect(rangeFloor(spec, "npm")).toBe(floor);
+  });
+
+  it("classifies >1 / >1.x against latest 2.0.0 as current, not major-behind", () => {
+    expect(classify(rangeFloor(">1", "npm"), "2.0.0", "ok")).toBe("current");
+    expect(classify(rangeFloor(">1.x", "npm"), "2.0.0", "ok")).toBe("current");
+    expect(classify(rangeFloor(">1", "npm"), "3.0.0", "ok")).toBe("major-behind");
   });
 
   it.each([
@@ -254,6 +271,17 @@ describe("rangeFloor uses the strongest lower bound in a comparator set (PR #7 r
 
   it("classifies '>=1.0.0 >=2.0.0' against latest 2.0.0 as current", () => {
     expect(classify(rangeFloor(">=1.0.0 >=2.0.0", "npm"), "2.0.0", "ok")).toBe("current");
+  });
+
+  it("property: >N and >N.x floor to (N+1).0.0 and classify as current against that latest", () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 0, max: 40 }), (major) => {
+        const floor = `${major + 1}.0.0`;
+        expect(rangeFloor(`>${major}`, "npm")).toBe(floor);
+        expect(rangeFloor(`>${major}.x`, "npm")).toBe(floor);
+        expect(classify(floor, floor, "ok")).toBe("current");
+      }),
+    );
   });
 
   it("property: floor is the max lower bound within a set and the min across ||", () => {

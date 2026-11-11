@@ -127,18 +127,30 @@ export function isNonRegistrySpec(spec: string, ecosystem: Ecosystem): boolean {
 
 /** Floor of one comparator token, "" for a wildcard with no bound, null when unparseable. */
 function npmTokenFloor(token: string): string | null {
+  const exclusive = token.startsWith(">") && !token.startsWith(">=");
   const bare = token.replace(/^(>=|~>|>|=|\^|~)/, "").replace(/^v/i, "");
   const [core, ...rest] = bare.split(/(?=[-+])/);
   const parts = core.split(".");
   if (!parts.length || /^[x*]$/i.test(parts[0])) return "";
   const firstWildcard = parts.findIndex((part) => /^[x*]$/i.test(part));
+  const precise = firstWildcard === -1 ? parts : parts.slice(0, firstWildcard);
+  // npm exclusive partials / X-ranges raise the last precise component:
+  // >1 and >1.x are >=2.0.0, >1.2 and >1.2.x are >=1.3.0.
+  // Fully specified versions such as >1.2.3 keep the inclusive floor (1.2.3).
+  const isPartialOrWildcard = firstWildcard !== -1 || precise.length < 3;
+  if (exclusive && isPartialOrWildcard && rest.length === 0) {
+    const last = precise.length - 1;
+    const n = Number(precise[last]);
+    if (!Number.isSafeInteger(n)) return null;
+    const raised = [...precise.slice(0, last), String(n + 1)];
+    while (raised.length < 3) raised.push("0");
+    const floor = raised.join(".");
+    return parseVersion(floor) ? floor : null;
+  }
   const floor =
     firstWildcard === -1
       ? core + rest.join("")
-      : parts
-          .slice(0, firstWildcard)
-          .concat(parts.slice(firstWildcard).map(() => "0"))
-          .join(".");
+      : precise.concat(parts.slice(firstWildcard).map(() => "0")).join(".");
   return parseVersion(floor) ? floor : null;
 }
 
