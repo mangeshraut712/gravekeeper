@@ -10,7 +10,8 @@ export type ReceiptKind =
   | 'fixture'
   | 'restoration'
   | 'github-manifest'
-  | 'registry';
+  | 'registry'
+  | 'wayback-cdx';
 
 export type Receipt = {
   seq: number;             // 0-based, monotonically increasing
@@ -31,6 +32,26 @@ export type WaybackResult = {
   snapshotUrl: string | null;
   timestamp: string | null;    // e.g. "20231015120000"
   status: string | null;       // HTTP status of the original archived page
+};
+
+// Internet Archive CDX life span (epitaph timeline)
+
+export type CdxEvidence = {
+  limit: number;          // always CDX_LIMIT
+  timestamps: string[];   // 14-digit UTC timestamps, non-decreasing, one per captured month
+};
+
+export type TimelineYear = { year: number; months: number }; // months with at least one capture
+
+export type EpitaphTimeline = {
+  state: 'complete' | 'truncated' | 'empty' | 'unavailable';
+  code: string | null;          // error code when unavailable
+  firstCapture: string | null;  // 14-digit timestamp
+  lastSeen: string | null;      // first capture in the latest captured month
+  capturedMonths: number;
+  yearsOnRecord: number;        // first year to last year, inclusive
+  yearsWithCaptures: number;
+  years: TimelineYear[];        // every year in the span, ascending
 };
 
 // GitHub types
@@ -162,6 +183,7 @@ export type ResurrectResponse = {
   publicKey: string;           // base64url-encoded Ed25519 public key for offline verification
   restoration?: RestorationResult | null;
   autopsy?: DependencyAutopsy | null; // absent in proofs made before the dependency autopsy
+  timeline?: EpitaphTimeline | null;  // absent in proofs made before the epitaph timeline
 };
 
 // Error handling

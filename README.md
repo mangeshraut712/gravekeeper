@@ -11,6 +11,7 @@ A public Hobby deployment is at https://gravekeeper-drab.vercel.app (`GITHUB_TOK
 - Home / lookup: https://gravekeeper-drab.vercel.app
 - Restoration case: https://gravekeeper-drab.vercel.app/restoration
 - Lantern Hill fixture: https://gravekeeper-drab.vercel.app/lantern-hill
+- Proof checker (in-browser, no upload; available once this branch is deployed): `/proof`
 
 A ~90 second demo walkthrough is in [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md). Accessibility scan results and the keyboard path are in [docs/A11Y_AUDIT.md](docs/A11Y_AUDIT.md) (`npm run a11y`). CI (`.github/workflows/ci.yml`) runs tests, lint, typecheck, and build on every push and pull request.
 
@@ -92,6 +93,10 @@ npm start
 ```
 
 The build uses the installed Next.js version's npm security-advisory check. A restricted execution environment may need to allow that read-only check and the native filesystem operations required by Turbopack. Do not disable security checks to conceal a build failure.
+
+## Check a proof in the browser
+
+Open `/proof`, choose (or drop, or paste) a downloaded `gravekeeper-proof.json` or Lantern Hill receipt file. Verification runs in the tab using the same receipt code; nothing is uploaded. Valid means internally consistent, not authored by anyone in particular and not true of GitHub or the Archive. See [.kiro/specs/proof-workbench](.kiro/specs/proof-workbench).
 
 ## Verify a downloaded proof offline
 

@@ -58,6 +58,7 @@ for (const path of [
   "/",
   "/restoration",
   "/lantern-hill",
+  "/proof",
   "/fixtures/lantern-hill/before",
   "/fixtures/lantern-hill/after",
 ]) {

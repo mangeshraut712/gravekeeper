@@ -15,6 +15,7 @@ import type { Receipt } from "../src/types/index.ts";
 import { generateKeyPair, exportPublicKey } from "../src/lib/receipts/crypto.ts";
 import { buildReceipt } from "../src/lib/receipts/chain.ts";
 import { generateRevivalSpec } from "../src/lib/spec/generator.ts";
+import { CDX_LIMIT, buildTimeline, cdxQueryUrl } from "../src/lib/wayback/timeline.ts";
 import fixtures from "../src/lib/restoration/fixtures.json" with { type: "json" };
 
 const base = process.env.BASE_URL ?? "http://localhost:3000";
@@ -59,11 +60,18 @@ async function record(kind: string, source: string, payload: unknown) {
   evidence.push({ receiptSeq: r.seq, body: payload });
 }
 const metaUrl = "https://api.github.com/repos/example/abandoned-widget";
+// Synthetic monthly capture index: 2014-2019 with a gap year in 2017.
+const cdx = {
+  limit: CDX_LIMIT,
+  timestamps: ["20140622190015", "20141101000000", "20150301000000", "20160705000000", "20180210000000", "20190412093000"],
+};
 await record("wayback", repoUrl, wayback);
+await record("wayback-cdx", cdxQueryUrl(repoUrl), cdx);
 await record("github-meta", metaUrl, meta);
 await record("github-commits", `${metaUrl}/commits?per_page=20`, commits);
 await record("spec", repoUrl, spec);
-const mocked = { receipts, evidence, spec, wayback, github: { meta, commits }, publicKey: await exportPublicKey(publicKey) };
+const timeline = buildTimeline(cdx);
+const mocked = { receipts, evidence, spec, wayback, github: { meta, commits }, timeline, publicKey: await exportPublicKey(publicKey) };
 
 // ---------- harness ----------
 const failures: string[] = [];
@@ -208,7 +216,8 @@ await step("offline verifier accepts the downloaded proof", async () => {
 await step("offline verifier rejects the proof after one evidence byte changes", async () => {
   assert(downloaded, "no proof file was downloaded");
   const proof = JSON.parse(await readFile(downloaded, "utf8"));
-  const body = proof.evidence[1].body as { description: string };
+  const metaIndex = proof.receipts.findIndex((r: { kind: string }) => r.kind === "github-meta");
+  const body = proof.evidence[metaIndex].body as { description: string };
   // Flip one character in the signed GitHub metadata evidence; displayed data is left alone.
   body.description = (body.description[0] === "S" ? "s" : "S") + body.description.slice(1);
   const tampered = join(work, "gravekeeper-proof-tampered.json");
@@ -216,6 +225,78 @@ await step("offline verifier rejects the proof after one evidence byte changes",
   const { status, output } = runVerifier(tampered);
   assert(status === 1, `expected exit 1 for tampered proof, got ${status}: ${output}`);
 });
+
+await step("results show the Epitaph timeline with a table alternative", () =>
+  withPage(browser, {}, async (page) => {
+    await page.route("**/api/resurrect", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(mocked) }));
+    await page.goto(base + "/", { waitUntil: "networkidle" });
+    await page.fill("#resource-url", repoUrl);
+    await page.click("form button[type=submit]");
+    const epitaph = page.locator("section[aria-labelledby='epitaph-title']");
+    await epitaph.getByText("Born").waitFor({ timeout: 15_000 });
+    await epitaph.getByText("Jun 22, 2014").waitFor();
+    await epitaph.getByText("Apr 2019").waitFor();
+    assert((await epitaph.locator("svg[aria-hidden='true']").count()) === 1, "chart is not aria-hidden");
+    await epitaph.getByText("Show captures per year as a table").click();
+    const rows = await epitaph.locator("tbody tr").count();
+    assert(rows === 6, `expected 6 year rows (2014-2019), saw ${rows}`);
+    await epitaph.locator("tbody tr", { hasText: "2017" }).getByText("0", { exact: true }).waitFor();
+  }));
+
+await step("permalink ?url= runs the lookup once, keeps the link, and Copy link announces", async () => {
+  const ctx = await browser.newContext();
+  try {
+    await ctx.grantPermissions(["clipboard-read", "clipboard-write"], { origin: new URL(base).origin });
+    const page = await ctx.newPage();
+    let calls = 0;
+    let sent = "";
+    await page.route("**/api/resurrect", (route) => {
+      calls++;
+      sent = JSON.parse(route.request().postData() ?? "{}").url;
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(mocked) });
+    });
+    const link = `${base}/?url=${encodeURIComponent(repoUrl)}`;
+    await page.goto(link, { waitUntil: "networkidle" });
+    await page.locator("#resource-title").getByText("example/abandoned-widget").waitFor({ timeout: 15_000 });
+    assert(calls === 1, `expected one lookup from the permalink, saw ${calls}`);
+    assert(sent === repoUrl, `permalink sent ${sent}`);
+    assert((await page.inputValue("#resource-url")) === repoUrl, "input was not filled from the permalink");
+    assert(page.url() === link, `address bar changed to ${page.url()}`);
+    await page.getByRole("button", { name: "Copy link" }).click();
+    await page.locator("#copy-link-status").getByText("Link copied.").waitFor({ timeout: 5_000 });
+    const copied = await page.evaluate(() => navigator.clipboard.readText());
+    assert(copied === link, `copied ${copied}`);
+  } finally {
+    await ctx.close();
+  }
+});
+
+await step("a lookup from the form updates the address bar to the permalink", () =>
+  withPage(browser, {}, async (page) => {
+    await page.route("**/api/resurrect", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(mocked) }));
+    await page.goto(base + "/", { waitUntil: "networkidle" });
+    await page.fill("#resource-url", repoUrl);
+    await page.click("form button[type=submit]");
+    await page.locator("#resource-title").getByText("example/abandoned-widget").waitFor({ timeout: 15_000 });
+    const search = new URL(page.url()).searchParams.getAll("url");
+    assert(search.length === 1 && search[0] === repoUrl, `address bar is ${page.url()}`);
+  }));
+
+await step("a private-looking permalink makes no request and says why", () =>
+  withPage(browser, {}, async (page) => {
+    let requested = false;
+    await page.route("**/api/resurrect", (route) => {
+      requested = true;
+      return route.abort();
+    });
+    await page.goto(`${base}/?url=${encodeURIComponent("http://localhost:8080/admin")}`, { waitUntil: "networkidle" });
+    await page.locator("#lookup-error").getByText("This link's URL was not looked up").waitFor({ timeout: 10_000 });
+    await page.waitForTimeout(300);
+    assert(!requested, "a request to /api/resurrect was made for a private-looking permalink");
+    assert((await page.inputValue("#resource-url")) === "", "input was filled from a rejected permalink");
+  }));
 
 await step("/restoration: running every example gives 12/12 after vs 4/12 before", () =>
   withPage(browser, {}, async (page) => {

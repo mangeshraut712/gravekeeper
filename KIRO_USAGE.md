@@ -235,6 +235,20 @@ Not a Kiro session. The follow-up kiro-cli resume (`sess_896d8716-8cca-40c1-846e
 
 No credit figure is claimed for this hand work. No Devpost submission, video, blog publish, or social post was made.
 
+## Nov 11, 2026 — Proof workbench, restoration properties, fog margin, Lighthouse (Kiro agent session)
+
+Branch `feat/proof-restoration-20261111`, from `4184d6f`. This run's metadata exposed no credit figure or token count, so none is claimed. No hook or MCP execution was observed or is claimed. No Devpost submission, video, blog publish, or social post was made.
+
+**Kiro-generated (agent wrote and ran these):**
+- `/proof` workbench: `.kiro/specs/proof-workbench/` (EARS requirements, design, tasks), `src/app/proof/analyze.ts` (wraps the unmodified `src/client/proof.ts` and `verifyReceiptExport`), `src/components/ProofWorkbench.tsx`, `SiteFooter` linked from `layout.tsx`. 18 analyzer tests with real signed fixtures, and component tests. `scripts/proof-smoke.mts` drives a real Chromium: downloads the Lantern Hill receipt file, loads it on `/proof` through the file input (valid), tampers it (invalid), bad JSON (error, no verdict), paste, a synthetic drop event, Tab order, and confirms no POST requests. 9/9 passed. A real mouse drag from the OS was not exercised.
+- Restoration property tests (fast-check): never throws and returns a string; UTF-16 length and code-unit multiset preserved; concatenation distributes (swapped) on a plain alphabet; identity on single graphemes; segment count never increases (also run 30,000 times on an adversarial combining/ZWJ/regional-indicator alphabet, one-off, not committed). `compareVersions` invariants. The existing warning about non-involution on leading combining marks is unchanged.
+- Fog: alphas reduced; a unit test recomputes worst-case contrast from the CSS; `scripts/fog-sweep.mts` sweeps 144 phase pairs per viewport. Finding: with the old CSS the sweep peaked at `#292a23` (5.60:1), not the `#55514c` recorded earlier, so the old CSS did not fail in this measurement and the source of `#55514c` is unexplained. Details in `docs/A11Y_AUDIT.md`.
+- Lighthouse 13.6.0 (pinned) via `npm run lighthouse`: all 100s after one fix. The first run caught CLS 0.113 on `/lantern-hill` caused by the new footer; fixed with a taller Suspense fallback. Lab numbers on localhost only. See `docs/LIGHTHOUSE.md`.
+
+**Hand work:** none beyond the prompt.
+
+**Limits:** no screen-reader pass; no OS-level drag test; Chromium only for the new checks; the deployed site was not measured.
+
 ## Nov 11, 2026 — PR #7 review follow-ups (hand work)
 
 Not a Kiro session. After the exclusive-floor entry above, Codex and Cursor Bugbot kept filing findings on this branch; each verified one was fixed with tests first, then pushed (no force-push, no PR replies, PID 73527 not touched). Credit usage is not claimed here.
@@ -249,6 +263,27 @@ Not a Kiro session. After the exclusive-floor entry above, Codex and Cursor Bugb
 Limits: Kilo review was still pending on some of these heads; later findings arrived after earlier fixes. No Devpost submission, video, blog publish, or social post was made.
 
 - Codex P2: `==1.0-rc1` against latest `1.0rc2` compared as current because the hyphenated form kept `rc1` as one identifier. PyPI parsing now splits known pre tags (`rc1` → `['rc', 1]`); npm identifier semantics are unchanged.
+
+## Nov 11, 2026 — Epitaph timeline and permalinks (Kiro agent session)
+
+Branch `feat/epitaph-timeline-20261111`, from `7c927bf` (PR #7 tip). Session `sess_01f7c850-64cc-429f-9ccc-2fb2296f888e`. Evidence: `.kiro/evidence/2026-11-11-epitaph-timeline.json`. The session metadata available to the agent exposed no credit figure or token count, so none is claimed. No MCP server was used. No Devpost submission, video, blog publish, or social post was made.
+
+**Kiro-generated (agent wrote and ran these):**
+- Spec first: `.kiro/specs/epitaph-timeline/` (EARS requirements ET-01 to ET-05, design with seven correctness properties, tasks), committed before code as `d44a06d`.
+- `src/lib/wayback/timeline.ts` (pure, isomorphic CDX parsing and per-year aggregation), `src/lib/wayback/cdx.ts` (10 s timeout, cancel signal, 512 KiB cap, typed errors), a new `wayback-cdx` receipt recorded after the first receipt, and `verifyProof` binding the displayed timeline to the signed evidence and the receipt URL to the resource. Older proofs without a timeline still verify.
+- `EpitaphTimeline` panel (born, last seen, years on record, `aria-hidden` SVG bars with a text summary and a `<details>` table; loading, missing, empty, unavailable and truncated states; no animation on the chart) and `CopyLinkButton` with a polite status region.
+- Permalinks: `/?url=` fills the input and runs one lookup only if `normalizePublicUrl` accepts it; otherwise no request and a status message. The address bar is replaced with the permalink after a successful lookup.
+- Tests: unit and fast-check properties for aggregation (sum, contiguous sorted years, first ≤ last, parser/validator agreement), the CDX client (mocked fetch), permalinks (round-trip property), route and proof tamper cases, and static-markup component tests. `scripts/e2e-smoke.mts` gained four steps (Epitaph panel, permalink, address bar, rejected permalink).
+- Fixed a pre-existing break found by `npm run e2e`: `src/lib/spec/generator.ts` imported `@/lib/deps/semver`, which Node's native TypeScript cannot resolve, so the e2e script could not start. It now uses a relative `.ts` import.
+- Real production-build lookups, recorded in `docs/EPITAPH_TIMELINE.md`: `atom/atom` returned a complete 2014–2026 timeline (136 captured months), and its proof verified offline. `http://www.geocities.com` returned 200, but the CDX index did not answer within 10 s on either attempt (`NETWORK_TIMEOUT`), so no life-span numbers were produced for it.
+
+**Hooks, observed in this session:** agent-hook instructions arrived after file saves made through the editor tools: the requirements-coverage check after `requirements.md` was saved (no gaps found), the tasks.md sync check after `src/` saves (the resurrect `tasks.md` had no item completed by this work, so it was left unchanged), and the spec-drift check after a route test save (`.kiro/specs/resurrect/design.md` gained `wayback-cdx` and `timeline`). Edits made through shell commands do not trigger save hooks. The output of the `npm test` command hook was not observed, so its execution is not claimed; tests were run directly.
+
+**Checks (final tree):** `npm test` 37 files, 557 tests passed; `npm run lint`; `npx next typegen && npx tsc --noEmit`; `npm run build`; `npm run demo:verify`; `npm run e2e` against `npx next start -p 3400`, 12/12 passed, server stopped afterwards.
+
+**Hand work:** none beyond the prompt.
+
+**Limits:** no axe scan, contrast sampling or screen-reader pass for the new panel. This worktree's `node_modules` had been a symlink into another checkout, and the build could not resolve `next` through it. The symlink was removed (the target was not touched), and `npm ci` installed a local copy. `package.json` and the lockfile were not changed.
 
 ## Nov 11, 2026 — Performance measurements, share previews and UI polish (Kiro agent session)
 

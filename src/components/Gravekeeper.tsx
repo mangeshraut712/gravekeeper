@@ -9,6 +9,9 @@ import { RevivalSpecPanel } from "./RevivalSpecPanel";
 import { SearchForm } from "./SearchForm";
 import { TombstoneCard } from "./TombstoneCard";
 import { DependencyAutopsyPanel } from "./DependencyAutopsyPanel";
+import { EpitaphTimeline } from "./EpitaphTimeline";
+import { CopyLinkButton } from "./CopyLinkButton";
+import { permalinkFor } from "@/shared/permalink";
 import { button } from "./styles";
 
 function Graveyard() {
@@ -132,7 +135,9 @@ function Graveyard() {
 function Results({ result, url }: { result: ResurrectResponse; url: string }) {
   return (
     <div className="space-y-6">
+      <CopyLinkButton resource={url} />
       <TombstoneCard result={result} url={url} />
+      <EpitaphTimeline timeline={result.timeline} />
       {result.autopsy && <DependencyAutopsyPanel autopsy={result.autopsy} />}
       <div className="grid items-start gap-6 lg:grid-cols-2">
         {result.spec ? (
@@ -247,6 +252,13 @@ export default function Gravekeeper() {
             onResult={(next, normalized) => {
               setResult(next);
               setResource(normalized);
+              // Shareable link: the address bar names only the resource, never results.
+              if (next)
+                window.history.replaceState(
+                  window.history.state,
+                  "",
+                  permalinkFor(normalized, window.location),
+                );
             }}
           />
         </section>
@@ -289,6 +301,11 @@ export default function Gravekeeper() {
                   ? "Gathering evidence. A missing archive does not mean a project is gone for good."
                   : "Enter a URL above to discover its past and figure out what comes next. Your findings will appear here."}
               </p>
+            </div>
+          )}
+          {loading && !result && (
+            <div className="mt-6">
+              <EpitaphTimeline loading />
             </div>
           )}
         </section>
@@ -336,10 +353,10 @@ export default function Gravekeeper() {
           </div>
         </section>
       </main>
-      <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 border-t border-stone-700/50 px-5 py-6 text-xs text-stone-400 sm:px-8">
-        <p>Gravekeeper · Built for Kiroween 2026</p>
-        <p>Open source. No ghosts in the fine print.</p>
-      </footer>
+      <p className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 pb-2 pt-6 text-xs text-stone-400 sm:px-8">
+        <span>Gravekeeper · Built for Kiroween 2026</span>
+        <span>Open source. No ghosts in the fine print.</span>
+      </p>
     </div>
   );
 }

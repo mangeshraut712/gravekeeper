@@ -13,6 +13,7 @@ The work logged in KIRO_USAGE.md was done with `kiro-cli` (chat sessions, some w
 ## Spec-driven work versus vibe coding
 
 - Spec-driven: the receipt chain and API logic. `.kiro/specs/resurrect/` has `requirements.md` (7 user stories, EARS acceptance criteria), `design.md` (data models, canonical JSON hashing, six correctness properties, error model) and `tasks.md` (17 tasks in 4 phases). Kiro worked through tasks in order and the checkboxes were ticked as they completed (some by hand; see below). The design was later reconciled with shipped behavior (evidence payloads, Lantern Hill export format).
+- Spec-driven (Nov 11): the Epitaph timeline. `.kiro/specs/epitaph-timeline/` was committed before code. Each lookup now reads the Internet Archive CDX index for first capture, last seen and captured months per year, signs it as a `wayback-cdx` receipt that both verifiers rebuild, and results can be shared as `/?url=` permalinks. In a real production-build run, `atom/atom` gave a 2014–2026 timeline; the `www.geocities.com` index did not answer within the 10-second limit, and the panel showed that error (`docs/EPITAPH_TIMELINE.md`).
 - Less spec-driven: UI polish and the haunted-graveyard look. The log planned this as vibe coding; the UI was later consolidated and then split into components under task 10-15, and much of the visual work, the first workbench interface, URL validation and the operator-only fork guard were implemented outside Kiro (KIRO_USAGE.md, Nov 6 entry).
 
 ## Custom agents
@@ -56,3 +57,11 @@ Provider-reported credit figures are recorded for several sessions (two read-onl
 - The revival plan is built from public metadata, not a code or dependency audit.
 - Receipts prove internal consistency, not authorship or that GitHub/the Internet Archive said what they say.
 - Accessibility: axe scans found no violations on the product pages scanned in Chromium, Firefox and WebKit (identical counts; the intentionally broken "before" fixture is excluded from the count). Color contrast over the fog is "needs review" in axe and was re-measured per text box in Chromium (lowest 7.13:1 in the sampled frames, with caveats in the audit); no screen reader pass was done. See [docs/A11Y_AUDIT.md](../A11Y_AUDIT.md).
+
+## Addendum: proof checker, restoration properties, performance (Nov 11)
+
+- `/proof` lets a visitor open a downloaded proof file and verify it in the browser. Nothing is uploaded; it reuses the same receipt and proof code and shows valid, invalid, and unreadable-file states. Valid still means only internal consistency. Specified under `.kiro/specs/proof-workbench/`. Exercised in headless Chromium (file input, tamper, bad JSON, paste, a synthetic drop event); a real OS drag and a screen reader were not tested.
+- Added fast-check properties for the restoration `reverse()` and `compareVersions()` that I believe hold (length and code-unit preservation, no throw, concatenation on a plain alphabet). The documented non-involution on leading combining marks stands.
+- The fog alphas were lowered and a test now checks the worst-case contrast from the CSS. The fog-only sweep did not reproduce the earlier `#55514c` reading with the old CSS (old peak `#292a23`, 5.60:1), so this is a safety margin rather than a confirmed failure fix.
+- Lighthouse (local production build, mobile emulation, median of 3): 100 in all four categories on `/`, `/restoration`, `/lantern-hill`, `/proof`, after fixing a footer layout shift on `/lantern-hill`. Lab numbers only; the deployed site was not measured. See `docs/LIGHTHOUSE.md`.
+

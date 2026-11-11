@@ -20,6 +20,8 @@ export function normalizePublicUrl(input: string): string | null {
     )
       return null;
     url.hash = "";
+    // A literal * is accepted by URL parsing but is a CDX prefix wildcard, not one page.
+    if (url.href.includes("*")) return null;
     return url.href;
   } catch {
     return null;

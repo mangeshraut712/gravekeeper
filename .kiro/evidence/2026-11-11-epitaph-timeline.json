@@ -1,0 +1,89 @@
+{
+  "kind": "kiro-session-metadata",
+  "note": "Metadata only. No transcript, prompts, tokens, environment values or secrets are recorded. The session metadata available to the agent exposed no credit figure, so none is claimed.",
+  "session": {
+    "id": "sess_01f7c850-64cc-429f-9ccc-2fb2296f888e",
+    "date": "2026-11-11",
+    "branch": "feat/epitaph-timeline-20261111",
+    "base": "7c927bf (PR #7 tip)",
+    "worktree": "~/kiroween/wt-q1-timeline"
+  },
+  "spec": {
+    "path": ".kiro/specs/epitaph-timeline/",
+    "files": ["requirements.md", "design.md", "tasks.md"],
+    "committedBeforeCode": "d44a06d",
+    "relatedSpecUpdated": ".kiro/specs/resurrect/design.md (wayback-cdx ReceiptKind, timeline response field)"
+  },
+  "tasksCompleted": [
+    "1 Types",
+    "2 Timeline module",
+    "3 CDX client",
+    "4 Permalink helpers",
+    "5 Route",
+    "6 Verification",
+    "7 EpitaphTimeline component",
+    "8 Permalinks and Copy link",
+    "9 e2e smoke",
+    "10 Real lookups and docs"
+  ],
+  "preExistingFix": {
+    "file": "src/lib/spec/generator.ts",
+    "issue": "imported '@/lib/deps/semver', which Node native TypeScript cannot resolve, so scripts/e2e-smoke.mts failed to start (ERR_MODULE_NOT_FOUND)",
+    "fix": "relative '../deps/semver.ts' import",
+    "commit": "e29bacd"
+  },
+  "checks": {
+    "npmTest": { "files": 37, "tests": 557, "result": "all passed" },
+    "lint": "passed (npm run lint)",
+    "typecheck": "passed (npx next typegen, then npx tsc --noEmit)",
+    "build": "passed (npm run build)",
+    "demoVerify": "passed (npm run demo:verify)",
+    "e2e": "12/12 passed (npm run e2e, BASE_URL http://localhost:3400, npx next start -p 3400, stopped afterwards)"
+  },
+  "realLookups": {
+    "server": "local production build, npx next start -p 3400, GITHUB_TOKEN and FORK_API_SECRET unset",
+    "atom/atom": {
+      "at": "2026-11-11T11:23:25Z",
+      "http": 200,
+      "seconds": 5.18,
+      "receiptKinds": ["wayback", "wayback-cdx", "github-meta", "github-commits", "github-manifest", "registry", "spec"],
+      "timeline": {
+        "state": "complete",
+        "firstCapture": "20140622190015",
+        "lastSeen": "20261016204610",
+        "capturedMonths": 136,
+        "yearsOnRecord": 13,
+        "yearsWithCaptures": 13
+      },
+      "offlineVerifier": "Internally consistent: 7 receipts; exit 1 after one displayed year count was changed"
+    },
+    "www.geocities.com": {
+      "input": "http://www.geocities.com",
+      "attempts": [
+        { "at": "2026-11-11T11:23:30Z", "http": 200, "seconds": 10.01 },
+        { "at": "2026-11-11T11:24:30Z", "http": 200, "seconds": 10.0 }
+      ],
+      "receiptKinds": ["wayback", "wayback-cdx"],
+      "timeline": { "state": "unavailable", "code": "NETWORK_TIMEOUT" },
+      "waybackClosest": "20190613084634",
+      "offlineVerifier": "Internally consistent: 2 receipts; exit 1 after the displayed code was changed",
+      "result": "CDX lookup failed (10 s timeout) on both attempts; no life-span numbers were produced"
+    }
+  },
+  "hooks": {
+    "observed": true,
+    "detail": [
+      "Requirements-coverage agent hook fired after .kiro/specs/epitaph-timeline/requirements.md was saved; no uncovered ids were found.",
+      "keep-tasks-in-sync agent hook fired on src/ saves; .kiro/specs/resurrect/tasks.md had no item completed by this work and was left unchanged.",
+      "Spec-drift agent hook fired after src/app/api/resurrect/route.test.ts was saved; .kiro/specs/resurrect/design.md was updated.",
+      "The npm test command hook output was not observed by the agent, so its execution is not claimed.",
+      "Edits made through shell commands do not trigger save hooks."
+    ]
+  },
+  "mcp": "No MCP server was used in this session.",
+  "environment": "node_modules in this worktree was a symlink to another checkout, and Turbopack could not resolve next through it. The symlink was removed (target untouched) and npm ci installed a local copy. package.json and package-lock.json were unchanged.",
+  "notDone": [
+    "axe scan, contrast sampling and screen-reader pass for the Epitaph panel",
+    "README and docs/submission/DEVPOST.md (left for a later docs pass)"
+  ]
+}
