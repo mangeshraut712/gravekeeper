@@ -3,6 +3,7 @@
 // `gh pr create`, run the release checks first; a non-zero exit blocks the tool call.
 // Any other shell command passes through immediately.
 import { spawnSync } from "node:child_process";
+import { isReleaseCommand } from "./release-gate-match.mjs";
 
 let raw = "";
 for await (const chunk of process.stdin) raw += chunk;
@@ -16,7 +17,7 @@ try {
   process.exit(0); // Not a shell event we understand; do not block.
 }
 
-if (!/(^|[;&|]\s*)(git\s+push|gh\s+pr\s+create)\b/.test(command)) process.exit(0);
+if (!isReleaseCommand(command)) process.exit(0);
 
 const checks = ["npm test", "npm run lint", "npm run demo:verify"];
 for (const check of checks) {
