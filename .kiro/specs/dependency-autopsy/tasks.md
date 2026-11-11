@@ -51,8 +51,8 @@ Complete in order. Each task lists the requirements it covers (see `requirements
 - **Refs:** DA-01, DA-03, DA-05
 
 ### Task 8 — Verification (`src/client/proof.ts`)
-- [ ] Verify `github-manifest` / `registry` receipts and bind the displayed autopsy via `buildAutopsy`.
-- [ ] Tests: valid autopsy proof, edited status/latest/counts, edited evidence, registry without manifest, autopsy without manifest, old proofs still valid, offline CLI rejects a tampered autopsy; fast-check property 7.
+- [x] Verify `github-manifest` / `registry` receipts and bind the displayed autopsy via `buildAutopsy`.
+- [x] Tests: valid autopsy proof, edited status/latest/counts, edited evidence, registry without manifest, autopsy without manifest, old proofs still valid, offline CLI rejects a tampered autopsy; fast-check property 7.
 - **Refs:** DA-05
 
 ### Task 9 — Revival plan (`src/lib/spec/generator.ts`)
