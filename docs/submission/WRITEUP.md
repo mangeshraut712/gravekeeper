@@ -31,11 +31,11 @@ Configured in `.kiro/hooks/`:
 - `run-tests-on-save.json`: on `PostFileSave` for `src/(lib|components)/*.ts(x)`, runs `npm test`.
 - `keep-tasks-in-sync.json`: two agent-prompt hooks on `PostFileSave`: tick matching boxes in `tasks.md` after `src/lib` or `src/app` edits, and check design/tasks drift after `src/types` or `src/app/api` edits.
 
-Configuration alone is not execution evidence. KIRO_USAGE.md has one remark that a post-save hook "found no `tasks.md` item that this completes" (Nov 7, kit drift test session). Beyond that, the log does not claim that hooks ran, and this write-up does not either. The Nov 6 and Nov 10 entries say hook or MCP execution is not claimed.
+Configuration alone is not execution evidence. What was observed, once, on Nov 11 (details in `.kiro/evidence/2026-11-11-hook-mcp-exercise.json`): saving `src/lib/wayback/client.test.ts` made the `keep-tasks-md-in-sync` agent hook deliver its prompt to the session, and the Kiro log recorded two hook-invocation events for that save. The agent hook checked `tasks.md` and ticked nothing, because the new test completed no task. The output of the `npm test` command hook was not attached to the session, so its result was not observed; the suite was run by hand (225 passing). Earlier, KIRO_USAGE.md has one remark that a post-save hook "found no `tasks.md` item that this completes" (Nov 7). That is the whole record: two sessions where a hook is known to have fired.
 
 ## MCP
 
-`.kiro/settings/mcp.json` configures two servers through `npx`: `@modelcontextprotocol/server-github` (token only via `${GITHUB_TOKEN}`; no secret is stored in the repo) and `@modelcontextprotocol/server-fetch`. Both have empty `autoApprove`. The log does not record any MCP tool call, so they are configured but not observed running. The read-only review agent has `includeMcpJson: false`.
+`.kiro/settings/mcp.json` configures two servers: `@modelcontextprotocol/server-github` via `npx` (token only via `${GITHUB_TOKEN}`; no secret is stored in the repo) and a fetch server. Both have empty `autoApprove`. Checking them on Nov 11 found that the configured fetch package, `@modelcontextprotocol/server-fetch`, does not exist on npm, so it could never have started; the config now uses `uvx mcp-server-fetch`. With a small stdio client (`scripts/mcp-probe.mts`), the fetch server started, listed its `fetch` tool, and returned the Wayback availability JSON for `github.com/atom/atom`. The GitHub server started and listed 26 tools, but `GITHUB_TOKEN` was not set, so no GitHub tool was called. These probes show the configured servers work; they are not Kiro invoking an MCP tool in a chat turn, and no such call is claimed. The read-only review agent has `includeMcpJson: false`.
 
 ## Property-based tests (fast-check)
 
@@ -55,4 +55,4 @@ Provider-reported credit figures are recorded for several sessions (two read-onl
 
 - The revival plan is built from public metadata, not a code or dependency audit.
 - Receipts prove internal consistency, not authorship or that GitHub/the Internet Archive said what they say.
-- Accessibility: axe scans found no violations on the product pages scanned in Chromium, but a color-contrast check is "needs review" and was measured manually; no screen reader pass was done. See [docs/A11Y_AUDIT.md](../A11Y_AUDIT.md).
+- Accessibility: axe scans found no violations on the product pages scanned in Chromium, Firefox and WebKit (identical counts; the intentionally broken "before" fixture is excluded from the count). Color contrast over the fog is "needs review" in axe and was re-measured per text box in Chromium (lowest 7.13:1 in the sampled frames, with caveats in the audit); no screen reader pass was done. See [docs/A11Y_AUDIT.md](../A11Y_AUDIT.md).

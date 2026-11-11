@@ -197,3 +197,20 @@ Branch `feat/judge-ready-a11y-ci-20261111`, from `03c7029`. This run exposed no 
 - Remaining for Mangesh: record and upload the video, publish the blog, post socially, fill in the URLs, confirm Student eligibility, and submit on Devpost. A screen reader pass is still not done.
 
 **Correction (added later):** the CLI stream-json metadata for the submission-drafts session at 16b6742 showed **2.390755344776119 credits** for the whole session (one credit entry, unit credit). The entry above said no figure was exposed; this is the figure. It is provider-reported credits, not a token count or WBM record.
+
+## Nov 11, 2026 — Non-Chromium a11y, contrast re-sample, live screenshot, hook + MCP exercise (Kiro agent session)
+
+Branch `feat/kiro-depth-20261111`, from `9165fa3`. Session `sess_a0090c9c-b917-4a73-b475-7fa3e3995e0e`. This run's metadata exposed no credit figure or token count, so none is claimed. No Devpost submission, video, blog publish, or social post was made.
+
+**Kiro-generated (agent wrote and ran these):**
+- `scripts/a11y-audit.mts`: `--browser=` / `--browsers=` for Chromium, Firefox and WebKit; a launch failure exits with code 2. Scanned all three against a local production build, including the live `atom/atom` lookup: 0 counted violations in each, plus the 4 intentional findings on the "before" fixture. Found and worked around a Firefox-only hang (the post-lookup animation wait never resolved); the wait is now capped at 2 s. `docs/A11Y_AUDIT.md` updated with per-browser results and that limit.
+- `scripts/contrast-sample.mts`: per-text-box pixel sampling for the initial, invalid-URL, mocked-error, running, canceled and live-result states. The first two versions gave misleading failures (leftover placeholder text, underlines, a page-wide max pixel); they were fixed before the recorded numbers were taken. Lowest ratio 7.13:1 in the sampled frames, with caveats written in the audit.
+- `scripts/capture-screenshots.mts --live` (optional; default mocked run unchanged) and `docs/screenshots/home-lookup-live.png`, a real `atom/atom` lookup (4 receipts, results complete), added to the README as live. The mocked `home-lookup.png` stays labeled mocked.
+- Added a regression test in `src/lib/wayback/client.test.ts` (malformed snapshot timestamp returns `PARSE_ERROR`). That save triggered the hooks.
+- Hooks, observed: the `keep-tasks-md-in-sync` agent hook delivered its prompt after the save; `kiro.log` shows two hook-invocation events at 10:35:54Z. The hook found no task completed by the test, so it changed nothing. The `npm test` command hook's output was not attached, so its result was not observed; `npm test` was run by hand.
+- MCP, observed with `scripts/mcp-probe.mts` (direct stdio client, not Kiro calling the tool): the configured `@modelcontextprotocol/server-fetch` does not exist on npm (404), so the config now uses `uvx mcp-server-fetch`; that server started and its `fetch` tool returned the Wayback availability JSON for `github.com/atom/atom`. The GitHub MCP server started and listed 26 tools; `GITHUB_TOKEN` was not set so no GitHub tool was called.
+- Evidence: `.kiro/evidence/2026-11-11-hook-mcp-exercise.json` (metadata only). `docs/submission/*` and `tasks.md` updated to match.
+
+**Hand work:** none beyond the prompt.
+
+**Limits:** no screen-reader pass; contrast sampled in Chromium only and only three animation frames; no real upstream-failure scan; Kiro was not shown calling an MCP tool in a chat turn.
