@@ -111,11 +111,12 @@ Implementation note (Nov 6, 2026 UTC): the UI is consolidated in `src/components
 ---
 
 ### Task 10 — SearchForm component (`src/components/SearchForm.tsx`)
-- [ ] `'use client'` Client Component.
+- [x] `'use client'` Client Component (`SearchForm.tsx`).
 - [x] Controlled text input + submit button.
 - [x] Client-side URL validation (display inline error, no network call on invalid).
 - [x] Calls `POST /api/resurrect`, tracks loading state, surfaces API errors.
-- [x] Result state is owned by the client wrapper; no prop callback needed.
+- [x] Result state is owned by the `Gravekeeper.tsx` client wrapper; `SearchForm` reports through `onResult` / `onLoadingChange` callbacks.
+- [x] Escape cancels a running lookup (window `keydown` while loading).
 - [x] Disabled state while loading (US-01 AC-5).
 - [x] Polite `role="status"` region for errors and lookup progress (US-07 AC-5).
 - **Refs:** US-01, US-07
@@ -123,16 +124,16 @@ Implementation note (Nov 6, 2026 UTC): the UI is consolidated in `src/components
 ---
 
 ### Task 11 — TombstoneCard component (`src/components/TombstoneCard.tsx`)
-- [ ] Server Component (accepts serialisable props, no client state).
-- [ ] Displays: repo/URL name as epitaph, last push date, Wayback snapshot date, "R.I.P." motif.
-- [ ] Gothic card styling via Tailwind utility classes.
+- [x] No client state or `'use client'` directive; accepts serialisable props. Note: it is currently imported by the client `Gravekeeper.tsx`, so it renders on the client in practice (it would be a Server Component if composed from a server page).
+- [x] Displays: repo/URL name as epitaph, last push date, Wayback snapshot date, "R.I.P." motif.
+- [x] Gothic card styling via Tailwind utility classes.
 - [x] Proper heading hierarchy; all decorative SVGs `aria-hidden`.
 - **Refs:** US-02, US-03, US-07
 
 ---
 
 ### Task 12 — ReceiptChainViewer component (`src/components/ReceiptChainViewer.tsx`)
-- [ ] `'use client'` Client Component.
+- [x] `'use client'` Client Component.
 - [x] Expandable/collapsible native details show sequence, kind, fetchedAt, hash and payload digest.
 - [x] "Export Receipt Chain" button — triggers JSON file download using `URL.createObjectURL`.
 - [x] Keyboard-operable accordion (Enter/Space to toggle).
@@ -141,10 +142,10 @@ Implementation note (Nov 6, 2026 UTC): the UI is consolidated in `src/components
 ---
 
 ### Task 13 — RevivalSpecPanel component (`src/components/RevivalSpecPanel.tsx`)
-- [ ] `'use client'` Client Component.
-- [ ] Accordion displaying detected stack, stale deps (with badges), and ordered revival steps.
+- [x] `'use client'` Client Component.
+- [x] Native `<details>` accordion (Enter/Space) displaying detected stack, maintenance flags (with badges), and ordered revival steps.
 - [x] Public fork link opens GitHub for explicit confirmation using the visitor account. Operator POST requires a separate secret and is disabled by default.
-- [ ] `motion-reduce:` variants on all animated elements.
+- [x] `motion-reduce:` variants on the chevron transition; panel fade uses `motion-safe:`; global reduced-motion reset in `globals.css`.
 - **Refs:** US-05, US-06, US-07
 
 ---
@@ -154,6 +155,7 @@ Implementation note (Nov 6, 2026 UTC): the UI is consolidated in `src/components
 - [x] CSS keyframe animation for drifting fog using Tailwind `@keyframes` in globals.css.
 - [x] Hidden via `motion-reduce:hidden` (US-07 AC-3).
 - [x] `aria-hidden="true"` (US-07 AC-2).
+- [x] Verified on main (Nov 11): component, `fog-drift-*` keyframes, `FogOverlay.test.tsx`, and the home-page composition test all present and passing; not reimplemented.
 - **Refs:** US-07
 
 ---
@@ -161,8 +163,8 @@ Implementation note (Nov 6, 2026 UTC): the UI is consolidated in `src/components
 ### Task 15 — Home page assembly (`src/app/page.tsx`)
 - [x] Server Component page.
 - [x] Import and compose `FogOverlay` on the home page. Search, tombstone, receipts, and revival plan still live in `Gravekeeper.tsx` rather than as separate files.
-- [ ] Extract `SearchForm`, `TombstoneCard`, `ReceiptChainViewer`, and `RevivalSpecPanel` into their own files.
-- [ ] Manage result state via a `'use client'` wrapper if needed (or use URL search params for SSR-friendly state).
+- [x] Extract `SearchForm`, `TombstoneCard`, `ReceiptChainViewer`, and `RevivalSpecPanel` into their own files (shared `Mark.tsx`, `styles.ts`).
+- [x] Result state is managed by the `'use client'` wrapper `Gravekeeper.tsx`.
 - [x] Haunted graveyard layout: dark background, tombstone grid, candlelight amber accents.
 - [x] `<title>` and Open Graph metadata via Next.js `export const metadata` in `src/app/layout.tsx`.
 - **Refs:** US-01, US-07
@@ -172,9 +174,10 @@ Implementation note (Nov 6, 2026 UTC): the UI is consolidated in `src/components
 ## Phase 4 — Polish & Verification
 
 ### Task 16 — Accessibility audit
-- [ ] Install `@axe-core/react` as a dev dependency and run in dev mode.
-- [ ] Fix any WCAG 2.1 AA violations reported.
-- [ ] Manually verify keyboard navigation end-to-end (Tab, Enter, Space, Escape on modals/accordions).
+- [x] Deviation: used `@axe-core/playwright` (pinned 4.14.0, with `playwright` 1.65.0) against the production build instead of `@axe-core/react` in dev mode. `npm run a11y` (`scripts/a11y-audit.mts`).
+- [x] Scanned `/`, `/` after a real lookup, `/restoration`, `/lantern-hill`, and both fixture documents. No violations on the product pages; the intentionally inaccessible "before" fixture reports 4. Color-contrast on `/` is "needs review" in axe and was checked by pixel sampling. Details in `docs/A11Y_AUDIT.md`.
+- [x] Keyboard path verified with Playwright key events (Tab, Enter, Space, Escape during a lookup). Accordions are native `<details>`; the app has no modals.
+- [ ] Not done: screen-reader pass, non-Chromium browsers, error-state scan.
 - **Refs:** US-07
 
 ---
@@ -182,4 +185,5 @@ Implementation note (Nov 6, 2026 UTC): the UI is consolidated in `src/components
 ### Task 17 — Final integration test
 - [x] Integration-style route tests mock upstream APIs and verify response shape, receipt chain, evidence payloads, and browser/offline proof integrity.
 - [x] Run `npm run build` and confirm zero TypeScript errors (rerun after final edits).
+- [x] `.github/workflows/ci.yml` runs `npm ci`, tests, lint, `tsc --noEmit`, and build on push and pull request (no secrets).
 - **Refs:** all
