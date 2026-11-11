@@ -4,7 +4,7 @@ import { LanternHillView } from "@/components/LanternHillView";
 import { buildLanternHillDemo } from "@/lib/restore/demo";
 
 export default function LanternHillPage() {
-  return <Suspense fallback={<main className="mx-auto max-w-6xl px-5 py-8 text-stone-300">Restoring Lantern Hill…</main>}><LanternHillContent /></Suspense>;
+  return <Suspense fallback={<main className="mx-auto min-h-screen max-w-6xl px-5 py-8 text-stone-300">Restoring Lantern Hill…</main>}><LanternHillContent /></Suspense>;
 }
 
 async function LanternHillContent() {

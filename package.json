@@ -12,7 +12,8 @@
     "demo:kit": "sh scripts/build-restoration-kit.sh",
     "demo:baseline": "node scripts/verify-restoration.mts --baseline",
     "a11y": "node scripts/a11y-audit.mts",
-    "e2e": "node scripts/e2e-smoke.mts"
+    "e2e": "node scripts/e2e-smoke.mts",
+    "lighthouse": "node scripts/lighthouse.mts"
   },
   "dependencies": {
     "next": "16.4.4",
@@ -29,6 +30,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.4",
     "fast-check": "^4.10.2",
+    "lighthouse": "13.6.0",
     "playwright": "1.65.0",
     "tailwindcss": "^4",
     "typescript": "^5",
