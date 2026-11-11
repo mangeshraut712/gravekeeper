@@ -93,7 +93,7 @@ type ResurrectResponse = { ...; autopsy?: DependencyAutopsy | null };
 
 Returns `{ epoch, release: number[], pre: (number|string)[] | null }` or `null`.
 
-`compareVersions(a, b)` → `-1 | 0 | 1`:
+`compareVersions(a, b)` → `-1 | 0 | 1`, or `null` when either string is not a version (`compareParsed` does the same on parsed values):
 1. epoch numerically;
 2. release arrays numerically, shorter array padded with zeros (`1.2` = `1.2.0`);
 3. a release without `pre` ranks above one with `pre`;

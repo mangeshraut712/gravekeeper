@@ -10,10 +10,10 @@ Complete in order. Each task lists the requirements it covers (see `requirements
 - **Refs:** DA-02, DA-04, DA-05
 
 ### Task 2 — Version comparator (`src/lib/deps/semver.ts`)
-- [ ] `parseVersion`, `compareVersions`, `majorOf` for semver and common PEP 440 forms.
-- [ ] `rangeFloor(spec, ecosystem)` for npm ranges and PyPI specifiers.
-- [ ] `classify(floor, latest, outcome)` and `severity`.
-- [ ] Unit tests for edge cases; fast-check properties 1–5 from design.md.
+- [x] `parseVersion`, `compareVersions`, `majorOf` for semver and common PEP 440 forms.
+- [x] `rangeFloor(spec, ecosystem)` for npm ranges and PyPI specifiers.
+- [x] `classify(floor, latest, outcome)` and `severity`.
+- [x] Unit tests for edge cases; fast-check properties 1–5 from design.md.
 - **Refs:** DA-04
 
 ### Task 3 — Manifest parsers (`src/lib/deps/manifest.ts`)
