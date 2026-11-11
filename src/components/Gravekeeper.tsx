@@ -11,6 +11,7 @@ import { TombstoneCard } from "./TombstoneCard";
 import { DependencyAutopsyPanel } from "./DependencyAutopsyPanel";
 import { EpitaphTimeline } from "./EpitaphTimeline";
 import { CopyLinkButton } from "./CopyLinkButton";
+import { RevivalKitPanel } from "./RevivalKitPanel";
 import { permalinkFor } from "@/shared/permalink";
 import { button } from "./styles";
 
@@ -156,6 +157,9 @@ function Results({ result, url }: { result: ResurrectResponse; url: string }) {
         )}
         <ReceiptChainViewer key={result.publicKey} result={result} url={url} />
       </div>
+      {result.spec && result.github && (
+        <RevivalKitPanel key={result.publicKey} result={result} url={url} />
+      )}
     </div>
   );
 }
