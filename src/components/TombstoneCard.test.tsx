@@ -77,6 +77,23 @@ describe("TombstoneCard", () => {
     expect(html).toContain("GitHub metadata is available only for public repository URLs.");
   });
 
+  it("shows the Open issues / PRs count alongside the snapshot date", () => {
+    const result: ResurrectResponse = {
+      ...base,
+      github: {
+        ...base.github!,
+        meta: { ...base.github!.meta!, openIssues: 42 },
+      },
+    };
+    const html = renderToStaticMarkup(
+      <TombstoneCard result={result} url="https://github.com/octo/ghost" />,
+    );
+    expect(html).toContain(">Open issues / PRs</dt>");
+    expect(html).toContain(">42</dd>");
+    expect(html).toContain(">Archive snapshot</dt>");
+    expect(html.indexOf("Archive snapshot")).toBeLessThan(html.indexOf("Open issues / PRs"));
+  });
+
   it("omits the snapshot link when none was found", () => {
     const html = renderToStaticMarkup(
       <TombstoneCard

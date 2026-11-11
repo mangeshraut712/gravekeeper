@@ -125,7 +125,7 @@ Implementation note (Nov 6, 2026 UTC): the UI is consolidated in `src/components
 
 ### Task 11 — TombstoneCard component (`src/components/TombstoneCard.tsx`)
 - [x] No client state or `'use client'` directive; accepts serialisable props. Note: it is currently imported by the client `Gravekeeper.tsx`, so it renders on the client in practice (it would be a Server Component if composed from a server page).
-- [x] Displays: repo/URL name as epitaph, last push date, Wayback snapshot date, "R.I.P." motif.
+- [x] Displays: repo/URL name as epitaph, last push date, Wayback snapshot date, Open issues / PRs count, "R.I.P." motif.
 - [x] Gothic card styling via Tailwind utility classes.
 - [x] Proper heading hierarchy; all decorative SVGs `aria-hidden`.
 - **Refs:** US-02, US-03, US-07

@@ -50,9 +50,23 @@ for (const path of [
     await page.fill("#resource-url", "https://github.com/atom/atom");
     await page.click("button[type=submit]");
     await page.getByText("Lookup complete").waitFor({ timeout: 45_000 });
-    await page.locator("details").first().evaluate((d) => ((d as HTMLDetailsElement).open = true));
+    // RevivalSpecPanel precedes ReceiptChainViewer, so the first <details> on
+    // the page is "Detected stack". Scope opening to the proof section and
+    // fail if the receipt bodies never appear (do not treat a miss as success).
+    const proof = page.locator("section[aria-labelledby='proof-title']");
+    await proof.waitFor();
+    const receipts = proof.locator("details");
+    if ((await receipts.count()) === 0) {
+      throw new Error("proof section has no receipt details to open");
+    }
+    await receipts.evaluateAll((nodes) => {
+      for (const node of nodes) (node as HTMLDetailsElement).open = true;
+    });
+    for (const label of ["Resource", "Recorded at", "Receipt hash", "Content digest"]) {
+      await proof.getByText(label, { exact: true }).first().waitFor({ state: "visible" });
+    }
     await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => undefined)))); // axe must not sample mid-fade
-    await scan("/ (after atom/atom lookup, receipt details open)", page);
+    await scan("/ (after atom/atom lookup, proof-section receipt details open)", page);
   }
   await page.context().close();
 }

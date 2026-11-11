@@ -17,11 +17,17 @@ Rule tags scanned: `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`. Preview iframes a
 | Page / state | Violations | Rules passed | Needs manual review |
 |---|---|---|---|
 | `/` (initial) | 0 | 22 | 1 (color-contrast, 16 nodes) |
-| `/` after a real `atom/atom` lookup, receipt details open | 0 | 27 | 1 (color-contrast, 13 nodes) |
+| `/` after a real `atom/atom` lookup, proof-section receipt details open | re-run needed | re-run needed | re-run needed |
 | `/restoration` | 0 | 23 | 0 |
 | `/lantern-hill` (page, iframes excluded) | 0 | 21 | 0 |
 | `/fixtures/lantern-hill/after` | 0 | 19 | 0 |
 | `/fixtures/lantern-hill/before` | 4 (intentional) | 9 | 0 |
+
+### Scan coverage for the lookup state
+
+The `--lookup` scan opens every `<details>` inside `section[aria-labelledby="proof-title"]` (the receipt chain) and waits until the receipt body fields — Resource, Recorded at, Receipt hash, and Content digest — are visible before axe runs. It does not open the first `<details>` on the page. That first disclosure is "Detected stack" in the revival plan, which precedes the proof section, and leaving receipts collapsed would not be a receipt-details scan.
+
+The 27-pass / 13-incomplete counts in the table above were recorded on 2026-11-11 before this scoping fix, when the script opened "Detected stack" instead. Re-run `BASE_URL=… npm run a11y -- --lookup` against a production build to refresh those numbers for the actual receipt-open state. The other rows were not affected.
 
 ### Intentional findings: Lantern Hill "before"
 

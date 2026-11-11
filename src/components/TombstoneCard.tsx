@@ -46,12 +46,13 @@ export function TombstoneCard({
           <span className="mt-1 font-serif text-xs tracking-[.3em]">R.I.P.</span>
         </div>
       </div>
-      <dl className="my-6 grid grid-cols-2 gap-5 border-y border-stone-700/60 py-5 sm:grid-cols-4">
+      <dl className="my-6 grid grid-cols-2 gap-5 border-y border-stone-700/60 py-5 sm:grid-cols-3 lg:grid-cols-5">
         {(meta
           ? [
               ["Last push", prettyDate(meta.pushedAt)],
               ["Archive snapshot", archiveDate ? prettyDate(archiveDate) : "None found"],
               ["Stars", meta.stars.toLocaleString()],
+              ["Open issues / PRs", meta.openIssues.toLocaleString()],
               ["License", meta.license ?? "Not detected"],
             ]
           : [
