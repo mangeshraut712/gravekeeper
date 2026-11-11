@@ -42,7 +42,8 @@ Checked on 2026-11-11 (UTC).
 - **Graveyard theme with accessibility.** The design uses tombstone cards, a fog layer hidden under reduced motion, and an inline SVG illustration. Screenshots are in [README.md](../README.md#screenshots) and [screenshots/polish](screenshots/polish) (375 px and 1440 px).
 - **Accessibility evidence.** [A11Y_AUDIT.md](A11Y_AUDIT.md): axe in Chromium, Firefox and WebKit found 0 counted violations on the scanned pages and states, plus 4 intentional findings on the deliberately broken Lantern Hill "before" fixture. Contrast over the fog was pixel-sampled (lowest 7.13:1 in the sampled frames). There is also a keyboard path with Escape to cancel, and `role="status"` regions.
 - **Polish measurements.** [PERFORMANCE.md](PERFORMANCE.md) and [LIGHTHOUSE.md](LIGHTHOUSE.md): local lab Lighthouse results, a layout-shift fix (0.0554 to 0.0004 at 375 px) and visible focus on every tab stop.
-- **Limits.** No screen-reader pass. The recorded multi-browser axe scans predate the Epitaph, autopsy and revival-kit panels, and [EPITAPH_TIMELINE.md](EPITAPH_TIMELINE.md) and [REVIVAL_KIT.md](REVIVAL_KIT.md) record no axe or contrast check for those panels. Lighthouse was run on localhost only, not on the deployed site.
+- **New panels.** As of 2026-11-11 (branch `feat/a11y-and-demo-assets-20261111`), `npm run a11y` also scans a synthetic signed lookup with the Epitaph, Dependency autopsy and Revival kit panels (collapsed, then with disclosures open, proof verified and kit used) and `/proof` showing a valid and an invalid verdict: 0 counted violations in Chromium, Firefox and WebKit on a local production build. A keyboard-only e2e step covers those panels. Details and limits are in [A11Y_AUDIT.md](A11Y_AUDIT.md#results-panels-and-proof-verdicts-2026-11-11-branch-feata11y-and-demo-assets-20261111).
+- **Limits.** No screen-reader pass. The new panels were scanned with synthetic data only, and contrast was not re-sampled for them. Lighthouse was run on localhost only, not on the deployed site.
 
 ## Innovation
 
@@ -61,6 +62,5 @@ Checked on 2026-11-11 (UTC).
 ## What is not done
 
 - Demo video, blog post and social post: not made. Their URLs are blank in the drafts.
-- Screen-reader pass; an axe scan of the Epitaph and autopsy panels; an OS-level drag test on `/proof`; a scan of a real upstream failure.
+- Screen-reader pass; contrast re-sampling of the Epitaph, autopsy and kit panels; an OS-level drag test on `/proof`; a scan of a real upstream failure.
 - Performance measurement of the deployed site.
-- A screen-reader pass and an axe scan of the revival-kit panel have not been run.

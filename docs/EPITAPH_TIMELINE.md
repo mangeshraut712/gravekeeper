@@ -41,7 +41,7 @@ Run on 2026-11-11 against a local production build (`npx next start -p 3400`, `G
 
 - Unit and property tests: `src/lib/wayback/timeline.test.ts`, `src/lib/wayback/cdx.test.ts`, `src/shared/permalink.test.ts`, the epitaph cases in `src/app/api/resurrect/route.test.ts` and `src/client/proof.test.ts`, and `src/components/EpitaphTimeline.test.tsx` (static markup).
 - `npm run e2e` against a production build on port 3400: all 12 checks passed, including the Epitaph panel and table, the `?url=` permalink running exactly one mocked lookup, Copy link (Chromium with clipboard permission), the address bar updating after a form lookup, and a private-looking permalink making no request. The e2e lookup data is synthetic and signed locally; it is not a live lookup.
-- No axe scan, contrast sampling or screen-reader pass was run for the Epitaph panel in this session.
+- No axe scan, contrast sampling or screen-reader pass was run for the Epitaph panel in this session. A later pass (2026-11-11) added an axe scan of the panel with synthetic data in Chromium, Firefox and WebKit (0 counted violations); see [A11Y_AUDIT.md](A11Y_AUDIT.md). Contrast sampling and a screen-reader pass are still not done.
 
 ## Limits
 
