@@ -178,7 +178,8 @@ Implementation note (Nov 6, 2026 UTC): the UI is consolidated in `src/components
 - [x] Scanned `/`, `/` after a real lookup, `/restoration`, `/lantern-hill`, and both fixture documents. No violations on the product pages; the intentionally inaccessible "before" fixture reports 4. Color-contrast on `/` is "needs review" in axe and was checked by pixel sampling. Details in `docs/A11Y_AUDIT.md`.
 - [x] Keyboard path verified with Playwright key events (Tab, Enter, Space, Escape during a lookup). Accordions are native `<details>`; the app has no modals.
 - [x] Error, invalid-URL, running and canceled states are scanned with `/api/resurrect` mocked (`npm run a11y`).
-- [ ] Not done: screen-reader pass, non-Chromium browsers, a scan of a real upstream failure (error states are mocked only), and a repeat of contrast pixel-sampling for the newer states.
+- [x] Firefox and WebKit axe scans (`npm run a11y -- --browsers=chromium,firefox,webkit`) and a per-text-box contrast re-sample for the newer states (`scripts/contrast-sample.mts`) were done; see `docs/A11Y_AUDIT.md`.
+- [ ] Not done: screen-reader pass and a scan of a real upstream failure (error states are mocked only).
 - **Refs:** US-07
 
 ---

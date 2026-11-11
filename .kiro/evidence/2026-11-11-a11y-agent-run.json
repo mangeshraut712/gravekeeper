@@ -1,0 +1,51 @@
+{
+  "purpose": "First real run of the read-only gravekeeper-a11y custom agent: axe-core scan of a local production build",
+  "recordedAt": "2026-11-11",
+  "source": "Kiro CLI 3.2.0 stream-json metadata (runStarted, session_info_update, runFinished)",
+  "engine": "v3",
+  "agent": "gravekeeper-a11y",
+  "sessionId": "sess_97761cf5-07b6-4849-b3d5-122253494804",
+  "commitScanned": "c812ca8",
+  "command": "kiro-cli chat --agent gravekeeper-a11y --no-interactive --trust-all-tools --output-format stream-json \"Run BASE_URL=http://localhost:3300 npm run a11y and summarize violations per page\"",
+  "server": "npx next start -p 3300 after npm run build; stopped after the run",
+  "runStatus": "success",
+  "stopReason": "end_turn",
+  "toolCalls": [
+    "execute_bash: BASE_URL=http://localhost:3300 npm run a11y; echo \"EXIT_CODE=$?\""
+  ],
+  "filesWrittenByAgent": [],
+  "contextFilesLoaded": [
+    "AGENTS.md",
+    ".kiro/steering/product.md",
+    ".kiro/steering/structure.md",
+    ".kiro/steering/tech.md",
+    ".kiro/steering/accessibility.md (listed in the agent's resources)",
+    "docs/A11Y_AUDIT.md"
+  ],
+  "meteringUsage": [
+    {
+      "value": 0.2289508389718076,
+      "unit": "credit",
+      "unitPlural": "credits"
+    }
+  ],
+  "reportedCreditsTotal": 0.2289508389718076,
+  "turnDurationMs": 25483,
+  "exactTokenCountsExposed": false,
+  "wbmUploadPerformed": false,
+  "findings": {
+    "scriptResult": "RESULT: no violations in scanned states (exit 0)",
+    "statesScanned": 9,
+    "violationsCounted": 0,
+    "perState": {
+      "/": "0 violations, 1 needs review (color-contrast, 16 nodes)",
+      "/restoration": "0 violations",
+      "/lantern-hill": "0 violations",
+      "/fixtures/lantern-hill/before": "4 violations, intentionally inaccessible fixture, not counted: blink, html-has-lang, label (input[name=name], input[name=note]), marquee",
+      "/fixtures/lantern-hill/after": "0 violations",
+      "/ invalid URL, mocked 404, running, canceled": "0 violations each, 1 needs review (color-contrast, 13 nodes)"
+    },
+    "notScanned": "--lookup (live atom/atom) was not requested; the script prints no selectors for needs-review items"
+  },
+  "scope": "Agent ran one shell command and reported its output. It did not edit files. Transcript not published."
+}

@@ -26,9 +26,9 @@ A custom read-only review agent was the second useful thing. It could only read 
 
 ## What did not go smoothly
 
-One session hit the monthly usage limit and wrote nothing, so I finished that work by hand. Much of the UI and the safety work was written by me, not Kiro, and the usage log in the repo says which parts. I also configured agent hooks and MCP servers (GitHub and fetch), but I have no log showing they ran, so I am not claiming they did. I did not use Kiro powers or Crew.
+One session hit the monthly usage limit and wrote nothing, so I finished that work by hand. Much of the UI and the safety work was written by me, not Kiro, and the usage log in the repo says which parts. I also configured agent hooks and MCP servers (GitHub and fetch). On Nov 11 I saw a post-save agent hook fire once and probed both MCP servers directly (the fetch server answered; the GitHub server started but I had no token to call it). I also found the fetch package I had configured did not exist and replaced it. I am not claiming more than that. I did not use Kiro powers or Crew.
 
-Accessibility: automated axe scans found no violations on the product pages I scanned, in Chromium only. That is not a conformance claim. Color contrast over the animated fog is flagged "needs review" by axe, so I measured it by sampling pixels. I did not do a screen reader pass.
+Accessibility: automated axe scans found no violations on the product pages I scanned, in Chromium, Firefox and WebKit. That is not a conformance claim. Color contrast over the animated fog is flagged "needs review" by axe, so I measured it by sampling pixels. I did not do a screen reader pass.
 
 ## Takeaway
 

@@ -1,0 +1,40 @@
+{
+  "purpose": "Exercise the configured PostFileSave hooks and MCP servers once, and record exactly what was observed",
+  "recordedAt": "2026-11-11T10:40:00Z",
+  "source": "Kiro agent session sess_a0090c9c-b917-4a73-b475-7fa3e3995e0e, tool results in the session, and ~/.kiro/logs/20261111T095834227-28038/kiro.log (metadata lines only)",
+  "branch": "feat/kiro-depth-20261111",
+  "hooks": {
+    "triggerEdit": "Saved src/lib/wayback/client.test.ts (added a regression test: snapshot timestamp that is not 14 digits returns PARSE_ERROR) at about 2026-11-11T10:35:54Z",
+    "observed": [
+      "The agent hook keep-tasks-md-in-sync delivered a HOOK_INSTRUCTION to the session after the save (prompt: check tasks.md and tick checkboxes the change completes).",
+      "kiro.log recorded two ContextualHookInvoked events at 10:35:54Z for that save, which is consistent with the two hooks whose matchers match src/lib/wayback/client.test.ts (keep-tasks-md-in-sync and run-src-tests-on-save). The log lines do not name the hooks."
+    ],
+    "outcomeOfAgentHook": "Checked tasks.md. The new test completes no task, so no checkbox was changed by that hook.",
+    "notObserved": [
+      "No output from the run-src-tests-on-save command hook (npm test) was attached to the session, so its result was not observed. npm test was run separately by hand afterwards: 27 files, 225 tests passed.",
+      "check-spec-drift did not apply (its matcher covers src/types and src/app/api, which were not edited)."
+    ]
+  },
+  "mcp": {
+    "method": "scripts/mcp-probe.mts starts the server exactly as configured in .kiro/settings/mcp.json and speaks JSON-RPC over stdio. This shows the configured servers start and answer; it is not Kiro invoking them itself.",
+    "finding": "The configured fetch server @modelcontextprotocol/server-fetch does not exist on npm (404), so it could never have started. Replaced with `uvx mcp-server-fetch` (the Python reference server) in .kiro/settings/mcp.json.",
+    "fetch": {
+      "started": true,
+      "serverInfo": "mcp-fetch 2026.11.11",
+      "toolsListed": ["fetch"],
+      "toolCalled": "fetch",
+      "publicUrl": "https://archive.org/wayback/available?url=github.com/atom/atom",
+      "outcome": "isError=false; returned the Wayback availability JSON (closest snapshot 20261027223315, status 200)"
+    },
+    "github": {
+      "started": true,
+      "serverInfo": "github-mcp-server 0.6.2 (npm package is marked deprecated/archived)",
+      "toolsListed": 26,
+      "toolCalled": null,
+      "outcome": "GITHUB_TOKEN was not set in the environment, so no GitHub tool was called. The server starts and lists tools without a token; calls were not attempted."
+    },
+    "secrets": "No token, Authorization header or environment value was printed or stored."
+  },
+  "credits": "No credit figure or token count was exposed by this session's metadata; none is claimed.",
+  "notClaimed": ["Kiro itself calling an MCP tool in a chat turn", "run-src-tests-on-save output", "any WBM record"]
+}
