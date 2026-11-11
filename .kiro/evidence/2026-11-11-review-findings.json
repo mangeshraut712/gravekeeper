@@ -1,0 +1,32 @@
+{
+  "purpose": "Bounded read-only Kiro review of code added since 9165fa3, then independent verification and fixes",
+  "recordedAt": "2026-11-11T12:26:47Z",
+  "source": "Kiro CLI stream-json metadata (runFinished and session_info_update session_usage)",
+  "engine": "v3",
+  "sessionId": "sess_9c02bc20-a9ed-42b4-9abe-4b19724efb47",
+  "agent": "gravekeeper-review",
+  "reviewStartedAt": "2026-11-11T12:21:19Z",
+  "reviewFinishedAt": "2026-11-11T12:26:47Z",
+  "status": "success",
+  "stopReason": "end_turn",
+  "toolCallsObserved": { "read": 28, "search": 5, "shell": 0, "write": 0, "mcp": 0 },
+  "meteringUsage": [
+    { "value": 5.634453310779436, "unit": "credit", "unitPlural": "credits" }
+  ],
+  "reportedCreditsTotal": 5.634453310779436,
+  "exactTokenCountsExposed": false,
+  "wbmUploadPerformed": false,
+  "baseCommit": "7c2973f",
+  "reviewedRange": "9165fa3..7c2973f",
+  "scope": "Source review only; Kiro read 27 listed files and did not run tests or change files.",
+  "findingsSummary": "No SSRF, token leakage, HTML injection or proof-verification bypass found. Reported three attacker-reachable DoS paths in manifest parsing/fetching, three SearchForm issues, release-gate matcher gaps, and low-severity items.",
+  "outcomes": {
+    "fixed": ["1", "2", "3", "4", "6", "7", "8", "9a", "9b"],
+    "partlyFixed": ["9h"],
+    "rejected": ["5", "9c", "9d", "9e", "9f", "9g", "verifyProof hardening"],
+    "unchanged": ["9i"]
+  },
+  "fixCommits": ["7b62d07", "ecdbf7f", "088fb1d", "347e2c5", "d68b5d5"],
+  "details": "docs/reviews/2026-11-11-kiro-review.md",
+  "transcriptPublished": false
+}
