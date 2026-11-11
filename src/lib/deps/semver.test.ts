@@ -123,8 +123,35 @@ describe("rangeFloor (pypi)", () => {
     ["(>=1.0)", "1.0"],
     ["===2.0", "2.0"],
     [">1.0", "1.0"],
+    // !=1.* excludes the 1.x series, so >=1.0,!=1.* starts at 2.0
+    [">=1.0,!=1.*", "2.0"],
+    [">=1.5,!=1.*", "2.0"],
+    [">=2.0,!=1.*", "2.0"],
+    [">=1.2,!=1.2.*", "1.3"],
+    ["(>=1.0,!=1.*)", "2.0"],
   ])("%s → %s", (spec, floor) => {
     expect(rangeFloor(spec, "pypi")).toBe(floor);
+  });
+
+  it("classifies >=1.0,!=1.* against latest 2.0.0 as current, not major-behind", () => {
+    expect(classify(rangeFloor(">=1.0,!=1.*", "pypi"), "2.0.0", "ok")).toBe("current");
+    expect(classify(rangeFloor(">=1.0,!=1.*", "pypi"), "3.0.0", "ok")).toBe("major-behind");
+  });
+
+  it("returns no floor when an exact != matches the inclusive floor (not reliably bumpable)", () => {
+    expect(rangeFloor(">=1.0,!=1.0", "pypi")).toBeNull();
+  });
+
+  it("property: >=N,!=N.* floors to N+1 and classifies as current against that latest", () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 0, max: 40 }), (major) => {
+        const floor = rangeFloor(`>=${major},!=${major}.*`, "pypi");
+        const next = `${major + 1}.0`;
+        expect(floor).not.toBeNull();
+        expect(compareVersions(floor!, next)).toBe(0);
+        expect(classify(floor, next, "ok")).toBe("current");
+      }),
+    );
   });
 
   it.each(["", "<3", "!=1.0", "<=2,!=1.5", "1.0"])("no floor for %j", (spec) => {

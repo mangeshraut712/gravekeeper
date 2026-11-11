@@ -186,16 +186,64 @@ function npmFloor(spec: string): string | null {
   return lowest;
 }
 
+/** True when a PEP 440 prefix (e.g. 1.* → [1]) covers this version. */
+function pypiPrefixCovers(prefix: number[], version: string): boolean {
+  const parsed = parseVersion(version);
+  if (!parsed || parsed.epoch !== 0) return false;
+  for (let i = 0; i < prefix.length; i++) {
+    if ((parsed.release[i] ?? 0) !== prefix[i]) return false;
+  }
+  return true;
+}
+
+/** Lowest version after a prefix exclusion: 1.* → 2.0, 1.2.* → 1.3. */
+function pypiBumpPastPrefix(prefix: number[]): string | null {
+  if (!prefix.length) return null;
+  const next = [...prefix];
+  next[next.length - 1] += 1;
+  while (next.length < 2) next.push(0);
+  const floor = next.join(".");
+  return parseVersion(floor) ? floor : null;
+}
+
 function pypiFloor(spec: string): string | null {
   let highest: string | null = null;
+  const prefixes: number[][] = [];
+  const exactExclusions: string[] = [];
   for (const clause of spec.replace(/^\(|\)$/g, "").split(",")) {
-    const match = /^(===|==|~=|>=|>)\s*(\S+)$/.exec(clause.trim());
-    if (!match) continue;
-    const floor = match[2].replace(/\.\*$/, "");
-    if (!parseVersion(floor)) continue;
-    if (highest === null || (compareVersions(floor, highest) ?? 0) > 0) highest = floor;
+    const text = clause.trim();
+    const lower = /^(===|==|~=|>=|>)\s*(\S+)$/.exec(text);
+    if (lower) {
+      const floor = lower[2].replace(/\.\*$/, "");
+      if (!parseVersion(floor)) continue;
+      if (highest === null || (compareVersions(floor, highest) ?? 0) > 0) highest = floor;
+      continue;
+    }
+    const excluded = /^!=\s*(\S+)$/.exec(text);
+    if (!excluded) continue;
+    const raw = excluded[1];
+    const prefix = /^(\d+(?:\.\d+)*)\.\*$/.exec(raw);
+    if (prefix) {
+      const parts = prefix[1].split(".").map(Number);
+      if (parts.every((n) => Number.isSafeInteger(n))) prefixes.push(parts);
+      continue;
+    }
+    if (parseVersion(raw.replace(/\.\*$/, ""))) exactExclusions.push(raw.replace(/\.\*$/, ""));
   }
-  return highest;
+  if (highest === null) return null;
+  let floor: string = highest;
+  for (let i = 0; i < 8; i++) {
+    const covering = prefixes.find((prefix) => pypiPrefixCovers(prefix, floor));
+    if (!covering) break;
+    const bumped = pypiBumpPastPrefix(covering);
+    if (bumped === null) return null;
+    if ((compareVersions(bumped, floor) ?? 0) <= 0) return null;
+    floor = bumped;
+  }
+  if (prefixes.some((prefix) => pypiPrefixCovers(prefix, floor))) return null;
+  // Exact != that lands on the floor cannot be bumped reliably.
+  if (exactExclusions.some((v) => (compareVersions(v, floor) ?? 1) === 0)) return null;
+  return floor;
 }
 
 /** The lowest version a declared spec admits, or null when it has no registry floor. */
