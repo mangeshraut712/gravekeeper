@@ -1,0 +1,17 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "receipts-property-tests-on-save",
+      "description": "When the agent saves receipt-chain or browser proof code, run only those suites (fast-check chain/crypto properties and proof tamper cases) so a weakened verifier fails fast.",
+      "trigger": "PostFileSave",
+      "matcher": "src/(lib/receipts|client)/.*\\.(ts|tsx)$",
+      "action": {
+        "type": "command",
+        "command": "npx vitest run src/lib/receipts src/client"
+      },
+      "timeout": 120,
+      "enabled": true
+    }
+  ]
+}
