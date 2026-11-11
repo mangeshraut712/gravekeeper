@@ -77,3 +77,12 @@ summary {
     radial-gradient(ellipse 40% 45% at 30% 80%, rgb(90 100 90 / 0.12), transparent 70%);
   animation: fog-drift-b 64s ease-in-out infinite;
 }
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
