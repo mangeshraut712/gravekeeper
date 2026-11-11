@@ -17,11 +17,11 @@ Complete in order. Each task lists the requirements it covers (see `requirements
 - **Refs:** DA-04
 
 ### Task 3 — Manifest parsers (`src/lib/deps/manifest.ts`)
-- [ ] `parsePackageJson` (dependencies then devDependencies, dedupe, cap 40).
-- [ ] `parseRequirementsTxt` (comments, continuations, markers, extras, options, URLs, skipped count, PEP 503 names).
-- [ ] `parsePyprojectToml` (`[project].dependencies` only).
-- [ ] `parseManifest(path, text)` dispatcher.
-- [ ] Unit tests for edge cases; fast-check property 6.
+- [x] `parsePackageJson` (dependencies then devDependencies, dedupe, cap 40).
+- [x] `parseRequirementsTxt` (comments, continuations, markers, extras, options, URLs, skipped count, PEP 503 names).
+- [x] `parsePyprojectToml` (`[project].dependencies` only).
+- [x] `parseManifest(path, text)` dispatcher.
+- [x] Unit tests for edge cases; fast-check property 6.
 - **Refs:** DA-02
 
 ### Task 4 — Autopsy builder (`src/lib/deps/autopsy.ts`)
