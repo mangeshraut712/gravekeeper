@@ -69,7 +69,7 @@ Complete in order. Each task lists the requirements it covers (see `requirements
 - **Refs:** DA-07
 
 ### Task 11 — Verify and document
-- [ ] `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `npm run demo:verify`.
-- [ ] Real lookups of `atom/atom` and `facebookarchive/flux` against a local production build; record counts.
-- [ ] `docs/DEPENDENCY_AUTOPSY.md`; `.kiro/evidence/2026-11-11-dependency-autopsy.json`.
+- [x] `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `npm run demo:verify`.
+- [x] Real lookups of `atom/atom` and `facebookarchive/flux` against a local production build; record counts.
+- [x] `docs/DEPENDENCY_AUTOPSY.md`; `.kiro/evidence/2026-11-11-dependency-autopsy.json`.
 - **Refs:** all

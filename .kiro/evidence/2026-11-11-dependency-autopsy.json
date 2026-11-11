@@ -1,0 +1,77 @@
+{
+  "kind": "kiro-session-metadata",
+  "note": "Metadata only. No transcript, prompts, tokens, environment values or secrets are recorded. Credit usage was not exposed to the agent during this session and is not claimed.",
+  "session": {
+    "date": "2026-11-11",
+    "branch": "feat/dependency-autopsy-20261111",
+    "base": "main 9165fa3",
+    "firstCommit": "2026-11-11T15:39:59+05:30",
+    "realLookupsAt": "2026-11-11T10:30Z (approx.)",
+    "interrupted": "Run was interrupted once by a signal right after the spec commit (e8b6285) and resumed from Task 1."
+  },
+  "spec": {
+    "path": ".kiro/specs/dependency-autopsy/",
+    "files": ["requirements.md", "design.md", "tasks.md"],
+    "committedBeforeCode": "e8b6285",
+    "relatedSpecUpdated": ".kiro/specs/resurrect/design.md (new ReceiptKind values, MANIFEST_NOT_FOUND, autopsy and evidence fields)"
+  },
+  "tasksCompleted": [
+    "1 Types",
+    "2 Version comparator",
+    "3 Manifest parsers",
+    "4 Autopsy builder",
+    "5 Manifest fetch",
+    "6 Registry client",
+    "7 Route",
+    "8 Verification",
+    "9 Revival plan",
+    "10 DependencyAutopsyPanel",
+    "11 Verify and document"
+  ],
+  "tests": {
+    "beforeMerge": { "files": 32, "tests": 431, "result": "all passed" },
+    "lint": "passed (npm run lint, no output)",
+    "typecheck": "passed (npx next typegen, then npx tsc --noEmit)",
+    "build": "passed (npm run build)",
+    "demoVerify": "passed (npm run demo:verify)"
+  },
+  "realLookups": {
+    "server": "local production build, npx next start -p 3200, GITHUB_TOKEN unset",
+    "atom/atom": {
+      "http": 200,
+      "seconds": 3.8,
+      "receiptKinds": ["wayback", "github-meta", "github-commits", "github-manifest", "registry", "spec"],
+      "manifest": "package.json",
+      "totalDeclared": 157,
+      "checked": 40,
+      "truncated": true,
+      "counts": { "current": 10, "minor-behind": 3, "major-behind": 5, "unknown": 22, "not-found": 0 },
+      "offlineVerifier": "Internally consistent: 6 receipts"
+    },
+    "facebookarchive/flux": {
+      "http": 200,
+      "seconds": 5.4,
+      "receiptKinds": ["wayback", "github-meta", "github-commits", "github-manifest", "registry", "spec"],
+      "manifest": "package.json",
+      "totalDeclared": 22,
+      "checked": 22,
+      "truncated": false,
+      "counts": { "current": 2, "minor-behind": 6, "major-behind": 14, "unknown": 0, "not-found": 0 },
+      "offlineVerifier": "Internally consistent: 6 receipts; rejected (exit 1) after one autopsy status was edited"
+    }
+  },
+  "hooks": {
+    "observed": true,
+    "detail": [
+      "check-spec-drift (agent hook) fired once, after src/types/index.ts was saved; resurrect design.md was updated in response.",
+      "keep-tasks-md-in-sync (agent hook) fired 12 times on src/lib saves; .kiro/specs/resurrect/tasks.md had no unchecked item completed by these changes, so it was left unchanged.",
+      "run-src-tests-on-save (command hook) output was not observed by the agent, so its execution is not claimed.",
+      "Edits made through shell scripts (route, proof verifier, some tests and components) do not trigger save hooks."
+    ]
+  },
+  "mcp": "No MCP server was used in this session.",
+  "notInScope": [
+    "KIRO_USAGE.md, README.md, docs/A11Y_AUDIT.md, docs/submission/WRITEUP.md and scripts/a11y-audit.mts were not edited (owned by a parallel session).",
+    "No axe scan was run for the new panel."
+  ]
+}
