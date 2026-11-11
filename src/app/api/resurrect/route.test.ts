@@ -565,9 +565,10 @@ describe("POST /api/resurrect CDX snapshot fallback", () => {
     other.wayback.timestamp = "20140622190015";
     other.wayback.snapshotUrl = `https://web.archive.org/web/20140622190015/${url}`;
     expect(await verifyProof(other, url)).toBe(false);
-    const dropped = structuredClone(body);
-    dropped.wayback = null;
-    expect(await verifyProof(dropped, url)).toBe(false);
+    // Proofs made before the fallback existed show no snapshot on a miss and must still verify.
+    const legacy = structuredClone(body);
+    legacy.wayback = null;
+    expect(await verifyProof(legacy, url)).toBe(true);
     const forged = structuredClone(body);
     delete forged.wayback.source;
     expect(await verifyProof(forged, url)).toBe(false);

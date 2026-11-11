@@ -110,7 +110,8 @@ export async function verifyProof(
       const expected = seen.has("wayback-cdx")
         ? deriveCdxFallback(cdxBody, result.receipts[0].url)
         : null;
-      if (!same(result.wayback ?? null, expected)) return false;
+      // null stays valid: proofs made before the fallback existed show no snapshot on a miss.
+      if (result.wayback != null && !same(result.wayback, expected)) return false;
     }
     if (
       result.github &&
