@@ -215,6 +215,41 @@ Branch `feat/kiro-depth-20261111`, from `9165fa3`. Session `sess_a0090c9c-b917-4
 
 **Limits:** no screen-reader pass; contrast sampled in Chromium only and only three animation frames; no real upstream-failure scan; Kiro was not shown calling an MCP tool in a chat turn.
 
+## Nov 11, 2026 — Dependency autopsy (Kiro agent session)
+
+Branch `feat/dependency-autopsy-20261111`, from main `9165fa3`. Evidence: `.kiro/evidence/2026-11-11-dependency-autopsy.json`. Credit usage was not exposed to the agent and is not claimed. No Devpost submission, video, blog publish, or social post was made.
+
+**Kiro-generated:** spec-first work under `.kiro/specs/dependency-autopsy/` (requirements, design, tasks committed before code as `e8b6285`). Implemented types, a dependency-free npm/PyPI floor comparator, manifest parsers, autopsy builder, manifest fetch, registry client, `/api/resurrect` receipts, proof verification, revival-plan steps, and an accessible `DependencyAutopsyPanel`. Documented real local production-build lookups of `atom/atom` and `facebookarchive/flux` in `docs/DEPENDENCY_AUTOPSY.md`.
+
+**PR #7 review fixes (also Kiro):** two Codex P2 findings. (1) A dependency spec longer than 256 characters was accepted by the parser but rejected by the evidence validator, so the whole autopsy became null and `verifyProof` failed; parsers now share the evidence length limits and skip over-limit entries (`e00b40d`). (2) An npm comparator set with several lower bounds used the first bound instead of the strongest; the floor is now the max lower bound in a set and the min across `||` (`5fec660`). Tests were written first. After those fixes: 32 files, 442 tests, lint, `tsc`, build, and `demo:verify` passed.
+
+**Limits recorded then:** the session's `git pull --no-rebase origin/main` reported already up to date, but the branch was still based at `9165fa3` and did not contain PRs #6 and #8. A third Codex P2 (exclusive npm partials / X-ranges) was not fixed in that session. Real lookups were not re-run after the review fixes.
+
+## Nov 11, 2026 — Exclusive npm floors and merge of main (hand work)
+
+Not a Kiro session. The follow-up kiro-cli resume (`sess_896d8716-8cca-40c1-846e-8b21e710a68d`, started about 16:11 IST) had already committed the two review fixes, then went silent (no log growth after 16:14 IST, 0% CPU). It was stopped with SIGTERM at 16:32 IST after its 20-minute check-poll window, without merging. PID 73527 was not touched. A separate kiro-cli job in the `gravekeeper-proof` worktree was left running.
+
+- Codex P2: `>1` and `>1.x` already require `2.0.0`, but the floor was `1` / `1.0`, so a current major was classified `major-behind`. Exclusive partials and X-ranges now raise the last precise component; fully specified `>1.2.3` is unchanged. Failing unit and property tests first, then the fix, in `8dca3d4`.
+- Merged `origin/main` (`4184d6f`, PRs #6 and #8) with `git merge --no-edit` (no rebase, no force-push). No conflicts.
+- After the merge: `npm test` 33 files, 482 passed; `npm run lint`; `npx next typegen && npx tsc --noEmit`; `npm run build`; `npm run demo:verify`. All passed.
+
+No credit figure is claimed for this hand work. No Devpost submission, video, blog publish, or social post was made.
+
+## Nov 11, 2026 — PR #7 review follow-ups (hand work)
+
+Not a Kiro session. After the exclusive-floor entry above, Codex and Cursor Bugbot kept filing findings on this branch; each verified one was fixed with tests first, then pushed (no force-push, no PR replies, PID 73527 not touched). Credit usage is not claimed here.
+
+- Browser CI: `@/lib` aliases failed under Node e2e; `generator.ts` now uses a relative import of `majorOf` (`b21df84`).
+- Codex P2: `>=1.0,!=1.*` ignored the exclusion and floored at `1.0`; floors now bump past prefix exclusions, and an exact `!=` of the floor returns null (`d8d698c`).
+- Codex P2: repeated Python requirements kept only the first line; `mergePypiSpecs` / `addOrMergePypi` combine them, and conflicting exact pins yield no floor (`3abf399`).
+- Codex P2 and Bugbot: a merged spec can exceed 256 characters, and `==1.*` was recorded as an exact pin of `1`; overflow now keeps the previous valid spec, and wildcard equality is a prefix (`b6838af`).
+- Bugbot: `==1.*,>=2.0` still returned a floor of `2.0` outside the required series; floors and pins must sit inside every `==N.*` prefix (`83c38c5`).
+- Codex P2: `addOrMergePypi` used `findIndex` on every requirement, so a large unique manifest was quadratic. Parsing now uses a name-to-index map (this commit).
+
+Limits: Kilo review was still pending on some of these heads; later findings arrived after earlier fixes. No Devpost submission, video, blog publish, or social post was made.
+
+- Codex P2: `==1.0-rc1` against latest `1.0rc2` compared as current because the hyphenated form kept `rc1` as one identifier. PyPI parsing now splits known pre tags (`rc1` → `['rc', 1]`); npm identifier semantics are unchanged.
+
 ## Nov 11, 2026 — Performance measurements, share previews and UI polish (Kiro agent session)
 
 Branch `perf/polish-and-share-20261111`, from `4184d6f`. The credit figure for this session is recorded by the runner, not here. No token count or WBM record is claimed. No Devpost submission, video, blog publish, or social post was made.

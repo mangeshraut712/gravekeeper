@@ -41,7 +41,13 @@ function Section({
 }
 
 /** Revival checklist as native, keyboard-operable disclosures (Enter/Space toggle). */
-export function RevivalSpecPanel({ spec }: { spec: RevivalSpec }) {
+export function RevivalSpecPanel({
+  spec,
+  usesDependencies = false,
+}: {
+  spec: RevivalSpec;
+  usesDependencies?: boolean;
+}) {
   return (
     <section
       aria-labelledby="plan-title"
@@ -56,7 +62,9 @@ export function RevivalSpecPanel({ spec }: { spec: RevivalSpec }) {
         </span>
       </div>
       <p className="mb-4 text-xs text-stone-400">
-        Metadata-based plan · no source code audit
+        {usesDependencies
+          ? "Metadata and declared-dependency plan · no source code or vulnerability audit"
+          : "Metadata-based plan · no source code audit"}
       </p>
       <Section
         title="Detected stack"
