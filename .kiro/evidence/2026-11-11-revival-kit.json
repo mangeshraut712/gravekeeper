@@ -10,7 +10,11 @@
   },
   "spec": {
     "path": ".kiro/specs/revival-kit/",
-    "files": ["requirements.md", "design.md", "tasks.md"],
+    "files": [
+      "requirements.md",
+      "design.md",
+      "tasks.md"
+    ],
     "committedBeforeCode": "f52061d"
   },
   "tasksCompleted": [
@@ -24,12 +28,29 @@
   "bugFoundByTests": "encodeURIComponent does not encode parentheses, so a snapshot URL containing ')' could end the Markdown link; replaced with an explicit %28/%29/%20 map",
   "newDependencies": "none",
   "checks": {
-    "npmTest": { "files": 40, "tests": 606, "result": "all passed" },
+    "npmTest": {
+      "files": 40,
+      "tests": 606,
+      "result": "all passed"
+    },
     "lint": "passed (npm run lint)",
     "typecheck": "passed (npx next typegen, then npx tsc --noEmit)",
     "build": "passed (npm run build)",
     "demoVerify": "passed (after 12/12, before 4/12)",
-    "e2e": "14/14 passed (npm run e2e, BASE_URL http://localhost:3400, npx next start -p 3400, stopped afterwards)"
+    "e2e": "14/14 passed (npm run e2e, BASE_URL http://localhost:3400, npx next start -p 3400, stopped afterwards)",
+    "afterMergingMain": {
+      "merged": "origin/main 7c2973f (PR #10), conflict in KIRO_USAGE.md only, all entries kept",
+      "npmTest": {
+        "files": 42,
+        "tests": 616,
+        "result": "all passed"
+      },
+      "lint": "passed",
+      "typecheck": "passed",
+      "build": "passed",
+      "demoVerify": "passed",
+      "e2e": "14/14 passed on port 3400, server stopped"
+    }
   },
   "realLookup": {
     "server": "local production build, npx next start -p 3400, GITHUB_TOKEN and FORK_API_SECRET unset",
@@ -38,7 +59,15 @@
     "recordedAt": "2026-11-11T12:22:39.827Z",
     "http": 200,
     "seconds": 9.0,
-    "receiptKinds": ["wayback", "wayback-cdx", "github-meta", "github-commits", "github-manifest", "registry", "spec"],
+    "receiptKinds": [
+      "wayback",
+      "wayback-cdx",
+      "github-meta",
+      "github-commits",
+      "github-manifest",
+      "registry",
+      "spec"
+    ],
     "browserVerify": "Proof internally consistent",
     "offlineVerifier": "Internally consistent: 7 receipts and their evidence verified; exit 0",
     "proofSha256": "c853324fe253ce46d5c8d4ec1fe55e25acf45a0a8e67da1d3b51f6f5a6d7f033",

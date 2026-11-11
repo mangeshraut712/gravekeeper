@@ -305,7 +305,7 @@ Branch `feat/revival-kit-export-20261111`, from `70d5a7d` (PR #11 tip, which inc
 
 **Hooks, observed in this session:** the requirements-coverage agent hook fired after `requirements.md` was saved (before design and tasks existed, so everything was uncovered; re-checked after writing them, no gaps). The keep-tasks-in-sync agent hook fired on `src/` saves; `.kiro/specs/resurrect/tasks.md` had no item completed by this work and was left unchanged. Output of the `npm test` and receipts-property command hooks was not observed, so their execution is not claimed; tests were run directly. Files written through shell commands (the docs page) do not trigger save hooks.
 
-**Checks:** `npm test` 40 files, 606 tests passed; `npm run lint`; `npx next typegen && npx tsc --noEmit`; `npm run build`; `npm run demo:verify` (after 12/12, before 4/12); `npm run e2e` against `npx next start -p 3400`, 14/14 passed, server stopped afterwards.
+**Checks:** `npm test` 40 files, 606 tests passed; `npm run lint`; `npx next typegen && npx tsc --noEmit`; `npm run build`; `npm run demo:verify` (after 12/12, before 4/12); `npm run e2e` against `npx next start -p 3400`, 14/14 passed, server stopped afterwards. After `git pull --no-rebase origin main` brought in PR #10 (one conflict, in this file; all entries kept, newest last): `npm test` 42 files, 616 tests passed; lint, typegen + tsc, build, `demo:verify` and e2e 14/14 passed again.
 
 **Hand work:** none beyond the prompt.
 
