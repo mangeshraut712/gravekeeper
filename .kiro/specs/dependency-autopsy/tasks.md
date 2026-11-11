@@ -25,8 +25,8 @@ Complete in order. Each task lists the requirements it covers (see `requirements
 - **Refs:** DA-02
 
 ### Task 4 — Autopsy builder (`src/lib/deps/autopsy.ts`)
-- [ ] `buildAutopsy(manifestEvidence | failure, registryEvidence | null)` → `DependencyAutopsy | null`, rejecting misaligned or malformed evidence.
-- [ ] Unit tests for complete, partial, no-manifest, unavailable and misaligned inputs.
+- [x] `buildAutopsy(manifestEvidence | failure, registryEvidence | null)` → `DependencyAutopsy | null`, rejecting misaligned or malformed evidence.
+- [x] Unit tests for complete, partial, no-manifest, unavailable and misaligned inputs.
 - **Refs:** DA-04, DA-05
 
 ## Phase 2 — IO
