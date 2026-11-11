@@ -13,7 +13,8 @@ import { chromium } from "playwright";
 import type { Browser, Page } from "playwright";
 import type { Receipt } from "../src/types/index.ts";
 import { generateKeyPair, exportPublicKey } from "../src/lib/receipts/crypto.ts";
-import { buildReceipt } from "../src/lib/receipts/chain.ts";
+import { buildReceipt, sha256hex } from "../src/lib/receipts/chain.ts";
+import { escapeMarkdown } from "../src/lib/revival/markdown.ts";
 import { generateRevivalSpec } from "../src/lib/spec/generator.ts";
 import { CDX_LIMIT, buildTimeline, cdxQueryUrl } from "../src/lib/wayback/timeline.ts";
 import fixtures from "../src/lib/restoration/fixtures.json" with { type: "json" };
@@ -242,6 +243,73 @@ await step("results show the Epitaph timeline with a table alternative", () =>
     const rows = await epitaph.locator("tbody tr").count();
     assert(rows === 6, `expected 6 year rows (2014-2019), saw ${rows}`);
     await epitaph.locator("tbody tr", { hasText: "2017" }).getByText("0", { exact: true }).waitFor();
+  }));
+
+await step("revival kit: REVIVAL.md names the downloaded proof's SHA-256 and every step; Copy issue body announces", async () => {
+  const ctx = await browser.newContext({ acceptDownloads: true });
+  try {
+    await ctx.grantPermissions(["clipboard-read", "clipboard-write"], { origin: new URL(base).origin });
+    const page = await ctx.newPage();
+    await page.route("**/api/resurrect", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(mocked) }));
+    await page.goto(base + "/", { waitUntil: "networkidle" });
+    await page.fill("#resource-url", repoUrl);
+    await page.click("form button[type=submit]");
+    const kit = page.locator("section[aria-labelledby='kit-title']");
+    await kit.waitFor({ timeout: 15_000 });
+    const proof = page.locator("section[aria-labelledby='proof-title']");
+    const [proofDownload] = await Promise.all([
+      page.waitForEvent("download", { timeout: 10_000 }),
+      proof.getByRole("button", { name: /Download proof/ }).click(),
+    ]);
+    const proofFile = join(work, "kit-proof.json");
+    await proofDownload.saveAs(proofFile);
+    const [kitDownload] = await Promise.all([
+      page.waitForEvent("download", { timeout: 15_000 }),
+      kit.getByRole("button", { name: "Download revival kit" }).click(),
+    ]);
+    assert(kitDownload.suggestedFilename() === "REVIVAL.md", `unexpected filename ${kitDownload.suggestedFilename()}`);
+    const kitFile = join(work, "REVIVAL.md");
+    await kitDownload.saveAs(kitFile);
+    await page.locator("#kit-download-status").getByText("REVIVAL.md downloaded.").waitFor({ timeout: 5_000 });
+    const markdown = await readFile(kitFile, "utf8");
+    const proofSha = await sha256hex(new Uint8Array(await readFile(proofFile)));
+    assert(markdown.includes(`- Proof SHA-256: \`${proofSha}\``), "REVIVAL.md does not name the downloaded proof's SHA-256");
+    for (const s of spec.revivalSteps)
+      assert(markdown.includes(`${s.order}. **${escapeMarkdown(s.title)}.**`), `REVIVAL.md is missing step ${s.order}`);
+    assert(markdown.includes("## Epitaph timeline"), "REVIVAL.md has no Epitaph timeline");
+    assert(!/[<>]/.test(markdown), "REVIVAL.md contains < or >");
+    await kit.getByRole("button", { name: "Copy issue body" }).click();
+    await page.locator("#kit-copy-status").getByText("Issue body copied.").waitFor({ timeout: 5_000 });
+    const copied = await page.evaluate(() => navigator.clipboard.readText());
+    assert(copied.startsWith("### Revival tracking issue"), "clipboard is not the issue body");
+    assert(markdown.includes(copied), "copied issue body is not the issue section of REVIVAL.md");
+    const boxes = copied.split("\n").filter((line) => line.startsWith("- [ ] ")).length;
+    assert(boxes === spec.revivalSteps.length, `expected ${spec.revivalSteps.length} checkboxes, saw ${boxes}`);
+  } finally {
+    await ctx.close();
+  }
+});
+
+await step("revival kit is refused when displayed data differs from the signed evidence", () =>
+  withPage(browser, {}, async (page) => {
+    const tampered = structuredClone(mocked);
+    tampered.github.meta.description = "Edited after signing.";
+    await page.route("**/api/resurrect", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(tampered) }));
+    await page.goto(base + "/", { waitUntil: "networkidle" });
+    await page.fill("#resource-url", repoUrl);
+    await page.click("form button[type=submit]");
+    const kit = page.locator("section[aria-labelledby='kit-title']");
+    await kit.waitFor({ timeout: 15_000 });
+    let downloads = 0;
+    page.on("download", () => downloads++);
+    await kit.getByRole("button", { name: "Download revival kit" }).click();
+    await page.locator("#kit-download-status").getByText("Revival kit not created: the proof did not verify.").waitFor({ timeout: 10_000 });
+    await kit.getByRole("button", { name: "Copy issue body" }).click();
+    await page.locator("#kit-copy-status").getByText("Issue body not copied: the proof did not verify.").waitFor({ timeout: 10_000 });
+    await page.waitForTimeout(500);
+    assert(downloads === 0, `expected no download, saw ${downloads}`);
   }));
 
 await step("permalink ?url= runs the lookup once, keeps the link, and Copy link announces", async () => {

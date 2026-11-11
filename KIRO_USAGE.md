@@ -304,6 +304,30 @@ Branch `perf/polish-and-share-20261111`, from `4184d6f`. The credit figure for t
 
 **Review follow-up (PR #10):** Cursor Bugbot reported that the demo pages inherited the home Twitter text. Reproduced with a failing test, then found with curl that those pages also had no `og:image` / `twitter:image`, because a page-level `openGraph` or `twitter` object replaces the inherited one. Fixed by setting page Twitter text and listing the share images explicitly. After the fix: `npm test` 263 passed, lint, `tsc`, build, e2e and `demo:verify` passed. Codex and Kilo reported no findings.
 
+## Nov 11, 2026 — Revival kit export (Kiro agent session)
+
+Branch `feat/revival-kit-export-20261111`, from `70d5a7d` (PR #11 tip, which includes the merged PR #7 autopsy). Session `sess_5e434b4f-4aaf-4888-a574-82fb093c9f42`. Evidence: `.kiro/evidence/2026-11-11-revival-kit.json`. The credit figure for this session is recorded by the runner; the agent saw none, so none is claimed here. No MCP server was used. No Devpost submission, video, blog publish, or social post was made.
+
+**Kiro-generated (agent wrote and ran these):**
+- Spec first: `.kiro/specs/revival-kit/` (EARS requirements RK-01 to RK-06, design with five correctness properties, tasks), committed before code as `f52061d`.
+- `src/lib/revival/markdown.ts`: pure, deterministic generator for `REVIVAL.md` (facts, snapshot link, five recent commits, every plan step, autopsy table, Epitaph timeline, tracking issue, proof reference) and the "Revival tracking issue" body. `escapeMarkdown()` entity-escapes `& < >`, backslash-escapes Markdown/GitHub punctuation (links, code, emphasis, pipes, `@mentions`, `#refs`, math) and turns line breaks, controls and bidi characters into spaces.
+- `src/client/kit.ts`: `prepareRevivalKit` runs `verifyProof` first, hashes the exact `exportProof` bytes with the existing `sha256hex`, and never throws. No new hashing scheme, no network.
+- `RevivalKitPanel` ("Download revival kit", "Copy issue body", two polite status regions, trust-limit text), shown only when a result has a plan and GitHub metadata.
+- Tests: unit tests for escaping and each section, fast-check properties (every step present in order with one checkbox each, no `<`/`>` from any user field, escape round trip, deterministic output, issue body embedded verbatim), signed-response refusal tests, static-markup component tests, and two e2e steps (download/copy tied to the proof SHA-256; tampered response refused with no download).
+- A real bug found by the tests: `encodeURIComponent` does not encode `(` `)`, so a snapshot URL with parentheses could end the Markdown link early; now mapped explicitly.
+- Real production-build export of `https://github.com/facebookarchive/flux` through the UI with Playwright, recorded verbatim in `docs/REVIVAL_KIT.md` (HTTP 200 in about 9.0 s, 7 receipts, browser and offline verification passed, proof SHA-256 named in the kit).
+
+**Hooks, observed in this session:** the requirements-coverage agent hook fired after `requirements.md` was saved (before design and tasks existed, so everything was uncovered; re-checked after writing them, no gaps). The keep-tasks-in-sync agent hook fired on `src/` saves; `.kiro/specs/resurrect/tasks.md` had no item completed by this work and was left unchanged. Output of the `npm test` and receipts-property command hooks was not observed, so their execution is not claimed; tests were run directly. Files written through shell commands (the docs page) do not trigger save hooks.
+
+**Checks:** `npm test` 40 files, 606 tests passed; `npm run lint`; `npx next typegen && npx tsc --noEmit`; `npm run build`; `npm run demo:verify` (after 12/12, before 4/12); `npm run e2e` against `npx next start -p 3400`, 14/14 passed, server stopped afterwards. After `git pull --no-rebase origin main` brought in PR #10 (one conflict, in this file; all entries kept, newest last): `npm test` 42 files, 616 tests passed; lint, typegen + tsc, build, `demo:verify` and e2e 14/14 passed again.
+
+**Hand work:** none beyond the prompt.
+
+**Limits:** no axe scan, contrast sampling or screen-reader pass for the new panel. The "Copy issue body" clipboard-failure message is covered by static markup only, not a browser test. The kit is not signed itself; it references the signed proof by hash.
+
+**Review follow-up (PR #12):** Codex P2: Safari can drop the user gesture across the WebCrypto awaits before `writeText`, so Copy issue body could fail on a valid proof. Reproduced with failing tests, then added `copyIssueBody()`: when `ClipboardItem` exists the write starts synchronously in the click with a promise-backed item that resolves only after verification (rejects otherwise); without it, verify then `writeText`. Safari itself was not tested; the fix is checked by unit tests and the Chromium e2e. After the fix: `npm test` 42 files, 620 tests; lint, typegen + tsc, build, `demo:verify` and e2e 14/14 passed.
+
+A second `git pull --no-rebase origin main` brought in PRs #9 and #11 (one conflict in this file, all entries kept). On that merged tree: `npm test` 44 files, 659 tests passed; lint, typegen + tsc, build, `demo:verify` (4/12 before, 12/12 after) and e2e 14/14 passed.
 ## Nov 11, 2026 — Kiro review of the post-9165fa3 code, then verified fixes (Kiro agent session)
 
 Branch `fix/review-findings-20261111`, from main `7c2973f`. The credit figure for this working session is recorded by the runner, not here. No token count or WBM record is claimed. No Devpost submission, video, blog publish, or social post was made.
