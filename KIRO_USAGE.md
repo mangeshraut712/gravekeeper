@@ -175,3 +175,13 @@ Branch `feat/judge-ready-a11y-ci-20261111`, from `c3cfd8e`. No credit figure or 
 **Hand work:** none beyond the prompt.
 
 **Limits:** the "later download succeeds clears the error" path is by code, not a click test (it needs a DOM environment and no new dependency was added). Contrast pixel-sampling was not repeated for the new states. No second Kiro review.
+
+**Correction (added later):** the CLI stream-json metadata for the PR #5 follow-up session above showed **2.2152887970149253 credits** for the whole session (one credit entry, unit credit). The entry above said no figure was available; this is the figure. It is provider-reported credits, not a token count or WBM record.
+
+## Nov 11, 2026 — Real screenshots, README, and leftovers (Kiro agent session)
+
+Branch `feat/judge-ready-a11y-ci-20261111`, from `678a087`. This run exposed no credit figure or token count in its metadata, so none is claimed. No hook or MCP execution was observed or is claimed. No Devpost submission, video, or social post was made.
+
+- Added `scripts/capture-screenshots.mts` and captured five PNGs into `docs/screenshots/` from a local production build with Playwright's Chromium. The results shot uses a mocked `/api/resurrect` response built from synthetic data (`example/abandoned-widget`) and signed with the project's receipt code; it is not a live lookup, and the README says so.
+- README now shows the screenshots with captions. `tasks.md` Task 16 leftovers were trimmed to what is still undone (screen-reader pass, non-Chromium browsers, real upstream failure scan, contrast re-sampling for the newer states).
+- Not done: screen-reader pass, other browsers, live-lookup screenshot.
