@@ -8,6 +8,36 @@ Gravekeeper is a digital-archaeology workbench for public websites and forgotten
 
 A public Hobby deployment is at https://gravekeeper-drab.vercel.app (`GITHUB_TOKEN` and `FORK_API_SECRET` unset). This is a preview host for development and judging, not a contest submission.
 
+- Home / lookup: https://gravekeeper-drab.vercel.app
+- Restoration case: https://gravekeeper-drab.vercel.app/restoration
+- Lantern Hill fixture: https://gravekeeper-drab.vercel.app/lantern-hill
+
+A ~90 second demo walkthrough is in [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md). Accessibility scan results and the keyboard path are in [docs/A11Y_AUDIT.md](docs/A11Y_AUDIT.md) (`npm run a11y`). CI (`.github/workflows/ci.yml`) runs tests, lint, typecheck, and build on every push and pull request.
+
+## Screenshots
+
+Captured at 1440x900 from a local production build (`npm run build`, `next start`) with Playwright's Chromium by `scripts/capture-screenshots.mts`. Regenerate with `BASE_URL=http://localhost:3000 node scripts/capture-screenshots.mts`.
+
+![Home page with the search form](docs/screenshots/home.png)
+
+Home page landing view. The fog is a faint, slow background layer and is subtle in a still image.
+
+![Home page with reduced motion](docs/screenshots/home-reduced-motion.png)
+
+Same page with `prefers-reduced-motion: reduce`; the fog overlay is hidden.
+
+![Lookup results](docs/screenshots/home-lookup.png)
+
+Results view. **This is not a live lookup.** `/api/resurrect` was mocked in the browser with a synthetic repository (`example/abandoned-widget`, invented data). The receipts are real, signed with the project's own receipt code, so the proof verifies, but they describe the synthetic data, not GitHub or the Internet Archive. The band in the background near the top is a full-page capture artifact.
+
+![Licensed restoration case](docs/screenshots/restoration.png)
+
+`/restoration`, the licensed `esrever` restoration case.
+
+![Lantern Hill fixture](docs/screenshots/lantern-hill.png)
+
+`/lantern-hill`, the original 1999-style fixture before and after, with signed HTML receipts.
+
 ## What works
 
 - Live Internet Archive and public GitHub lookups, with partial results when a source is unavailable.
@@ -84,7 +114,7 @@ The verifier checks receipt sequence, predecessor hashes, signatures, evidence d
 
 ## How Kiro was used
 
-See [KIRO_USAGE.md](KIRO_USAGE.md), the committed [.kiro](.kiro) steering/spec/task files, and review metering evidence in [.kiro/evidence](.kiro/evidence). The log distinguishes Kiro-generated work, manual implementation, unsuccessful quota-limited sessions, and Kiro's later read-only review. It does not claim that untested hook or MCP configurations were exercised.
+See [KIRO_USAGE.md](KIRO_USAGE.md), the draft judge write-up in [docs/submission/WRITEUP.md](docs/submission/WRITEUP.md), the committed [.kiro](.kiro) steering/spec/task files, and review metering evidence in [.kiro/evidence](.kiro/evidence). The log distinguishes Kiro-generated work, manual implementation, unsuccessful quota-limited sessions, and Kiro's later read-only review. It does not claim that untested hook or MCP configurations were exercised.
 
 ## License and third-party services
 

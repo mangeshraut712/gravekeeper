@@ -10,7 +10,8 @@
     "test": "vitest run",
     "demo:verify": "node scripts/verify-restoration.mts",
     "demo:kit": "sh scripts/build-restoration-kit.sh",
-    "demo:baseline": "node scripts/verify-restoration.mts --baseline"
+    "demo:baseline": "node scripts/verify-restoration.mts --baseline",
+    "a11y": "node scripts/a11y-audit.mts"
   },
   "dependencies": {
     "next": "16.4.4",
@@ -18,6 +19,7 @@
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^22.15.0",
     "@types/react": "^19",
@@ -26,6 +28,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.4",
     "fast-check": "^4.10.2",
+    "playwright": "1.65.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite": "^8.3.5",
