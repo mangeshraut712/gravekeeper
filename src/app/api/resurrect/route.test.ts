@@ -84,6 +84,10 @@ function githubCommitsOk() {
   };
 }
 
+function notFound() {
+  return new Response("Not Found", { status: 404 });
+}
+
 /** Import raw public key bytes from base64url for verifyChain. */
 async function importPublicKey(b64url: string): Promise<CryptoKey> {
   const b64 = b64url
@@ -198,6 +202,7 @@ describe("POST /api/resurrect", () => {
     const fetchMock = vi.fn().mockImplementation(async (req: string | URL) => {
       const href = String(req);
       if (href.includes("archive.org")) return waybackOk(url);
+      if (href.includes("/contents/")) return notFound();
       if (href.includes("/commits")) return githubCommitsOk();
       if (href.includes("/repos/")) return githubMetaOk();
       throw new Error(`unexpected fetch: ${href}`);
@@ -211,11 +216,14 @@ describe("POST /api/resurrect", () => {
     expect(body.spec?.revivalSteps.length).toBeGreaterThanOrEqual(3);
     expect(body.evidence).toHaveLength(body.receipts.length);
     expect(body.evidence[1].body).toEqual(body.github.meta);
-    expect(body.evidence[3].body).toEqual(body.spec);
+    expect(body.evidence[3].body).toEqual({ code: "MANIFEST_NOT_FOUND" });
+    expect(body.evidence[4].body).toEqual(body.spec);
+    expect(body.autopsy.state).toBe("no-manifest");
     expect(body.receipts.map((r: { kind: string }) => r.kind)).toEqual([
       "wayback",
       "github-meta",
       "github-commits",
+      "github-manifest",
       "spec",
     ]);
 
@@ -237,6 +245,7 @@ describe("POST /api/resurrect", () => {
             vi.fn().mockImplementation(async (req: string | URL) => {
               const href = String(req);
               if (href.includes("archive.org")) return waybackOk(url);
+              if (href.includes("/contents/")) return notFound();
               if (href.includes("/commits")) return githubCommitsOk();
               if (href.includes("/repos/")) {
                 const base = await githubMetaOk();
@@ -262,10 +271,175 @@ describe("POST /api/resurrect", () => {
           const verified = await verifyChain(body.receipts, pk);
           expect(verified.valid).toBe(true);
           expect(await verifyProof(body)).toBe(true);
-          expect(body.receipts.length).toBeGreaterThanOrEqual(4);
+          expect(body.receipts.length).toBeGreaterThanOrEqual(5);
         },
       ),
       { numRuns: 15 },
     );
+  });
+
+  describe("dependency autopsy", () => {
+    const repoUrl = "https://github.com/ghost/gravekeeper";
+
+    function routeFetch(handlers: {
+      manifest?: Record<string, string>;
+      registry?: (href: string, init?: RequestInit) => Promise<Response> | Response;
+    }) {
+      return vi.fn().mockImplementation(async (req: string | URL, init?: RequestInit) => {
+        const href = String(req);
+        if (href.includes("archive.org")) return waybackMiss(repoUrl);
+        if (href.includes("/contents/")) {
+          const file = href.split("/contents/")[1].split("?")[0];
+          const text = handlers.manifest?.[file];
+          return text === undefined ? notFound() : new Response(text, { status: 200 });
+        }
+        if (href.includes("/commits")) return githubCommitsOk();
+        if (href.includes("api.github.com/repos/")) return githubMetaOk();
+        if (href.includes("registry.npmjs.org") || href.includes("pypi.org"))
+          return handlers.registry!(href, init);
+        throw new Error(`unexpected fetch: ${href}`);
+      });
+    }
+
+    it("reads package.json, looks up npm and binds the autopsy into the proof", async () => {
+      const latest: Record<string, string> = { react: "19.2.0", lodash: "4.17.21", "@types/node": "22.0.0" };
+      const fetchMock = routeFetch({
+        manifest: {
+          "package.json": JSON.stringify({
+            dependencies: { react: "^16.14.0", lodash: "^4.17.0" },
+            devDependencies: { "@types/node": "^22.0.0", "ghost-pkg": "^1.0.0", local: "file:../x" },
+          }),
+        },
+        registry: (href) => {
+          const name = decodeURIComponent(href.split("registry.npmjs.org/")[1].replace("/latest", ""));
+          return latest[name]
+            ? new Response(JSON.stringify({ version: latest[name] }), { status: 200 })
+            : notFound();
+        },
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      const body = await (await POST(jsonRequest({ url: repoUrl }))).json();
+      expect(body.receipts.map((r: { kind: string }) => r.kind)).toEqual([
+        "wayback-miss",
+        "github-meta",
+        "github-commits",
+        "github-manifest",
+        "registry",
+        "spec",
+      ]);
+      expect(body.receipts[3].url).toBe(
+        "https://api.github.com/repos/ghost/gravekeeper/contents/package.json?ref=main",
+      );
+      expect(body.receipts[4].url).toBe("https://registry.npmjs.org/");
+      expect(body.autopsy.state).toBe("complete");
+      expect(body.autopsy.counts).toEqual({
+        current: 1,
+        "minor-behind": 1,
+        "major-behind": 1,
+        unknown: 1,
+        "not-found": 1,
+      });
+      expect(body.spec.revivalSteps.map((s: { title: string }) => s.title)).toContain(
+        "Upgrade react ^16.14.0 → 19.x (major behind)",
+      );
+      expect(body.spec.detectedFramework).toBe("React");
+      expect(fetchMock.mock.calls.some(([u]) => String(u).includes("/local/"))).toBe(false);
+      expect(await verifyProof(body, repoUrl)).toBe(true);
+      body.autopsy.dependencies[0].status = "current";
+      expect(await verifyProof(body, repoUrl)).toBe(false);
+    });
+
+    it("falls back to requirements.txt and PyPI", async () => {
+      vi.stubGlobal(
+        "fetch",
+        routeFetch({
+          manifest: { "requirements.txt": "Django==2.2.0\nrequests>=2.31\n-r dev.txt\n" },
+          registry: (href) =>
+            new Response(
+              JSON.stringify({ info: { version: href.includes("/django/") ? "5.1.4" : "2.32.3" } }),
+              { status: 200 },
+            ),
+        }),
+      );
+      const body = await (await POST(jsonRequest({ url: repoUrl }))).json();
+      expect(body.autopsy.manifest).toMatchObject({ path: "requirements.txt", ecosystem: "pypi", skippedLines: 1 });
+      expect(body.autopsy.dependencies.map((d: { status: string }) => d.status)).toEqual([
+        "major-behind",
+        "minor-behind",
+      ]);
+      expect(await verifyProof(body, repoUrl)).toBe(true);
+    });
+
+    it("labels a registry outage as partial and keeps a verifiable proof", async () => {
+      vi.stubGlobal(
+        "fetch",
+        routeFetch({
+          manifest: { "package.json": JSON.stringify({ dependencies: { react: "^16.0.0" } }) },
+          registry: () => new Response("", { status: 503 }),
+        }),
+      );
+      const res = await POST(jsonRequest({ url: repoUrl }));
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.autopsy.state).toBe("partial");
+      expect(body.autopsy.dependencies[0]).toMatchObject({ status: "unknown", note: "Registry lookup failed." });
+      expect(JSON.stringify(body.spec.revivalSteps)).toMatch(/partial/);
+      expect(await verifyProof(body, repoUrl)).toBe(true);
+    });
+
+    it("records an unreadable manifest and keeps the metadata-only plan", async () => {
+      vi.stubGlobal("fetch", routeFetch({ manifest: { "package.json": "{not json" } }));
+      const body = await (await POST(jsonRequest({ url: repoUrl }))).json();
+      expect(body.evidence[3].body).toEqual({ code: "PARSE_ERROR" });
+      expect(body.autopsy.state).toBe("unavailable");
+      expect(body.receipts.map((r: { kind: string }) => r.kind)).not.toContain("registry");
+      expect(body.spec.revivalSteps.map((s: { title: string }) => s.title)).toContain(
+        "Audit and update dependencies (metadata only)",
+      );
+      expect(await verifyProof(body, repoUrl)).toBe(true);
+    });
+
+    it("keeps a verifiable proof when a spec exceeds the evidence limit", async () => {
+      const longRange = Array.from({ length: 40 }, (_, i) => `^${i}.0.0`).join(" || ");
+      vi.stubGlobal(
+        "fetch",
+        routeFetch({
+          manifest: {
+            "package.json": JSON.stringify({ dependencies: { react: ">=15.0.0 >=16.0.0", huge: longRange } }),
+          },
+          registry: () => new Response(JSON.stringify({ version: "16.2.0" }), { status: 200 }),
+        }),
+      );
+      const body = await (await POST(jsonRequest({ url: repoUrl }))).json();
+      expect(body.autopsy).not.toBeNull();
+      expect(body.autopsy.manifest.skippedLines).toBe(1);
+      expect(body.autopsy.dependencies).toMatchObject([{ name: "react", floor: "16.0.0", status: "minor-behind" }]);
+      expect(await verifyProof(body, repoUrl)).toBe(true);
+    });
+
+    it("returns 499 when canceled during registry lookups", async () => {
+      const controller = new AbortController();
+      const request = new NextRequest("http://localhost/api/resurrect", {
+        method: "POST",
+        body: JSON.stringify({ url: repoUrl }),
+        signal: controller.signal,
+      });
+      let registryCalls = 0;
+      vi.stubGlobal(
+        "fetch",
+        routeFetch({
+          manifest: {
+            "package.json": JSON.stringify({ dependencies: { a: "1", b: "1", c: "1", d: "1", e: "1", f: "1" } }),
+          },
+          registry: () => {
+            registryCalls++;
+            controller.abort();
+            return new Response(JSON.stringify({ version: "1.0.0" }), { status: 200 });
+          },
+        }),
+      );
+      expect((await POST(request)).status).toBe(499);
+      expect(registryCalls).toBeLessThanOrEqual(4);
+    });
   });
 });

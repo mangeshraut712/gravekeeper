@@ -1,5 +1,10 @@
 import type { ResurrectResponse } from "@/types";
 import { sha256hex, verifyChain } from "../lib/receipts/chain.ts";
+import {
+  buildAutopsy,
+  isFailureBody,
+  isManifestEvidence,
+} from "../lib/deps/autopsy.ts";
 
 /** Crypto-only code is browser-safe and does not include a GitHub client or token. */
 export async function verifyProof(
@@ -27,12 +32,10 @@ export async function verifyProof(
     if (!(await verifyChain(result.receipts, key)).valid) return false;
     const same = (a: unknown, b: unknown) =>
       JSON.stringify(a) === JSON.stringify(b);
-    const isFailure = (body: unknown) =>
-      typeof body === "object" &&
-      body !== null &&
-      Object.keys(body).length === 1 &&
-      typeof (body as { code?: unknown }).code === "string";
+    const isFailure = isFailureBody;
     const seen = new Set<string>();
+    let manifestBody: unknown;
+    let registryBody: unknown = null;
     for (const [index, receipt] of result.receipts.entries()) {
       const evidence = result.evidence[index];
       if (evidence.receiptSeq !== index || seen.has(receipt.kind)) return false;
@@ -72,6 +75,19 @@ export async function verifyProof(
         case "spec":
           if (!result.spec || !same(result.spec, evidence.body)) return false;
           break;
+        case "github-manifest":
+          if (
+            !result.github ||
+            (!isManifestEvidence(evidence.body) && !isFailure(evidence.body))
+          )
+            return false;
+          manifestBody = evidence.body;
+          break;
+        case "registry":
+          // Registry lookups only follow a manifest that was read successfully.
+          if (!isManifestEvidence(manifestBody)) return false;
+          registryBody = evidence.body;
+          break;
         default:
           return false;
       }
@@ -84,6 +100,13 @@ export async function verifyProof(
     )
       return false;
     if (result.spec && !seen.has("spec")) return false;
+    // The displayed autopsy must be exactly what the signed evidence derives.
+    if (seen.has("github-manifest")) {
+      const derived = buildAutopsy(manifestBody, registryBody);
+      if (!derived || !same(derived, result.autopsy)) return false;
+    } else if (result.autopsy !== undefined && result.autopsy !== null) {
+      return false;
+    }
     return true;
   } catch {
     return false;
