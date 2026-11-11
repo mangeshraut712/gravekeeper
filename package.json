@@ -11,7 +11,8 @@
     "demo:verify": "node scripts/verify-restoration.mts",
     "demo:kit": "sh scripts/build-restoration-kit.sh",
     "demo:baseline": "node scripts/verify-restoration.mts --baseline",
-    "a11y": "node scripts/a11y-audit.mts"
+    "a11y": "node scripts/a11y-audit.mts",
+    "e2e": "node scripts/e2e-smoke.mts"
   },
   "dependencies": {
     "next": "16.4.4",
