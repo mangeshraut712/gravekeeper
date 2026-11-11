@@ -37,7 +37,22 @@ jobs:
           node-version: lts/*
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - name: Install Chromium (retry apt/DNS flakes, then fall back)
+        run: |
+          # GitHub-hosted apt mirrors sometimes fail to resolve (exit 100).
+          # Retry --with-deps twice; if the system packages still cannot be fetched,
+          # install the browser alone (the runner image ships the usual libs).
+          # A failure of the browser download itself is not hidden: the last
+          # command has no fallback and fails the job.
+          # Each attempt is capped: with DNS down, apt alone retries for many
+          # minutes per run and would consume the whole job timeout.
+          for attempt in 1 2; do
+            timeout 150 npx playwright install --with-deps chromium && exit 0
+            echo "playwright install --with-deps failed or timed out (attempt $attempt)"
+            sleep $((attempt * 10))
+          done
+          echo "falling back to browser-only install"
+          npx playwright install chromium
       - run: npm run build
       - name: Start production server
         run: |

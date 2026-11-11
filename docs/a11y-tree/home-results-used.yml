@@ -1,0 +1,317 @@
+- link "Skip to lookup":
+  - /url: "#lookup"
+- banner:
+  - link "Gravekeeper":
+    - /url: /
+  - navigation "Main navigation":
+    - link "How it works":
+      - /url: "#how-it-works"
+    - link "Source code ↗":
+      - /url: https://github.com/mangeshraut712/gravekeeper
+- main:
+  - paragraph: Digital archaeology for the living web
+  - heading "Good code deserves a second life." [level=1]:
+    - text: Good code deserves
+    - emphasis: a second life.
+  - paragraph: Unearth forgotten websites and abandoned repositories. Recover their history, make a revival plan, and keep a verifiable trail of what you found.
+  - link "Try a real restoration":
+    - /url: /restoration
+  - link "Restore a 1999-style page":
+    - /url: /lantern-hill
+  - region "What shall we bring back?":
+    - heading "What shall we bring back?" [level=2]
+    - text: One URL. A new beginning. Repository or website URL
+    - textbox "Repository or website URL":
+      - /placeholder: https://github.com/owner/forgotten-project
+      - text: https://github.com/example/abandoned-widget
+    - button "Unearth project"
+    - status
+    - paragraph: Public URLs only. Your URL is sent to the Internet Archive and, for GitHub repositories, GitHub. Do not enter private links or secrets. No account needed.
+    - text: Need a starting point?
+    - button "atom/atom"
+    - button "facebookarchive/flux"
+  - region "The excavation":
+    - heading "The excavation" [level=2]
+    - text: Lookup complete
+    - button "Copy link"
+    - status
+    - region "example/abandoned-widget":
+      - paragraph: Archived, not forgotten
+      - heading "example/abandoned-widget" [level=3]
+      - paragraph: Synthetic example repository used by the polish check.
+      - text: R.I.P.
+      - term: Last push
+      - definition: Mar 2, 2019
+      - term: Archive snapshot
+      - definition: Apr 12, 2019
+      - term: Stars
+      - definition: 1,280
+      - term: Open issues / PRs
+      - definition: "42"
+      - term: License
+      - definition: MIT
+      - link "Open archived snapshot":
+        - /url: https://web.archive.org/web/20190412093000/https://github.com/example/abandoned-widget
+      - link "View repository":
+        - /url: https://github.com/example/abandoned-widget
+      - link "Fork on GitHub":
+        - /url: https://github.com/example/abandoned-widget/fork
+      - paragraph: Archived pages may contain outdated or unsafe content. Forking opens GitHub, where you review and confirm with your own account.
+    - region "Epitaph":
+      - heading "Epitaph" [level=3]
+      - text: Internet Archive capture index
+      - paragraph: When the Internet Archive first and last captured this exact URL, and how many months of each year have at least one capture.
+      - term: Born
+      - definition: Jun 22, 2014
+      - term: Last seen
+      - definition: Apr 2019
+      - term: Years on record
+      - definition: 6 (5 with captures)
+      - term: Captured months
+      - definition: "6"
+      - 'figure "Captured months per year from 2014 to 2019. Busiest year: 2014 with 2 of 12 months. Tall bars are busy years; short grey ticks are years with no captures."'
+      - group:
+        - text: Show captures per year as a table
+        - table "Captured months per year":
+          - caption: Captured months per year
+          - rowgroup:
+            - row "Year Months with a capture":
+              - columnheader "Year"
+              - columnheader "Months with a capture"
+          - rowgroup:
+            - row "2014 2":
+              - rowheader "2014"
+              - cell "2"
+            - row "2015 1":
+              - rowheader "2015"
+              - cell "1"
+            - row "2016 1":
+              - rowheader "2016"
+              - cell "1"
+            - row "2017 0":
+              - rowheader "2017"
+              - cell "0"
+            - row "2018 1":
+              - rowheader "2018"
+              - cell "1"
+            - row "2019 1":
+              - rowheader "2019"
+              - cell "1"
+      - paragraph: Months are UTC; “last seen” is the latest month with a capture. The signed receipt shows this is what Gravekeeper received from the Archive, not that the Archive's index is complete or correct.
+    - region "Dependency autopsy":
+      - heading "Dependency autopsy" [level=3]
+      - text: package.json · npm
+      - paragraph: "Compares the lowest version each dependency declares with the latest release on the public registry. It reads declared versions only: no lockfile, no install, and it is not a vulnerability scan."
+      - term: Major behind
+      - definition: "1"
+      - term: Minor behind
+      - definition: "1"
+      - term: Current
+      - definition: "1"
+      - term: Unknown
+      - definition: "1"
+      - term: Not found
+      - definition: "1"
+      - region "Declared dependencies, latest registry version and status":
+        - table "Declared dependencies, latest registry version and status":
+          - caption: Declared dependencies, latest registry version and status
+          - rowgroup:
+            - row "Package Declared Latest Status":
+              - columnheader "Package"
+              - columnheader "Declared"
+              - columnheader "Latest"
+              - columnheader "Status"
+          - rowgroup:
+            - row "react ^16.14.0 19.2.0 Major behind":
+              - rowheader "react"
+              - cell "^16.14.0"
+              - cell "19.2.0"
+              - cell "Major behind"
+            - row "lodash ^4.17.0 4.17.21 Minor behind":
+              - rowheader "lodash"
+              - cell "^4.17.0"
+              - cell "4.17.21"
+              - cell "Minor behind"
+            - row "left-pad 1.3.0 1.3.0 Current":
+              - rowheader "left-pad"
+              - cell "1.3.0"
+              - cell "1.3.0"
+              - cell "Current"
+            - row "ghost-pkgdev ^1.0.0 — Not found Not found on the registry.":
+              - rowheader "ghost-pkgdev"
+              - cell "^1.0.0"
+              - cell "—"
+              - cell "Not found Not found on the registry.":
+                - text: Not found
+                - paragraph: Not found on the registry.
+            - row "jestdev * 30.0.0 Unknown Declared spec has no lower bound.":
+              - rowheader "jestdev"
+              - cell "*"
+              - cell "30.0.0"
+              - cell "Unknown Declared spec has no lower bound.":
+                - text: Unknown
+                - paragraph: Declared spec has no lower bound.
+    - region "A path back to life":
+      - heading "A path back to life" [level=3]
+      - text: 8 next steps
+      - paragraph: Metadata and declared-dependency plan · no source code or vulnerability audit
+      - group:
+        - text: Detected stack 1
+        - list:
+          - listitem: JavaScript
+        - paragraph: "Framework: React"
+      - group:
+        - text: Maintenance flags 4
+        - list:
+          - listitem: "archived example/abandoned-widget: This repository has been archived by its owner. Consider forking it to continue development."
+          - listitem: "outdated react: Latest 19.2.0 (major behind)"
+          - listitem: "outdated lodash: Latest 4.17.21 (minor behind)"
+          - listitem: "unknown ghost-pkg: Not found on the registry."
+      - group:
+        - text: Revival steps 8
+        - list:
+          - listitem:
+            - text: "01"
+            - heading "Fork and clone the repository" [level=4]
+            - paragraph: Fork example/abandoned-widget to your GitHub account and clone it locally. Create a new branch (e.g. "revival") to track your changes.
+          - listitem:
+            - text: "02"
+            - heading "Update the README" [level=4]
+            - paragraph: Replace or supplement the existing README with a revival notice. Document the original purpose, the revival date, and your plans for the project. Add badges for build status and license.
+          - listitem:
+            - text: "03"
+            - heading "Upgrade react ^16.14.0 → 19.x (major behind)" [level=4]
+            - paragraph: package.json declares react ^16.14.0; the registry's latest is 19.2.0. Read the changelog for breaking changes between 16.x and 19.x, upgrade on a branch, and run the tests.
+          - listitem:
+            - text: "04"
+            - heading "Update 1 minor-behind package" [level=4]
+            - paragraph: "Same major line, older floor: lodash ^4.17.0 → 4.17.21. These are usually low-risk; raise the declared floor and refresh the lockfile."
+          - listitem:
+            - text: "05"
+            - heading "Review 2 packages Gravekeeper could not compare" [level=4]
+            - paragraph: "Check these by hand: ghost-pkg (not on the registry), jest (Declared spec has no lower bound.)."
+          - listitem:
+            - text: "06"
+            - heading "Set up continuous integration" [level=4]
+            - paragraph: "Add or restore a CI workflow (GitHub Actions, CircleCI, etc.) that runs tests on every push. A minimal `.github/workflows/ci.yml` that installs dependencies and runs the test suite is sufficient to start."
+          - listitem:
+            - text: "07"
+            - heading "Triage the 42 open issues" [level=4]
+            - paragraph: Review open issues to identify quick wins, stale reports, and blockers. Close duplicates and issues that are no longer relevant. Label the rest by severity so new contributors can orient quickly.
+          - listitem:
+            - text: "08"
+            - heading "Communicate revival intent" [level=4]
+            - paragraph: The last commit was approximately 93 months ago. Post a brief "revival notice" in the project's issue tracker and (if applicable) package registry listing. Mention the transfer/fork so existing users know where to find updates.
+    - region "Leave a paper trail":
+      - heading "Leave a paper trail" [level=3]
+      - text: Ed25519 + SHA-256
+      - paragraph: 7 linked receipts record this lookup. Verify their signatures in your browser, then keep an export for later.
+      - button "Verify proof"
+      - button "Download proof"
+      - status: "Proof internally consistent: signatures, links, and included data match."
+      - status
+      - group:
+        - text: 01 wayback be0bd5fcecca…
+        - term: Resource
+        - definition: https://github.com/example/abandoned-widget
+        - term: Recorded at
+        - definition: 2026-11-11T14:38:26.797Z
+        - term: Receipt hash
+        - definition: be0bd5fceccab7385afb664e40c24e0737248c538dfaccc9fca27cf88b357212
+        - term: Content digest
+        - definition: 6139ca3481228ae80776644be106f45f15fc1a9575df58863eb605311e03da2e
+      - group:
+        - text: 02 wayback-cdx 5354255d62d3…
+        - term: Resource
+        - definition: https://web.archive.org/cdx/search/cdx?url=https%3A%2F%2Fgithub.com%2Fexample%2Fabandoned-widget&output=json&fl=timestamp,statuscode&collapse=timestamp:6&limit=1200&matchType=exact
+        - term: Recorded at
+        - definition: 2026-11-11T14:38:26.797Z
+        - term: Receipt hash
+        - definition: 5354255d62d3a3c33178d46376509aa5cf0f6bf67f0ca805b2e6a693bfc48f44
+        - term: Content digest
+        - definition: 26a18af27dbfe2625186a1764c476cf106d84e1d7d1fa855d197a590477dee21
+      - group:
+        - text: 03 github-meta 216abeb2b5af…
+        - term: Resource
+        - definition: https://api.github.com/repos/example/abandoned-widget
+        - term: Recorded at
+        - definition: 2026-11-11T14:38:26.797Z
+        - term: Receipt hash
+        - definition: 216abeb2b5af9581e241c03af1f4768762d0ddedc9b59e7377a7abb72206d4d1
+        - term: Content digest
+        - definition: b0eb562b3fb77d6fbac70c3683a682d2364edc323258ece35cfd6256c53c797b
+      - group:
+        - text: 04 github-commits 7804ce4fc662…
+        - term: Resource
+        - definition: https://api.github.com/repos/example/abandoned-widget/commits?per_page=20
+        - term: Recorded at
+        - definition: 2026-11-11T14:38:26.798Z
+        - term: Receipt hash
+        - definition: 7804ce4fc6621047e54ef0635ac2ef72614a91b1f54b37be4a0867222f79652d
+        - term: Content digest
+        - definition: a8e6d1d0639d39fc3165354d4a11510bc48ab7e7fe12160eca9439ce7cb1dc69
+      - group:
+        - text: 05 github-manifest 5c21973a46d9…
+        - term: Resource
+        - definition: https://api.github.com/repos/example/abandoned-widget/contents/package.json?ref=main
+        - term: Recorded at
+        - definition: 2026-11-11T14:38:26.798Z
+        - term: Receipt hash
+        - definition: 5c21973a46d993de28891eea1cf4d0b46fda8c0d9c8b17188ccfa05b8e09281e
+        - term: Content digest
+        - definition: b797680c69404246d5249f154f9c4ebfa2e06ccd768d03ee385b610804d5c443
+      - group:
+        - text: 06 registry dae75bad02c4…
+        - term: Resource
+        - definition: https://registry.npmjs.org/
+        - term: Recorded at
+        - definition: 2026-11-11T14:38:26.798Z
+        - term: Receipt hash
+        - definition: dae75bad02c41958807968ab6f3df276c00929007490cebdfbe2badc51bb85bf
+        - term: Content digest
+        - definition: 176a68bb0ee539f9140e4b5e3136dd94278f9b24a80344cc79dae9df05c9ec2e
+      - group:
+        - text: 07 spec 6728f97c9d4a…
+        - term: Resource
+        - definition: https://github.com/example/abandoned-widget
+        - term: Recorded at
+        - definition: 2026-11-11T14:38:26.798Z
+        - term: Receipt hash
+        - definition: 6728f97c9d4a2ea326a63661168cdee292bbcc210ad81ad5731400ec5c3aa416
+        - term: Content digest
+        - definition: f418a1fc828d94f46a246a25d6b862e5f912832d66a71a4d2a4cfbd1f81a75d4
+      - paragraph: Integrity, not proof of authorship or source truth. Each lookup uses a fresh signing key included in the export. An exported chain cannot authenticate GitHub or the Internet Archive, or prove that later receipts were not removed.
+    - region "Take the plan home":
+      - heading "Take the plan home" [level=3]
+      - text: Revival kit
+      - paragraph: REVIVAL.md collects the repository facts, archive snapshot, revival steps, dependency autopsy and Epitaph timeline, plus a ready-to-paste “Re …[264 more characters truncated]
+      - button "Download revival kit"
+      - button "Copy issue body"
+      - status: REVIVAL.md downloaded. Proof SHA-256 759682750171…
+      - status: Issue body copied.
+  - region "From forgotten to found":
+    - heading "From forgotten to found" [level=2]
+    - article:
+      - text: 01 /
+      - heading "Unearth the evidence" [level=3]
+      - paragraph: Look for an archived snapshot and read public repository metadata and recent commit history.
+    - article:
+      - text: 02 /
+      - heading "Find a way forward" [level=3]
+      - paragraph: Get a checklist from repository metadata and the versions declared in the root manifest. It is not a security audit; review licenses and vulnerabilities yourself.
+    - article:
+      - text: 03 /
+      - heading "Keep the receipts" [level=3]
+      - paragraph: Download signed, linked records you can verify offline. Evidence of integrity, not proof of authorship.
+- paragraph: Gravekeeper · Built for Kiroween 2026 Open source. No ghosts in the fine print.
+- contentinfo:
+  - navigation "Site":
+    - link "Home":
+      - /url: /
+    - link "Restoration":
+      - /url: /restoration
+    - link "Lantern Hill":
+      - /url: /lantern-hill
+    - link "Check a proof":
+      - /url: /proof
+- alert

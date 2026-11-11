@@ -1,0 +1,28 @@
+- main:
+  - heading "Check a proof file" [level=1]
+  - paragraph:
+    - text: Open a
+    - code: gravekeeper-proof.json
+    - text: or a Lantern Hill receipt file. The check runs in this browser tab. The file is never uploaded.
+  - list:
+    - listitem: "Valid means the file is consistent with itself: signatures, hash links and payload digests agree."
+    - listitem: It does not prove who made the file, or that GitHub or the Internet Archive said what the file records.
+    - listitem: The public key is inside the file. Someone who replaces the whole file and key, or cuts off the end of a valid chain, cannot be detected without a trusted copy kept elsewhere.
+  - text: Choose a proof file or drop it here (JSON, up to 5 MB)
+  - button "Choose a proof file or drop it here (JSON, up to 5 MB)"
+  - text: Or paste proof JSON
+  - textbox "Or paste proof JSON"
+  - button "Verify pasted text"
+  - status
+  - paragraph: No proof checked yet. Nothing here is verified until you choose a file or paste one.
+- contentinfo:
+  - navigation "Site":
+    - link "Home":
+      - /url: /
+    - link "Restoration":
+      - /url: /restoration
+    - link "Lantern Hill":
+      - /url: /lantern-hill
+    - link "Check a proof":
+      - /url: /proof
+- alert
