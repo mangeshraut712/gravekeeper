@@ -3,25 +3,25 @@
 // `gh pr create`, run the release checks first; a non-zero exit blocks the tool call.
 // Any other shell command passes through immediately.
 import { spawnSync } from "node:child_process";
-import { isReleaseCommand } from "./release-gate-match.mjs";
+import { commandFromEvent, isReleaseCommand } from "./release-gate-match.mjs";
 
 let raw = "";
 for await (const chunk of process.stdin) raw += chunk;
 
-let command = "";
-try {
-  const event = JSON.parse(raw || "{}");
-  const input = event.tool_input ?? {};
-  command = typeof input.command === "string" ? input.command : "";
-} catch {
-  process.exit(0); // Not a shell event we understand; do not block.
-}
-
-if (!isReleaseCommand(command)) process.exit(0);
+// An event we cannot parse runs the checks (fail closed) instead of passing silently.
+const parsed = commandFromEvent(raw);
+const command = parsed ?? "(unparseable hook event)";
+if (parsed !== null && !isReleaseCommand(parsed)) process.exit(0);
 
 const checks = ["npm test", "npm run lint", "npm run demo:verify"];
+const CHECK_TIMEOUT_MS = 10 * 60 * 1000;
 for (const check of checks) {
-  const run = spawnSync(check, { shell: true, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" });
+  const run = spawnSync(check, {
+    shell: true,
+    stdio: ["ignore", "pipe", "pipe"],
+    encoding: "utf8",
+    timeout: CHECK_TIMEOUT_MS,
+  });
   if (run.status !== 0) {
     process.stderr.write(
       `pre-release gate: \`${check}\` failed (exit ${run.status}); blocking \`${command.split("\n")[0]}\`.\n` +

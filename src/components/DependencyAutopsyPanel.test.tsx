@@ -66,7 +66,14 @@ describe("DependencyAutopsyPanel", () => {
   });
 
   it("makes the scrolling table keyboard focusable", () => {
-    expect(html).toMatch(/<div role="region" aria-labelledby="autopsy-title" tabindex="0"/);
+    expect(html).toMatch(/<div role="region" aria-labelledby="autopsy-table-caption" tabindex="0"/);
+  });
+
+  // Regression for the 2026-11-11 Kiro review: the scroller used to share the
+  // section's accessible name, giving two regions with the same label.
+  it("names the scrolling region by the table caption, not the section heading", () => {
+    expect(html).toMatch(/<caption id="autopsy-table-caption"/);
+    expect(html.match(/aria-labelledby="autopsy-title"/g)).toHaveLength(1);
   });
 
   it("labels partial, truncated and skipped results", () => {

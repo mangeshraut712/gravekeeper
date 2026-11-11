@@ -6,7 +6,7 @@
 // the project's own receipt code, the same approach as scripts/capture-screenshots.mts.
 // It checks the UI and the proof round trip, not live GitHub or Wayback behaviour.
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium } from "playwright";
@@ -147,6 +147,36 @@ await step("invalid URL shows the inline error without a network call", () =>
   }));
 
 let downloaded = "";
+// Regressions for the 2026-11-11 Kiro review (SearchForm findings 4, 6 and 7).
+await step("non-JSON error page shows a plain message and does not mark the URL invalid", () =>
+  withPage(browser, {}, async (page) => {
+    await page.route("**/api/resurrect", (route) =>
+      route.fulfill({ status: 504, contentType: "text/html", body: "<!DOCTYPE html><title>Gateway Timeout</title>" }));
+    await page.goto(base + "/", { waitUntil: "networkidle" });
+    await page.fill("#resource-url", repoUrl);
+    await page.click("form button[type=submit]");
+    await page.locator("#lookup-error").getByText("The lookup failed. Please try again.").waitFor({ timeout: 10_000 });
+    const text = (await page.locator("#lookup-error").textContent()) ?? "";
+    assert(!/JSON|Unexpected token/.test(text), `raw parser error shown: ${text}`);
+    assert((await page.locator("#resource-url").getAttribute("aria-invalid")) === "false", "aria-invalid set for a server error");
+  }));
+
+await step("keyboard focus moves to Cancel while loading and back to the URL field after Escape", () =>
+  withPage(browser, {}, async (page) => {
+    await page.route("**/api/resurrect", () => new Promise(() => {})); // never completes
+    await page.goto(base + "/", { waitUntil: "networkidle" });
+    await page.fill("#resource-url", repoUrl);
+    await page.focus("#resource-url");
+    await page.keyboard.press("Enter");
+    const cancel = page.getByRole("button", { name: "Cancel" });
+    await cancel.waitFor({ timeout: 10_000 });
+    await page.waitForFunction(() => document.activeElement?.textContent === "Cancel", null, { timeout: 5_000 });
+    await page.keyboard.press("Escape");
+    await page.locator("#lookup-error").getByText("Lookup canceled").waitFor({ timeout: 5_000 });
+    await page.waitForFunction(() => document.activeElement?.id === "resource-url", null, { timeout: 5_000 });
+    assert((await page.locator("#resource-url").getAttribute("aria-invalid")) === "false", "aria-invalid set after cancel");
+  }));
+
 await step("lookup renders tombstone, revival steps and proof; Verify and Download proof work", () =>
   withPage(browser, {}, async (page) => {
     await page.route("**/api/resurrect", (route) =>
@@ -155,6 +185,7 @@ await step("lookup renders tombstone, revival steps and proof; Verify and Downlo
     await page.fill("#resource-url", repoUrl);
     await page.click("form button[type=submit]");
     await page.locator("#resource-title").getByText("example/abandoned-widget").waitFor({ timeout: 15_000 });
+    await page.waitForFunction(() => document.activeElement?.id === "results-title", null, { timeout: 5_000 });
     await page.getByText("R.I.P.", { exact: true }).last().waitFor();
     const plan = page.locator("section[aria-labelledby='plan-title']");
     await plan.getByText("Revival steps").waitFor();
@@ -365,6 +396,7 @@ await step("/lantern-hill: Verify HTML receipts reports valid", () =>
   }));
 
 await browser.close();
+await rm(work, { recursive: true, force: true });
 if (failures.length) {
   console.error(`\nRESULT: ${failures.length} e2e check(s) failed:\n- ${failures.join("\n- ")}`);
   process.exit(1);

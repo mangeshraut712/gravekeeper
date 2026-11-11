@@ -397,6 +397,38 @@ export function contentsUrl(owner: string, repo: string): string {
 }
 
 /**
+ * Read at most `limit` bytes of a response body. Returns null (and cancels the
+ * stream) as soon as the body passes the limit, so a body without a usable
+ * content-length is never buffered in full. Throws only what the stream throws.
+ */
+async function readCapped(response: Response, limit: number): Promise<Uint8Array | null> {
+  if (!response.body) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    return bytes.byteLength > limit ? null : bytes;
+  }
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > limit) {
+      await reader.cancel().catch(() => undefined);
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+}
+
+/**
  * Read the first root manifest found on the default branch, in the order
  * package.json, requirements.txt, pyproject.toml, via the raw contents API.
  */
@@ -436,14 +468,14 @@ export async function fetchRootManifest(
     const declared = Number(response.headers?.get("content-length") ?? 0);
     if (declared > MAX_MANIFEST_BYTES)
       return { ok: false, error: `${path} is larger than 512 KiB.`, code: "PARSE_ERROR" };
-    let bytes: Uint8Array;
+    let bytes: Uint8Array | null;
     try {
-      bytes = new Uint8Array(await response.arrayBuffer());
+      bytes = await readCapped(response, MAX_MANIFEST_BYTES);
     } catch (err) {
       if (err instanceof DOMException) return fetchError(err) as Result<RootManifest>;
       return { ok: false, error: `Failed to read ${path}.`, code: "PARSE_ERROR" };
     }
-    if (bytes.byteLength > MAX_MANIFEST_BYTES)
+    if (bytes === null)
       return { ok: false, error: `${path} is larger than 512 KiB.`, code: "PARSE_ERROR" };
     return {
       ok: true,
