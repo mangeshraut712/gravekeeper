@@ -45,4 +45,40 @@ describe("restoration properties", () => {
   it("matches upstream esrever on the generated printable ASCII alphabet", () => {
     fc.assert(fc.property(fc.string({ unit: fc.constantFrom(..."abcXYZ019 !?-_".split("")), maxLength: 64 }), (s) => reverse(s) === upstream.reverse(s)));
   });
+
+  describe("conservative invariants", () => {
+    const anyUtf16 = fc.array(fc.integer({ min: 0, max: 0xffff }), { maxLength: 64 })
+      .map((units) => String.fromCharCode(...units));
+    const segs = (s: string) =>
+      Array.from(new Intl.Segmenter("en", { granularity: "grapheme" }).segment(s), ({ segment }) => segment);
+
+    it("never throws and returns a string for any UTF-16 input", () => {
+      fc.assert(fc.property(anyUtf16, (s) => typeof reverse(s) === "string"));
+    });
+    it("preserves UTF-16 length, since it only reorders existing segments", () => {
+      fc.assert(fc.property(anyUtf16, (s) => reverse(s).length === s.length));
+    });
+    it("preserves the multiset of UTF-16 code units", () => {
+      fc.assert(fc.property(anyUtf16, (s) => {
+        const sorted = (x: string) => Array.from({ length: x.length }, (_, i) => x.charCodeAt(i)).sort((a, b) => a - b);
+        expect(sorted(reverse(s))).toEqual(sorted(s));
+      }));
+    });
+    it("distributes over concatenation in swapped order when the join does not merge graphemes", () => {
+      // Letters and digits never combine across the join, so the segmentation of a+b is the two parts.
+      const plain = fc.string({ unit: fc.constantFrom(..."abcXYZ019 ".split("")), maxLength: 32 });
+      fc.assert(fc.property(plain, plain, (a, b) => reverse(a + b) === reverse(b) + reverse(a)));
+    });
+    it("is the identity on empty and single-grapheme strings", () => {
+      expect(reverse("")).toBe("");
+      fc.assert(fc.property(fc.constantFrom("a", "é", "中", "👩\u200d💻", "👍🏽", "🇮🇳"), (g) => reverse(g) === g));
+    });
+    it("rejects non-string input", () => {
+      expect(() => reverse(42 as unknown as string)).toThrow(TypeError);
+    });
+    it("leaves segment count of the reversed string equal to the pieces it reordered or lower", () => {
+      // Reordering can merge graphemes (leading combining marks) but never split them.
+      fc.assert(fc.property(anyUtf16, (s) => segs(reverse(s)).length <= segs(s).length));
+    });
+  });
 });

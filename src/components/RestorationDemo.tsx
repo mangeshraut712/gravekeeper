@@ -150,7 +150,7 @@ export default function RestorationDemo() {
             </p>
           </details>
         </section>
-        <footer className="py-10 text-xs leading-6 text-stone-400">Gravekeeper · Good code deserves a second life. No affiliation with or endorsement by the original maintainers.</footer>
+        <p className="py-10 text-xs leading-6 text-stone-400">Gravekeeper · Good code deserves a second life. No affiliation with or endorsement by the original maintainers.</p>
       </div>
     </main>
   );

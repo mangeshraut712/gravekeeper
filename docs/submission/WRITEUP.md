@@ -57,3 +57,11 @@ Provider-reported credit figures are recorded for several sessions (two read-onl
 - The revival plan is built from public metadata, not a code or dependency audit.
 - Receipts prove internal consistency, not authorship or that GitHub/the Internet Archive said what they say.
 - Accessibility: axe scans found no violations on the product pages scanned in Chromium, Firefox and WebKit (identical counts; the intentionally broken "before" fixture is excluded from the count). Color contrast over the fog is "needs review" in axe and was re-measured per text box in Chromium (lowest 7.13:1 in the sampled frames, with caveats in the audit); no screen reader pass was done. See [docs/A11Y_AUDIT.md](../A11Y_AUDIT.md).
+
+## Addendum: proof checker, restoration properties, performance (Nov 11)
+
+- `/proof` lets a visitor open a downloaded proof file and verify it in the browser. Nothing is uploaded; it reuses the same receipt and proof code and shows valid, invalid, and unreadable-file states. Valid still means only internal consistency. Specified under `.kiro/specs/proof-workbench/`. Exercised in headless Chromium (file input, tamper, bad JSON, paste, a synthetic drop event); a real OS drag and a screen reader were not tested.
+- Added fast-check properties for the restoration `reverse()` and `compareVersions()` that I believe hold (length and code-unit preservation, no throw, concatenation on a plain alphabet). The documented non-involution on leading combining marks stands.
+- The fog alphas were lowered and a test now checks the worst-case contrast from the CSS. The fog-only sweep did not reproduce the earlier `#55514c` reading with the old CSS (old peak `#292a23`, 5.60:1), so this is a safety margin rather than a confirmed failure fix.
+- Lighthouse (local production build, mobile emulation, median of 3): 100 in all four categories on `/`, `/restoration`, `/lantern-hill`, `/proof`, after fixing a footer layout shift on `/lantern-hill`. Lab numbers only; the deployed site was not measured. See `docs/LIGHTHOUSE.md`.
+
