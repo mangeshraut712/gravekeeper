@@ -177,7 +177,8 @@ Implementation note (Nov 6, 2026 UTC): the UI is consolidated in `src/components
 - [x] Deviation: used `@axe-core/playwright` (pinned 4.14.0, with `playwright` 1.65.0) against the production build instead of `@axe-core/react` in dev mode. `npm run a11y` (`scripts/a11y-audit.mts`).
 - [x] Scanned `/`, `/` after a real lookup, `/restoration`, `/lantern-hill`, and both fixture documents. No violations on the product pages; the intentionally inaccessible "before" fixture reports 4. Color-contrast on `/` is "needs review" in axe and was checked by pixel sampling. Details in `docs/A11Y_AUDIT.md`.
 - [x] Keyboard path verified with Playwright key events (Tab, Enter, Space, Escape during a lookup). Accordions are native `<details>`; the app has no modals.
-- [ ] Not done: screen-reader pass, non-Chromium browsers, error-state scan.
+- [x] Error, invalid-URL, running and canceled states are scanned with `/api/resurrect` mocked (`npm run a11y`).
+- [ ] Not done: screen-reader pass, non-Chromium browsers, a scan of a real upstream failure (error states are mocked only), and a repeat of contrast pixel-sampling for the newer states.
 - **Refs:** US-07
 
 ---
