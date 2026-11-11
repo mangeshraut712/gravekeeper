@@ -16,6 +16,11 @@ import type {
 } from "@/types";
 import { classify, parseVersion, rangeFloor } from "./semver.ts";
 
+/** Limits shared by the manifest parsers and the evidence validator so parser output is always valid evidence. */
+export const MAX_PACKAGES = 40;
+export const MAX_NAME_LENGTH = 214;
+export const MAX_SPEC_LENGTH = 256;
+
 export const REGISTRY_BASE: Record<Ecosystem, string> = {
   npm: "https://registry.npmjs.org/",
   pypi: "https://pypi.org/pypi/",
@@ -54,7 +59,7 @@ export function isManifestEvidence(value: unknown): value is ManifestEvidence {
     isCount(totalDeclared) &&
     isCount(skippedLines) &&
     Array.isArray(packages) &&
-    packages.length <= 40 &&
+    packages.length <= MAX_PACKAGES &&
     totalDeclared >= packages.length &&
     truncated === totalDeclared > packages.length &&
     packages.every(
@@ -62,9 +67,9 @@ export function isManifestEvidence(value: unknown): value is ManifestEvidence {
         isRecord(item) &&
         typeof item.name === "string" &&
         item.name.length > 0 &&
-        item.name.length <= 214 &&
+        item.name.length <= MAX_NAME_LENGTH &&
         typeof item.spec === "string" &&
-        item.spec.length <= 256 &&
+        item.spec.length <= MAX_SPEC_LENGTH &&
         typeof item.group === "string" &&
         GROUPS.has(item.group),
     )

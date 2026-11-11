@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { ManifestEvidence, RegistryEvidence } from "@/types";
+import fc from "fast-check";
 import { buildAutopsy, REGISTRY_BASE } from "./autopsy";
+import { parsePackageJson } from "./manifest";
 
 const manifest: ManifestEvidence = {
   path: "package.json",
@@ -112,5 +114,40 @@ describe("buildAutopsy", () => {
     ["not an object", "package.json", registry],
   ])("rejects %s", (_label, manifestBody, registryBody) => {
     expect(buildAutopsy(manifestBody, registryBody)).toBeNull();
+  });
+});
+
+describe("parser output is always accepted as evidence (PR #7 review)", () => {
+  function evidenceFor(text: string) {
+    const parsed = parsePackageJson(text);
+    if (!parsed.ok) throw new Error("expected ok");
+    const evidence: ManifestEvidence = { path: "package.json", rawSha256: "e".repeat(64), ...parsed.data };
+    const reg: RegistryEvidence = {
+      registry: REGISTRY_BASE.npm,
+      results: evidence.packages.map((p) => ({ name: p.name, latest: "1.0.0", outcome: "ok" as const })),
+    };
+    return buildAutopsy(evidence, evidence.packages.length ? reg : null);
+  }
+
+  it("does not drop the whole autopsy for a spec longer than 256 characters", () => {
+    const longRange = Array.from({ length: 40 }, (_, i) => `^${i}.0.0`).join(" || ");
+    expect(longRange.length).toBeGreaterThan(256);
+    const autopsy = evidenceFor(
+      JSON.stringify({ dependencies: { react: "^16.0.0", huge: longRange, ["x".repeat(300)]: "1.0.0" } }),
+    );
+    expect(autopsy).not.toBeNull();
+    expect(autopsy!.dependencies.map((d) => d.name)).toEqual(["react"]);
+    expect(autopsy!.manifest!.skippedLines).toBe(2);
+  });
+
+  it("property: any parsed package.json yields a non-null autopsy", () => {
+    const name = fc.oneof(fc.stringMatching(/^[a-z][a-z0-9-]{0,10}$/), fc.string({ minLength: 1, maxLength: 260 }));
+    const spec = fc.oneof(fc.constantFrom("^1.0.0", "*", "file:x"), fc.string({ maxLength: 400 }));
+    fc.assert(
+      fc.property(fc.dictionary(name, spec, { maxKeys: 50 }), (dependencies) => {
+        expect(evidenceFor(JSON.stringify({ dependencies }))).not.toBeNull();
+      }),
+      { numRuns: 200 },
+    );
   });
 });

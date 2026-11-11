@@ -3,8 +3,14 @@
  * pyproject.toml [project].dependencies. Pure functions; never throw.
  */
 import type { DeclaredDependency, Ecosystem, ManifestPath, Result } from "@/types";
+import { MAX_NAME_LENGTH, MAX_PACKAGES, MAX_SPEC_LENGTH } from "./autopsy";
 
-export const MAX_PACKAGES = 40;
+export { MAX_PACKAGES };
+
+/** Entries outside the evidence limits are skipped and counted, never recorded. */
+function withinLimits(name: string, spec: string): boolean {
+  return name.length > 0 && name.length <= MAX_NAME_LENGTH && spec.length <= MAX_SPEC_LENGTH;
+}
 
 export type ParsedManifest = {
   ecosystem: Ecosystem;
@@ -56,7 +62,7 @@ export function parsePackageJson(text: string): Result<ParsedManifest> {
       continue;
     }
     for (const [name, spec] of Object.entries(table)) {
-      if (typeof spec !== "string" || !name) {
+      if (typeof spec !== "string" || !withinLimits(name, spec.trim())) {
         skipped++;
         continue;
       }
@@ -102,7 +108,7 @@ export function parseRequirementsTxt(text: string): Result<ParsedManifest> {
     const line = raw.replace(/(^|\s)#.*$/, "").trim();
     if (!line) continue;
     const requirement = line.startsWith("-") ? null : parseRequirement(line);
-    if (!requirement) {
+    if (!requirement || !withinLimits(requirement.name, requirement.spec)) {
       skipped++;
       continue;
     }
@@ -162,7 +168,7 @@ export function parsePyprojectToml(text: string): Result<ParsedManifest> {
   let skipped = 0;
   for (const entry of entries) {
     const requirement = parseRequirement(entry);
-    if (!requirement) {
+    if (!requirement || !withinLimits(requirement.name, requirement.spec)) {
       skipped++;
       continue;
     }

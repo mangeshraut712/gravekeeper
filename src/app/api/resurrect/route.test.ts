@@ -399,6 +399,24 @@ describe("POST /api/resurrect", () => {
       expect(await verifyProof(body, repoUrl)).toBe(true);
     });
 
+    it("keeps a verifiable proof when a spec exceeds the evidence limit", async () => {
+      const longRange = Array.from({ length: 40 }, (_, i) => `^${i}.0.0`).join(" || ");
+      vi.stubGlobal(
+        "fetch",
+        routeFetch({
+          manifest: {
+            "package.json": JSON.stringify({ dependencies: { react: ">=15.0.0 >=16.0.0", huge: longRange } }),
+          },
+          registry: () => new Response(JSON.stringify({ version: "16.2.0" }), { status: 200 }),
+        }),
+      );
+      const body = await (await POST(jsonRequest({ url: repoUrl }))).json();
+      expect(body.autopsy).not.toBeNull();
+      expect(body.autopsy.manifest.skippedLines).toBe(1);
+      expect(body.autopsy.dependencies).toMatchObject([{ name: "react", floor: "16.0.0", status: "minor-behind" }]);
+      expect(await verifyProof(body, repoUrl)).toBe(true);
+    });
+
     it("returns 499 when canceled during registry lookups", async () => {
       const controller = new AbortController();
       const request = new NextRequest("http://localhost/api/resurrect", {
