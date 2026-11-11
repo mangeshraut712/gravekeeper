@@ -4,6 +4,8 @@
 // No network is needed: /api/resurrect is mocked in the browser with a response built here
 // from SYNTHETIC repository data (example/abandoned-widget) and signed with the project's own
 // receipt code, so the displayed proof verifies. It is not a live GitHub/Wayback lookup.
+// --live additionally performs a REAL atom/atom lookup (needs network, may be partial) and writes home-lookup-live.png.
+// Without --live the default mocked run is unchanged.
 import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright";
 import type { Receipt } from "../src/types/index.ts";
@@ -65,7 +67,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 async function settle(page: import("playwright").Page) {
   await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => Number.isFinite(a.effect?.getComputedTiming().endTime as number)).map((a) => a.finished)));
 }
-async function shot(name: string, path: string, opts: { reduced?: boolean; full?: boolean; lookup?: boolean } = {}) {
+async function shot(name: string, path: string, opts: { reduced?: boolean; full?: boolean; lookup?: boolean; live?: string } = {}) {
   const ctx = await browser.newContext({
     viewport: { width: 1440, height: 900 },
     reducedMotion: opts.reduced ? "reduce" : "no-preference",
@@ -81,6 +83,11 @@ async function shot(name: string, path: string, opts: { reduced?: boolean; full?
     await page.getByRole("button", { name: /unearth project/i }).click();
     await page.getByRole("heading", { name: /example\/abandoned-widget|abandoned-widget/i }).first().waitFor();
   }
+  if (opts.live) {
+    await page.locator("#resource-url").fill(opts.live);
+    await page.getByRole("button", { name: /unearth project/i }).click();
+    await page.getByText("Lookup complete").waitFor({ timeout: 45_000 });
+  }
   await settle(page);
   await page.screenshot({ path: out + name, fullPage: opts.full ?? false, type: "png" });
   console.log("wrote", name);
@@ -92,4 +99,5 @@ await shot("home-reduced-motion.png", "/", { reduced: true });
 await shot("home-lookup.png", "/", { lookup: true, full: true });
 await shot("restoration.png", "/restoration", { full: true });
 await shot("lantern-hill.png", "/lantern-hill", { full: true });
+if (process.argv.includes("--live")) await shot("home-lookup-live.png", "/", { live: "https://github.com/atom/atom", full: true });
 await browser.close();

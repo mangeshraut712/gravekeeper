@@ -30,6 +30,10 @@ Same page with `prefers-reduced-motion: reduce`; the fog overlay is hidden.
 
 Results view. **This is not a live lookup.** `/api/resurrect` was mocked in the browser with a synthetic repository (`example/abandoned-widget`, invented data). The receipts are real, signed with the project's own receipt code, so the proof verifies, but they describe the synthetic data, not GitHub or the Internet Archive. The band in the background near the top is a full-page capture artifact.
 
+![Live lookup of atom/atom](docs/screenshots/home-lookup-live.png)
+
+Results view from a **live lookup** of `https://github.com/atom/atom` (not mocked), captured on 2026-11-11 from a local production build with `node scripts/capture-screenshots.mts --live`. The archive snapshot, repository metadata and commits come from the real Internet Archive and GitHub APIs at that moment, so a rerun will differ. The mocked screenshot above is kept and stays labeled as mocked.
+
 ![Licensed restoration case](docs/screenshots/restoration.png)
 
 `/restoration`, the licensed `esrever` restoration case.
