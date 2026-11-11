@@ -4,7 +4,7 @@
  */
 
 import type { CdxEvidence, Result } from "@/types";
-import { CDX_MAX_BYTES, cdxQueryUrl, parseCdxBody } from "./timeline";
+import { CDX_MAX_BYTES, cdxQueryUrl, isCdxWildcardUrl, parseCdxBody } from "./timeline";
 
 const TIMEOUT_MS = 10_000;
 
@@ -12,6 +12,13 @@ export async function fetchCdxCaptures(
   url: string,
   signal?: AbortSignal,
 ): Promise<Result<CdxEvidence>> {
+  if (isCdxWildcardUrl(url)) {
+    return {
+      ok: false,
+      error: "CDX wildcard URLs are not queried; they would match more than one page.",
+      code: "PARSE_ERROR",
+    };
+  }
   const timeout = AbortSignal.timeout(TIMEOUT_MS);
   let text: string;
   try {

@@ -31,7 +31,16 @@ describe("fetchCdxCaptures", () => {
     expect(url.searchParams.get("fl")).toBe("timestamp,statuscode");
     expect(url.searchParams.get("collapse")).toBe("timestamp:6");
     expect(url.searchParams.get("limit")).toBe(String(CDX_LIMIT));
+    expect(url.searchParams.get("matchType")).toBe("exact");
     expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("does not request CDX for a wildcard URL", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await fetchCdxCaptures("https://example.com/*");
+    expect(result).toMatchObject({ ok: false, code: "PARSE_ERROR" });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("returns an empty capture list for []", async () => {
