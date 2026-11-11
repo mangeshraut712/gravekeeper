@@ -199,9 +199,12 @@ describe("PyPI hyphenated prereleases", () => {
     expect(parseVersion("1.0-rc1", "pypi")).toEqual({ epoch: 0, release: [1, 0], pre: ["rc", 1] });
     expect(parseVersion("1.0rc1", "pypi")).toEqual({ epoch: 0, release: [1, 0], pre: ["rc", 1] });
     expect(parseVersion("1.0-rc1")).toEqual({ epoch: 0, release: [1, 0], pre: ["rc1"] });
+    expect(parseVersion("1.0-rc.1", "pypi")).toEqual({ epoch: 0, release: [1, 0], pre: ["rc", 1] });
     expect(compareVersions("1.0-rc1", "1.0rc2", "pypi")).toBe(-1);
     expect(compareVersions("1.0-rc1", "1.0rc1", "pypi")).toBe(0);
+    expect(compareVersions("1.0-rc.1", "1.0rc1", "pypi")).toBe(0);
     expect(classify(rangeFloor("==1.0-rc1", "pypi"), "1.0rc2", "ok", "pypi")).toBe("minor-behind");
+    expect(classify(rangeFloor("==1.0-rc.1", "pypi"), "1.0rc1", "ok", "pypi")).toBe("current");
   });
 });
 

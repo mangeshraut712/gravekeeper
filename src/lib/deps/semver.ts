@@ -49,16 +49,28 @@ function toNumber(text: string): number | null {
 
 /** Split a hyphenated pre-release such as rc1 into the PEP 440 pair ['rc', 1]. */
 function normalizePypiPre(raw: string): (number | string)[] {
+  const parts = raw.split(".");
   const out: (number | string)[] = [];
-  for (const part of raw.split(".")) {
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
     const pep = /^(alpha|beta|preview|pre|rc|a|b|c)(\d*)$/i.exec(part);
     if (pep) {
-      out.push(PEP440_PRE[pep[1].toLowerCase()], toNumber(pep[2] || "0") ?? 0);
+      let number = toNumber(pep[2] || "0") ?? 0;
+      if (!pep[2] && i + 1 < parts.length && /^\d+$/.test(parts[i + 1])) {
+        number = toNumber(parts[i + 1]) ?? 0;
+        i += 1;
+      }
+      out.push(PEP440_PRE[pep[1].toLowerCase()], number);
       continue;
     }
     const dev = /^dev(\d*)$/i.exec(part);
     if (dev) {
-      out.push(DEV, toNumber(dev[1] || "0") ?? 0);
+      let number = toNumber(dev[1] || "0") ?? 0;
+      if (!dev[1] && i + 1 < parts.length && /^\d+$/.test(parts[i + 1])) {
+        number = toNumber(parts[i + 1]) ?? 0;
+        i += 1;
+      }
+      out.push(DEV, number);
       continue;
     }
     out.push(/^\d+$/.test(part) ? (toNumber(part) ?? part) : part);
