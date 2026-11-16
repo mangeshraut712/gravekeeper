@@ -2,7 +2,7 @@
 
 Captured from the live production site, https://gravekeeper-drab.vercel.app, at about 13:16–13:17 UTC on 2026-11-11 (file times 18:46–18:47 IST), at a 1440x900 viewport unless noted. They were captured before this branch; the files were copied in unchanged apart from one rename (`home-lookup-atom-epitaph-autopsy.png` became `home-lookup-atom-epitaph.png`, because that viewport shows the tombstone card and the Epitaph panel, not the autopsy table).
 
-The lookup is a real `POST /api/resurrect` for `https://github.com/atom/atom`, not mocked. At that moment the Wayback availability API returned no snapshot, so the tombstone card says **Archive snapshot: None found** and the first receipt is `wayback-miss`. The Internet Archive CDX index did answer, so the Epitaph panel shows **Born Jun 22, 2014**, **Last seen Oct 2026**, 13 years on record and **136** captured months. A rerun can return different data.
+The lookup is a real `POST /api/resurrect` for `https://github.com/atom/atom`, not mocked. At that moment the Wayback availability API returned no snapshot, so the tombstone card says **Archive snapshot: None found** and the first receipt is `wayback-miss`. The Internet Archive CDX index did answer, so the Epitaph panel shows **Born Jun 22, 2014**, **Last seen Oct 2026**, 13 years on record and **136** captured months. A rerun can return different data. These screenshots predate the CDX snapshot fallback (see docs/EPITAPH_TIMELINE.md); with it, a miss like this one fills the snapshot from the capture index and labels it, but the images were not retaken.
 
 | File | What it shows |
 |---|---|

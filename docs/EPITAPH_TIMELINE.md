@@ -43,6 +43,14 @@ Run on 2026-11-11 against a local production build (`npx next start -p 3400`, `G
 - `npm run e2e` against a production build on port 3400: all 12 checks passed, including the Epitaph panel and table, the `?url=` permalink running exactly one mocked lookup, Copy link (Chromium with clipboard permission), the address bar updating after a form lookup, and a private-looking permalink making no request. The e2e lookup data is synthetic and signed locally; it is not a live lookup.
 - No axe scan, contrast sampling or screen-reader pass was run for the Epitaph panel in this session. A later pass (2026-11-11) added an axe scan of the panel with synthetic data in Chromium, Firefox and WebKit (0 counted violations); see [A11Y_AUDIT.md](A11Y_AUDIT.md). Contrast sampling and a screen-reader pass are still not done.
 
+## Snapshot fallback
+
+If the availability API misses (or errors) and the signed CDX evidence has at least one timestamp, the displayed snapshot is derived from that evidence: `https://web.archive.org/web/{latest captured timestamp}/{resource}`, marked `source: "cdx-fallback"` on `response.wayback`. The first receipt stays `wayback-miss` with the real failure code, and `wayback-cdx` stays the real index answer; no availability hit is invented. `verifyProof` recomputes the fallback from the `wayback-cdx` evidence and the resource named by receipt 0, so a snapshot shown on a miss that the index does not support fails (changed or unsigned); no snapshot on a miss still verifies, so proofs made before the fallback remain valid. Older proofs (no fallback, `wayback` hit) verify as before. The availability path is unchanged.
+
+Limits of the fallback: CDX is collapsed to one row per month, so the link is a capture from the latest captured month, not the availability API's "closest" snapshot, and the date can differ from what a rerun of the availability API returns. With an empty or unavailable index the card and kit still say "None found". The tombstone and revival kit say when a link came from the capture index.
+
+The production lookup of `atom/atom` on 2026-11-11 about 13:17 UTC predates this change and showed "None found" next to a 136-month timeline. In a local production-build lookup in the session that added the fallback, the availability API answered (snapshot 2026-10-27) so the fallback did not trigger live; it is covered by mocked route tests only. Production has not been re-checked.
+
 ## Limits
 
 - Month resolution; "last seen" is the first capture in the latest captured month.

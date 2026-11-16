@@ -8,6 +8,7 @@ POST /api/resurrect { url }
   ├─ fetchCdxCaptures(url)            new, src/lib/wayback/cdx.ts      ─┐ parallel
   └─ fetchRepoMeta(owner, repo)       (existing, GitHub URLs only)     ─┘
 record wayback | wayback-miss         seq 0, url = resource
+                                      (on a miss, response.wayback may be derived from the signed wayback-cdx evidence: source "cdx-fallback", latest captured month; verifyProof recomputes it)
 record wayback-cdx                    seq 1, url = cdxQueryUrl(resource), evidence { limit, timestamps } | { code }
 record github-*, registry, spec       (existing, unchanged order)
 timeline = buildTimeline(cdxEvidence) src/lib/wayback/timeline.ts (pure, isomorphic)

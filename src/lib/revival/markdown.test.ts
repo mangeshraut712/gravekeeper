@@ -175,6 +175,22 @@ describe("buildRevivalMarkdown", () => {
     expect(doc).not.toContain("## Epitaph timeline");
   });
 
+  it("labels a snapshot taken from the capture index", () => {
+    const base = input();
+    const md = buildRevivalMarkdown(
+      input({
+        wayback: {
+          ...base.result.wayback!,
+          snapshotUrl: "https://web.archive.org/web/20261001120000/https://github.com/octo/ghost",
+          timestamp: "20261001120000",
+          source: "cdx-fallback",
+        },
+      }),
+    );
+    expect(md).toContain("capture from the latest month in the capture index");
+    expect(md).toContain("https://web.archive.org/web/20261001120000/");
+  });
+
   it("says None found and does not link an unsafe snapshot URL", () => {
     const base = input();
     const none = buildRevivalMarkdown(input({ wayback: null }));
