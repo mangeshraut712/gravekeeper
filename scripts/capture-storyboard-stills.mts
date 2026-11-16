@@ -39,7 +39,7 @@ async function run(label: "synthetic" | "atom") {
   if (label === "synthetic") {
     const synthetic = await buildSyntheticLookup();
     url = syntheticRepoUrl;
-    proofText = exportProof(synthetic as never, syntheticRepoUrl);
+    proofText = exportProof(synthetic, syntheticRepoUrl);
     await page.route("**/api/resurrect", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(synthetic) }));
   }
   await page.goto(base + "/", { waitUntil: "networkidle" });
