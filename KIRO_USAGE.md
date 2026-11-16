@@ -395,6 +395,38 @@ Branch `feat/a11y-and-demo-assets-20261111`, from main `f6b7b40`. Evidence: `.ki
 
 **Limits:** no screen-reader pass. The new panels were scanned with synthetic data only; the live `--lookup` scan was not re-run and contrast was not re-sampled for them. Which copy status Firefox and WebKit showed was not recorded. The polish check and keyboard e2e step ran in Chromium only.
 
+## Nov 11, 2026 — CI install retry, production Lighthouse, accessibility-tree pass (Kiro agent session)
+
+Branch `feat/ci-lighthouse-a11y-tree-20261111`, from main `0d944db`. The credit figure for this session is recorded by the runner, not here. No token count or WBM record is claimed. Evidence: `.kiro/evidence/2026-11-11-ci-lighthouse-a11y-tree.json`. No hook output or MCP call was observed in this session, and none is claimed. No Devpost submission, video, blog publish, or social post was made.
+
+**Kiro-generated (agent wrote and ran these):**
+- `.github/workflows/ci.yml`: the browser job's Playwright install now retries `--with-deps` twice (each attempt capped at 150 s) and, if apt still fails, falls back to `npx playwright install chromium`, which has no fallback of its own so a real browser-download failure still fails the job. This was motivated by PR #16's two failed `browser` jobs (apt could not resolve the Ubuntu mirrors). The first version (3 uncapped attempts) hung: with DNS down, apt retried for the whole 20-minute job timeout and the `browser` job was cancelled (run 43041000401). The per-attempt `timeout` was added after that; the YAML was only parsed locally.
+- Production Lighthouse 13.6.0 against https://gravekeeper-drab.vercel.app (headless Chrome 157, 3 runs per page, mobile emulation): 100 in every category except `/proof` SEO 92. The cause was a real bug: `/proof` inherited the root `canonical: "/"`. Fixed with a test that failed first; a local production build then scored SEO 100 on `/proof` (one run). The deployed site has not been re-measured since the fix. Details and limits in `docs/LIGHTHOUSE.md`.
+- `scripts/a11y-tree.mts` (`npm run a11y:tree`): Chromium ARIA snapshots in `docs/a11y-tree/` for the landing page, a synthetic lookup (collapsed, then everything open with proof verified and the kit used) and `/proof` empty, Valid and Invalid, with structural assertions. It found that receipt summaries were announced as `01wayback3e7e8cd9c226…`; a static-markup test failed first, then the summary parts were spaced. Other observations are listed in `docs/A11Y_AUDIT.md` as not changed. This is an accessibility-tree pass, not a VoiceOver or NVDA pass; no OS accessibility feature was started.
+- `docs/JUDGES.md` main SHA updated to `0d944db` with the PRs actually on it; Design limits updated.
+- `scripts/capture-storyboard-stills.mts` does not exist on this base (it is in the open PR #16), so the `as never` cast cleanup was not applicable here. `scripts/a11y-audit.mts` still has its own `synthetic as never` cast; it was left alone.
+
+**Hand work:** none beyond the prompt.
+
+**Checks (before the final pull):** `npm test` 45 files, 687 passed; `npm run lint`; `npx next typegen && npx tsc --noEmit`; `npm run build`; `npm run demo:verify` (4/12 before, 12/12 after); `npm run e2e` and `npm run a11y` (Chromium, 0 counted violations) against `npx next start -p 3441`; `npm run a11y:tree` passed. Servers were stopped afterwards. `node_modules` in this worktree was a symlink to another checkout; only the symlink was removed and `npm ci` run locally.
+
+**Limits:** Lighthouse is lab data from one machine and one run window; no CI Lighthouse gate. The tree pass is Chromium only, synthetic data only, and shows what the browser exposes rather than what a screen reader says.
+
+## Nov 11, 2026 — Panel contrast sampling and storyboard stills (Kiro agent session)
+
+Branch `feat/contrast-and-storyboard-stills-20261111`, from main `0d944db` (PRs #7 and #9–#15 merged). Evidence: `.kiro/evidence/2026-11-11-contrast-storyboard-stills.json`. The credit figure for this session is recorded by the runner; the agent saw none, so none is claimed here. No hook instruction arrived in this session (only `scripts/` and `docs/` were edited), and no MCP server was used. No video was recorded or uploaded. No Devpost submission, blog publish, or social post was made.
+
+**Kiro-generated (agent wrote and ran these):**
+- `scripts/contrast-sample.mts --panels`: mocks `/api/resurrect` with the synthetic signed lookup, opens every disclosure, presses **Download revival kit** and **Copy issue body**, and samples only text inside the Epitaph, Dependency autopsy and Revival kit sections. These panels are opaque above the fog, so this mode keeps component backgrounds and includes button labels. `CONTRAST_LIST=1` prints every box. Result on a local production build (Chromium, 1440x900): lowest 6.74:1 in all three panels (30, 43 and 10 text boxes), 0 under 4.5:1. No failure was found, so no palette change or test was added. Recorded in `docs/A11Y_AUDIT.md`.
+- `scripts/capture-storyboard-stills.mts [--live]` and eight stills in `docs/screenshots/live/storyboard/`: the Epitaph table opened, the autopsy table at viewport size, the kit status after both buttons, and `/proof` Valid. Each beat has a synthetic still and a real `atom/atom` still, all from a local production build at 1440x900 with reduced motion. The `atom/atom` proof was downloaded in the session, loaded into `/proof` through the file input (Valid), and also passed `node scripts/verify-proof.ts`. Captions are in `docs/screenshots/live/README.md`, and `docs/submission/DEMO_STORYBOARD.md` now points at the stills.
+- `docs/JUDGES.md`: the opening now names main at `0d944db` and PRs #7 and #9–#15. It also adds the panel contrast numbers and the stills, and narrows the "not done" list.
+
+**Hand work:** none beyond the prompt.
+
+**Checks:** `npm test` 45 files, 685 passed; `npm run lint`; `npx next typegen && npx tsc --noEmit`; `npm run build`; `npm run demo:verify` (4/12 before, 12/12 after); `npm run e2e` against `npx next start -p 3471`, 17 passed, server stopped afterwards.
+
+**Limits:** no screen-reader pass. Panel contrast was sampled with synthetic data only, in Chromium only, over three frames, without hover or focus colours, and without non-text contrast for the chart bars or borders. The stills come from a local build, not production, and the live `atom/atom` data can change on a rerun. No Fork-on-GitHub or terminal still was captured.
+
 ## Nov 11, 2026 — CDX snapshot fallback (Kiro agent session)
 
 Branch `feat/cdx-snapshot-fallback-20261111`, from `0d944db`. Evidence: `.kiro/evidence/2026-11-11-cdx-snapshot-fallback.json`. The credit figure is recorded by the runner; the agent saw none. No MCP server was used. No Devpost submission, video, blog publish, or social post was made.

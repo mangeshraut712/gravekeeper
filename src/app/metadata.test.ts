@@ -6,6 +6,7 @@ import * as og from "./opengraph-image";
 import * as twitter from "./twitter-image";
 import { metadata as restorationMetadata } from "./restoration/page";
 import { metadata as lanternMetadata } from "./lantern-hill/page";
+import { metadata as proofMetadata } from "./proof/page";
 import { siteUrl, themeColor } from "@/shared/site";
 
 describe("site metadata", () => {
@@ -26,6 +27,10 @@ describe("site metadata", () => {
     expect(lanternMetadata.alternates?.canonical).toBe("/lantern-hill");
     expect(restorationMetadata.description).toBeTruthy();
     expect(lanternMetadata.description).toBeTruthy();
+  });
+
+  it("gives /proof its own canonical (the root one points at the home page, which Lighthouse flags)", () => {
+    expect(proofMetadata.alternates?.canonical).toBe("/proof");
   });
 
   it("overrides the root Twitter card text on demo pages (metadata merges shallowly)", () => {
