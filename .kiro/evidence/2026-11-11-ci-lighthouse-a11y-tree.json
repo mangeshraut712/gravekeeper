@@ -1,0 +1,24 @@
+{
+  "kind": "kiro-session-metadata",
+  "note": "Metadata only. No transcript, prompts, tokens, environment values or secrets are recorded. The credit figure is recorded by the runner and is not claimed here.",
+  "session": {
+    "date": "2026-11-11",
+    "branch": "feat/ci-lighthouse-a11y-tree-20261111",
+    "base": "0d944db",
+    "worktree": "~/kiroween/wt-q9-ci"
+  },
+  "changes": [
+    "ci.yml: retry playwright install --with-deps, fall back to browser-only install",
+    "docs/LIGHTHOUSE.md: production run of https://gravekeeper-drab.vercel.app (3 runs per page, headless Chrome 157)",
+    "src/app/proof/page.tsx: own canonical URL (test first)",
+    "scripts/a11y-tree.mts and docs/a11y-tree: Chromium accessibility-tree snapshots, not a screen-reader pass",
+    "ReceiptChainViewer summary spacing (test first)",
+    "docs/JUDGES.md, docs/A11Y_AUDIT.md updated"
+  ],
+  "observed": {
+    "productionLighthouse": "100 in all categories except /proof SEO 92 (canonical), before the fix",
+    "hooks": "no hook output observed",
+    "mcp": "no MCP call made",
+    "osAccessibilityFeaturesUsed": false
+  }
+}

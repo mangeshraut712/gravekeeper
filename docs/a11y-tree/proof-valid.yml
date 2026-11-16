@@ -1,0 +1,40 @@
+- main:
+  - heading "Check a proof file" [level=1]
+  - paragraph:
+    - text: Open a
+    - code: gravekeeper-proof.json
+    - text: or a Lantern Hill receipt file. The check runs in this browser tab. The file is never uploaded.
+  - list:
+    - listitem: "Valid means the file is consistent with itself: signatures, hash links and payload digests agree."
+    - listitem: It does not prove who made the file, or that GitHub or the Internet Archive said what the file records.
+    - listitem: The public key is inside the file. Someone who replaces the whole file and key, or cuts off the end of a valid chain, cannot be detected without a trusted copy kept elsewhere.
+  - text: Choose a proof file or drop it here (JSON, up to 5 MB)
+  - button "Choose a proof file or drop it here (JSON, up to 5 MB)"
+  - text: Or paste proof JSON
+  - textbox "Or paste proof JSON": "{ \"format\": \"gravekeeper-proof-v1\", \"resource\": \"https://github.com/example/abandoned-widget\", \"receipts\": [ { \"s …[14854 more characters truncated]
+  - button "Verify pasted text"
+  - status: Valid. The proof is internally consistent.
+  - 'region "Valid: internally consistent"':
+    - 'heading "Valid: internally consistent" [level=2]'
+    - paragraph: Signatures, hash links and the displayed result data are consistent with each other.
+    - paragraph: "Format: gravekeeper-proof-v1"
+    - heading "Receipts as written in the file" [level=3]
+    - list:
+      - listitem: "1. wayback URL: https://github.com/example/abandoned-widget Fetched: 2026-11-11T14:38:26.797Z Hash: be0bd5fceccab7385afb664e40c24e0737248c538dfaccc9fca27cf88b357212 Payload SHA-256: 6139ca3481228ae80776644be106f45f15fc1a9575df58863eb605311e03da2e"
+      - listitem: "2. wayback-cdx URL: https://web.archive.org/cdx/search/cdx?url=https%3A%2F%2Fgithub.com%2Fexample%2Fabandoned-widget&output=json&fl=timestamp …[247 more characters truncated]
+      - listitem: "3. github-meta URL: https://api.github.com/repos/example/abandoned-widget Fetched: 2026-11-11T14:38:26.797Z Hash: 216abeb2b5af9581e241c03af1f4768762d0ddedc9b59e7377a7abb72206d4d1 Payload SHA-256: b0eb562b3fb77d6fbac70c3683a682d2364edc323258ece35cfd6256c53c797b"
+      - listitem: "4. github-commits URL: https://api.github.com/repos/example/abandoned-widget/commits?per_page=20 Fetched: 2026-11-11T14:38:26.798Z Hash: 7804ce4fc6621047e54ef0635ac2ef72614a91b1f54b37be4a0867222f79652d Payload SHA-256: a8e6d1d0639d39fc3165354d4a11510bc48ab7e7fe12160eca9439ce7cb1dc69"
+      - listitem: "5. github-manifest URL: https://api.github.com/repos/example/abandoned-widget/contents/package.json?ref=main Fetched: 2026-11-11T14:38:26.798Z Hash: 5c21973a46d993de28891eea1cf4d0b46fda8c0d9c8b17188ccfa05b8e09281e Payload SHA-256: b797680c69404246d5249f154f9c4ebfa2e06ccd768d03ee385b610804d5c443"
+      - listitem: "6. registry URL: https://registry.npmjs.org/ Fetched: 2026-11-11T14:38:26.798Z Hash: dae75bad02c41958807968ab6f3df276c00929007490cebdfbe2badc51bb85bf Payload SHA-256: 176a68bb0ee539f9140e4b5e3136dd94278f9b24a80344cc79dae9df05c9ec2e"
+      - listitem: "7. spec URL: https://github.com/example/abandoned-widget Fetched: 2026-11-11T14:38:26.798Z Hash: 6728f97c9d4a2ea326a63661168cdee292bbcc210ad81ad5731400ec5c3aa416 Payload SHA-256: f418a1fc828d94f46a246a25d6b862e5f912832d66a71a4d2a4cfbd1f81a75d4"
+- contentinfo:
+  - navigation "Site":
+    - link "Home":
+      - /url: /
+    - link "Restoration":
+      - /url: /restoration
+    - link "Lantern Hill":
+      - /url: /lantern-hill
+    - link "Check a proof":
+      - /url: /proof
+- alert
