@@ -6,7 +6,7 @@ Websites go dark and open-source repositories get abandoned. Someone who wants t
 
 - Live app: https://gravekeeper-drab.vercel.app (Vercel Hobby, `GITHUB_TOKEN` and `FORK_API_SECRET` unset)
 - Judge guide, mapping each criterion to evidence: [docs/JUDGES.md](docs/JUDGES.md)
-- Demo script: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) (no video recorded yet)
+- Demo video (2:37, captioned) and script: [demo-video-2026-11-18 release](https://github.com/mangeshraut712/gravekeeper/releases/tag/demo-video-2026-11-18) · [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) (YouTube upload pending)
 
 ## Try it in 60 seconds
 

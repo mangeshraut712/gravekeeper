@@ -12,17 +12,16 @@
 
 ## Required before publishing
 
-- Run final tests, lint, typecheck, and production build against the exact release commit.
-- Independent final review and a browser regression pass, including cancel/resubmit, keyboard flow, reduced motion, mobile layout, proof download, and offline verification.
-- Automated WCAG 2.1 AA scan. Do not claim zero violations before this runs.
-- [x] Public Hobby hosting at https://gravekeeper-drab.vercel.app, with no GitHub write token and no server fork secret. Provider abuse limits and spending-control review still need a final pass.
-- Smoke-test the exact deployed version and keep judges' access free through Jan 29, 2027 at 1 PM PST.
-- Live application URL: https://gravekeeper-drab.vercel.app. Real screenshots still need to be added.
-- Licensed restoration demo exists (/restoration, `npm run demo:verify`); still needs a browser pass and real screenshots.
-- Public YouTube demo under 3 minutes, showing the real working app on its intended device.
-- Final English submission text, public repository and all assets, recognized license, root .kiro directory, and accurate Kiro usage explanation.
-- Disclose any incorporated pre-existing work and rights/licenses.
-- Review contest legal terms with the entrant and obtain the required approval before accepting them or submitting.
+- [x] Run final tests, lint, typecheck, and production build in CI (`verify` and `browser` jobs green on `main`, Next.js 16.4.6 in PR #19).
+- [x] Browser regression pass in Playwright (`npm run e2e`) covering lookup, proof download/verification, keyboard flow, and panels.
+- [x] Automated WCAG 2.1 AA scan (`npm run a11y`, documented with caveats in `docs/A11Y_AUDIT.md`).
+- [x] Public Hobby hosting at https://gravekeeper-drab.vercel.app, with no GitHub write token and no server fork secret. Re-verified HTTP 200 across `/`, `/proof`, `/restoration`, `/lantern-hill`, `/opengraph-image`, `/robots.txt`, `/sitemap.xml`, and `POST /api/resurrect` (7 signed receipts) on 2026-11-18. Keep judges' access free through Jan 29, 2027 at 1 PM PST.
+- [x] Live application URL and real screenshots committed under `docs/screenshots/`.
+- [x] Licensed restoration demo (`/restoration`, `npm run demo:verify`: 4/12 before, 12/12 after).
+- [ ] Upload the recorded 2:37 captioned demo video (`demo-video-2026-11-18` release) to public YouTube and fill the YouTube URL in `docs/submission/DEVPOST.md` and `docs/JUDGES.md`.
+- [x] Final English submission text drafts (`docs/submission/DEVPOST.md`, `docs/submission/WRITEUP.md`), public repository, MIT license, root `.kiro` directory (not ignored), and Kiro usage explanation (`KIRO_USAGE.md`, `docs/KIRO_WORKFLOW.md`).
+- [x] Disclose incorporated pre-existing work and rights/licenses (`third_party/`, MIT `esrever` fixture).
+- [ ] Review contest legal terms with the entrant and submit on Devpost before the deadline.
 
 Deadline: Dec 4, 2026, 22:00 UTC (Dec 5, 03:30 IST).
 Official references: https://kiroween.devpost.com/ ; https://kiroween.devpost.com/details/faqs ; https://kiroween.devpost.com/rules
