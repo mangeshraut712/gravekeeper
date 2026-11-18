@@ -1,19 +1,19 @@
 # Judge guide
 
-A map from each judging criterion to evidence in this repository, plus the submission requirements with their real status. Everything here describes `main` as of merge commit `0d944db` (PRs #7 dependency autopsy, #9 proof workbench, #10 performance and share previews, #11 epitaph timeline, #12 revival kit export, #13 review-finding fixes, #14 judge guide, #15 results-panel scans and demo storyboard), plus the panel contrast sampling and storyboard stills from branch `feat/contrast-and-storyboard-stills-20261111` where noted. The revival kit was present in the production JavaScript at https://gravekeeper-drab.vercel.app when checked at 13:06:49 UTC on 2026-11-11, shortly after PR #12 merged.
+A map from each judging criterion to evidence in this repository, plus the submission requirements with their real status. Everything here describes `main` through PR #20 (`f588a04`: PRs #7 dependency autopsy, #9 proof workbench, #10 performance and share previews, #11 epitaph timeline, #12 revival kit export, #13 review-finding fixes, #14 judge guide, #15 results-panel scans and demo storyboard, #16 panel contrast sampling and storyboard stills, #17 CDX snapshot fallback, #18 CI Lighthouse and accessibility checks, #19 Next.js 16.4.6 cache-leak update, #20 recorded demo video release). The revival kit was present in the production JavaScript at https://gravekeeper-drab.vercel.app when checked on 2026-11-11, and all routes plus `POST /api/resurrect` were re-verified live on 2026-11-18.
 
 Fastest path: the 60-second walkthrough at the top of [README.md](../README.md#try-it-in-60-seconds), on https://gravekeeper-drab.vercel.app.
 
 ## Submission requirements
 
-Checked on 2026-11-11 (UTC).
+Re-checked on 2026-11-18 (UTC).
 
 | Requirement | Status | How it was checked |
 |---|---|---|
 | Public repository | Done | `gh repo view` reports `visibility: PUBLIC` for https://github.com/mangeshraut712/gravekeeper |
 | Open-source license detected | Done: MIT | `gh repo view` reports `licenseInfo.key: mit`; [LICENSE](../LICENSE) |
 | `/.kiro` at the repo root and not ignored | Done | `git check-ignore .kiro` matches nothing; the GitHub contents API lists `agents`, `evidence`, `hooks`, `settings`, `specs`, `steering` under `.kiro` on `main` |
-| Working application URL | Done | https://gravekeeper-drab.vercel.app: `/`, `/proof`, `/restoration`, `/lantern-hill`, `/opengraph-image`, `/robots.txt` and `/sitemap.xml` returned HTTP 200 at about 12:38 UTC. A `POST /api/resurrect` for `atom/atom` returned 7 receipts with a complete timeline and a `package.json` autopsy |
+| Working application URL | Done | https://gravekeeper-drab.vercel.app: `/`, `/proof`, `/restoration`, `/lantern-hill`, `/opengraph-image`, `/robots.txt` and `/sitemap.xml` returned HTTP 200 on 2026-11-18. A live `POST /api/resurrect` for `facebookarchive/flux` returned 7 signed receipts with a complete timeline, dependency autopsy and revival spec |
 | Demo video under 3 minutes on YouTube | **Pending** | Recorded on 2026-11-18 (2:37, live app, captions): [gravekeeper-demo.mp4](https://github.com/mangeshraut712/gravekeeper/releases/download/demo-video-2026-11-18/gravekeeper-demo.mp4). Not on YouTube yet. Scripts are in [DEMO_SCRIPT.md](DEMO_SCRIPT.md). YouTube URL: ______ |
 | Category | Resurrection | Planned in the draft [submission/DEVPOST.md](submission/DEVPOST.md). Nothing has been submitted |
 | Kiro usage write-up | Draft | [submission/WRITEUP.md](submission/WRITEUP.md), [KIRO_WORKFLOW.md](KIRO_WORKFLOW.md), [KIRO_USAGE.md](../KIRO_USAGE.md) |
@@ -31,7 +31,7 @@ Checked on 2026-11-11 (UTC).
 ## Technological Implementation
 
 - **Signed receipt chain.** `src/lib/receipts/chain.ts` and `crypto.ts` use Web Crypto Ed25519 and SHA-256 with canonical JSON. The six correctness properties in [.kiro/specs/resurrect/design.md](../.kiro/specs/resurrect/design.md) are fast-check tests in `chain.test.ts` and `crypto.test.ts`.
-- **Snapshot fallback (branch `feat/cdx-snapshot-fallback-20261111`, started from `0d944db`).** When the availability API misses but the signed CDX evidence has captures, the card, kit and proof show a capture from the latest captured month, labelled as coming from the capture index; `wayback-miss` and `wayback-cdx` stay as answered. Verified by mocked tests and one local build lookup where availability answered (so the fallback did not run live). Not re-checked on production. See [EPITAPH_TIMELINE.md](EPITAPH_TIMELINE.md).
+- **Snapshot fallback (merged in PR #17, `8ce8c3f`).** When the availability API misses but the signed CDX evidence has captures, the card, kit and proof show a capture from the latest captured month, labelled as coming from the capture index; `wayback-miss` and `wayback-cdx` stay as answered. Verified by mocked tests and one local build lookup where availability answered (so the fallback did not run live). Not re-checked on production. See [EPITAPH_TIMELINE.md](EPITAPH_TIMELINE.md).
 - **Evidence binding.** Each receipt carries its exact normalized payload. `src/client/proof.ts` and `scripts/verify-proof.ts` share that code: they recompute digests and rebuild the displayed autopsy (`src/lib/deps/autopsy.ts`) and timeline (`src/lib/wayback/timeline.ts`). An edited value fails. The tamper runs are recorded in DEPENDENCY_AUTOPSY.md and EPITAPH_TIMELINE.md.
 - **Upstream clients.** `src/lib/wayback/{client,cdx}.ts`, `src/lib/github/client.ts` and `src/lib/deps/{manifest,registry}.ts` return `Result<T>`, use 10-second timeouts, follow the visitor's cancel signal and enforce size caps. They run in parallel where independent (`src/app/api/resurrect/route.ts`).
 - **Version comparison.** A dependency-free npm/PyPI floor comparator, `src/lib/deps/semver.ts`. Review findings on PR #7 (exclusive partials, `!=` prefixes, repeated PyPI requirements, prerelease tags) were each fixed with a failing test first ([KIRO_USAGE.md](../KIRO_USAGE.md)).
@@ -65,6 +65,6 @@ Checked on 2026-11-11 (UTC).
 
 ## What is not done
 
-- Demo video, blog post and social post: not made. Their URLs are blank in the drafts.
+- YouTube upload of the recorded demo video ([gravekeeper-demo.mp4](https://github.com/mangeshraut712/gravekeeper/releases/download/demo-video-2026-11-18/gravekeeper-demo.mp4)), plus optional blog post and social post: URLs are still blank in the drafts.
 - Screen-reader pass; contrast sampling of the panels with live data or in Firefox and WebKit; an OS-level drag test on `/proof`; a scan of a real upstream failure.
-- Performance measurement of the deployed site.
+- Field performance measurement of the deployed site.
