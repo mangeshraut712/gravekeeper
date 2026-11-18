@@ -1,6 +1,6 @@
 # Demo storyboard (draft)
 
-Draft only. No video has been recorded or uploaded, and nothing here has been submitted or posted. The spoken lines are short forms of the lines in [../DEMO_SCRIPT.md](../DEMO_SCRIPT.md); if the two disagree, the script wins.
+The longer cut was recorded on 2026-11-18 and attached to the [demo-video-2026-11-18](https://github.com/mangeshraut712/gravekeeper/releases/tag/demo-video-2026-11-18) release. It is not on YouTube, and nothing here has been submitted or posted. The spoken lines are short forms of the lines in [../DEMO_SCRIPT.md](../DEMO_SCRIPT.md); if the two disagree, the script wins.
 
 "Reference shot" names a screenshot that exists in this repository. Production shots in `docs/screenshots/live/` were captured on https://gravekeeper-drab.vercel.app at about 13:16–13:17 UTC on 2026-11-11 (see [the caption file](../screenshots/live/README.md)). "None yet" means no screenshot of that beat exists; capture it while recording. Shots in `docs/screenshots/live/storyboard/` are **not** production: they come from a local production build at about 13:47–13:48 UTC on 2026-11-11, at 1440x900 with reduced motion, from a real `atom/atom` lookup (files ending `-atom.png`) and from the synthetic signed lookup (`-synthetic.png`); see the same caption file. Reference shots show what the screen looked like once, not what it will show on the day: a live `atom/atom` lookup depends on GitHub, the Internet Archive and npm, and its numbers change.
 
@@ -62,4 +62,4 @@ For a 375 px cutaway (optional, either cut), `docs/screenshots/live/home-375.png
 - [ ] If GitHub rate-limits the anonymous lookup (60 requests/hour), wait or run the same steps on a local production build, and say which one is on screen.
 - [ ] Reduced motion: System Settings → Accessibility → Display → Reduce motion (macOS).
 - [ ] Do not say a hook ran tests, that Kiro called an MCP tool, or that the app is WCAG conformant. Do not claim a screen-reader pass.
-- [ ] Upload, Devpost submission and any social post are done by the owner, not by this repository. YouTube URL: ______
+- [ ] Upload, Devpost submission and any social post are done by the owner, not by this repository. Recorded file: [gravekeeper-demo.mp4](https://github.com/mangeshraut712/gravekeeper/releases/download/demo-video-2026-11-18/gravekeeper-demo.mp4). YouTube URL: ______

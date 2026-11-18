@@ -14,7 +14,7 @@ Checked on 2026-11-11 (UTC).
 | Open-source license detected | Done: MIT | `gh repo view` reports `licenseInfo.key: mit`; [LICENSE](../LICENSE) |
 | `/.kiro` at the repo root and not ignored | Done | `git check-ignore .kiro` matches nothing; the GitHub contents API lists `agents`, `evidence`, `hooks`, `settings`, `specs`, `steering` under `.kiro` on `main` |
 | Working application URL | Done | https://gravekeeper-drab.vercel.app: `/`, `/proof`, `/restoration`, `/lantern-hill`, `/opengraph-image`, `/robots.txt` and `/sitemap.xml` returned HTTP 200 at about 12:38 UTC. A `POST /api/resurrect` for `atom/atom` returned 7 receipts with a complete timeline and a `package.json` autopsy |
-| Demo video under 3 minutes on YouTube | **Pending** | Not recorded or uploaded. Scripts for a 90-second cut and a 2:30 to 2:45 cut are in [DEMO_SCRIPT.md](DEMO_SCRIPT.md). Video URL: ______ |
+| Demo video under 3 minutes on YouTube | **Pending** | Recorded on 2026-11-18 (2:37, live app, captions): [gravekeeper-demo.mp4](https://github.com/mangeshraut712/gravekeeper/releases/download/demo-video-2026-11-18/gravekeeper-demo.mp4). Not on YouTube yet. Scripts are in [DEMO_SCRIPT.md](DEMO_SCRIPT.md). YouTube URL: ______ |
 | Category | Resurrection | Planned in the draft [submission/DEVPOST.md](submission/DEVPOST.md). Nothing has been submitted |
 | Kiro usage write-up | Draft | [submission/WRITEUP.md](submission/WRITEUP.md), [KIRO_WORKFLOW.md](KIRO_WORKFLOW.md), [KIRO_USAGE.md](../KIRO_USAGE.md) |
 | Devpost submission | **Not submitted** | The owner submits; this repository never does |
@@ -59,7 +59,7 @@ Checked on 2026-11-11 (UTC).
 ## Presentation
 
 - [README.md](../README.md): pitch, 60-second path, feature table with limits, Mermaid architecture diagram, setup in three commands (clone, `npm ci`, `npm run dev`).
-- [DEMO_SCRIPT.md](DEMO_SCRIPT.md): timed scripts. No video yet.
+- [DEMO_SCRIPT.md](DEMO_SCRIPT.md): timed scripts. The longer cut is recorded ([release](https://github.com/mangeshraut712/gravekeeper/releases/tag/demo-video-2026-11-18)); YouTube upload pending.
 - Share previews: 1200×630 Open Graph and Twitter images; `/opengraph-image` returned `image/png` on production.
 - **How Kiro built it.** Specs for [resurrect](../.kiro/specs/resurrect), [dependency-autopsy](../.kiro/specs/dependency-autopsy), [epitaph-timeline](../.kiro/specs/epitaph-timeline) and [revival-kit](../.kiro/specs/revival-kit) were committed before their code (`863f8c1`, `e8b6285`, `d44a06d`, `f52061d`). [proof-workbench](../.kiro/specs/proof-workbench) landed in the same commit as its code. The other records are [KIRO_WORKFLOW.md](KIRO_WORKFLOW.md) (observed versus configured, per file), [KIRO_USAGE.md](../KIRO_USAGE.md) (session log separating Kiro work from hand work) and [.kiro/evidence](../.kiro/evidence) (metadata-only records).
 

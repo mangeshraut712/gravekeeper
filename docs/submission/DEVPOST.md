@@ -8,7 +8,7 @@ Nothing here has been submitted. Mangesh must review, fill the blanks, and submi
 - Category: Resurrection
 - Public GitHub repository: https://github.com/mangeshraut712/gravekeeper
 - Working app: https://gravekeeper-drab.vercel.app
-- Video URL (YouTube, under 3 minutes): ______ (not recorded; see "Video" below)
+- Video URL (YouTube, under 3 minutes): ______ (recorded, not yet on YouTube; see "Video" below)
 
 ## What it does
 
@@ -44,7 +44,9 @@ Kiro CLI wrote the steering docs and the spec (requirements, design, tasks) and 
 
 ## Video
 
-Not recorded. A 90-second cut and a roughly 2:30 to 2:45 cut are scripted in [docs/DEMO_SCRIPT.md](../DEMO_SCRIPT.md). Recording and the YouTube upload need Mangesh.
+Recorded on 2026-11-18: 2:37, 1440x900, captions burned in. Download: [gravekeeper-demo.mp4](https://github.com/mangeshraut712/gravekeeper/releases/download/demo-video-2026-11-18/gravekeeper-demo.mp4) (release [demo-video-2026-11-18](https://github.com/mangeshraut712/gravekeeper/releases/tag/demo-video-2026-11-18), which also has the captions as an `.srt`). It follows the longer cut in [docs/DEMO_SCRIPT.md](../DEMO_SCRIPT.md): Playwright drove the live app through a real `atom/atom` lookup, the narration is text-to-speech, and the terminal shots show the real output of `node scripts/verify-proof.ts` on the proof downloaded during the recording and of `npm run demo:verify`.
+
+The rules require the video to be public on YouTube, so the release link is not the submission link. Mangesh still has to upload the file to YouTube and paste that URL above.
 
 ## Things judges should know
 
