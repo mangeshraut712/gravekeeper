@@ -2,7 +2,7 @@
 
 Live URL: https://gravekeeper-drab.vercel.app
 
-Two cuts, both under 3 minutes. No video has been recorded; these are scripts only. Every feature shown is on `main`. The revival kit (merged in PR #12, `7a55157`) was present in the production JavaScript at 13:06:49 UTC on 2026-11-11. If a deploy lags, run the same steps on a local production build.
+Two cuts, both under 3 minutes. The longer cut was recorded on 2026-11-18 (2:37, text-to-speech narration) and attached to the [demo-video-2026-11-18](https://github.com/mangeshraut712/gravekeeper/releases/tag/demo-video-2026-11-18) release; it is not on YouTube yet. Every feature shown is on `main`. The revival kit (merged in PR #12, `7a55157`) was present in the production JavaScript at 13:06:49 UTC on 2026-11-11. If a deploy lags, run the same steps on a local production build.
 
 Record at 1440×900 with the browser zoom at 110%. Have a terminal open in the repo, and let `gravekeeper-proof.json` land in `~/Downloads`. Do a dry run first. The `atom/atom` lookup depends on GitHub (anonymous limit, 60 requests/hour shared by all visitors), the Internet Archive and npm, so it can be slow or partial. On 2026-11-11 at 12:38 UTC a production lookup got "no archived snapshot" from the Wayback availability API while the CDX index returned a full timeline. If a source is missing on the day, say so: the partial result is the intended behaviour. With the CDX snapshot fallback, an availability miss still shows a capture from the latest captured month when the index has one (the card says so); this is tested with mocks and was not seen live.
 
@@ -46,4 +46,4 @@ About 400 spoken words at a relaxed pace; time a dry run and trim if it passes 2
 - `npm run demo:verify` exits 0 locally.
 - Reduced-motion toggle: System Settings → Accessibility → Display → Reduce motion (macOS).
 - Do not enter private URLs; the lookup sends the URL to the Internet Archive, GitHub and npm or PyPI.
-- The video is not uploaded or submitted by this repository. YouTube URL: ______
+- The video is not uploaded to YouTube or submitted by this repository. Recorded file: [gravekeeper-demo.mp4](https://github.com/mangeshraut712/gravekeeper/releases/download/demo-video-2026-11-18/gravekeeper-demo.mp4). YouTube URL: ______
