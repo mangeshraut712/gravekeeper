@@ -321,7 +321,9 @@ function assembleDocument(html: string, fixtureLabel: string | undefined): strin
   const working = html.trim();
   const navAt = working.search(/<nav\b/i);
   const sectionAt = working.search(/<section\b/i);
-  const splitAt = navAt === -1 ? sectionAt : navAt;
+  // Split at whichever structural element comes first, so a section never lands in <header>.
+  const present = [navAt, sectionAt].filter((index) => index !== -1);
+  const splitAt = present.length ? Math.min(...present) : -1;
 
   let headerInner = '';
   let rest = working;

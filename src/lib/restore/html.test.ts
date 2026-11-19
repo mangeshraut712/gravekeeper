@@ -113,4 +113,15 @@ describe('restoreDeadHtml', () => {
     expect(header.replace(/<!--[\s\S]*?-->/g, '')).not.toContain('</section>');
     expect(restored.html).toMatch(/<section id="links">[\s\S]*<\/section>\s*<hr>/);
   });
+
+  it('keeps a section that comes before the nav table out of the header', () => {
+    const restored = restoreDeadHtml(`<html><head><title>T</title></head><body><font size=7>Home</font><br>
+<a name="about"></a><b>About</b><br>Hi there<br>
+<table border="0"><tr><td><a href="#about">About</a> | <a href="#links">Links</a></td></tr></table>
+<a name="links"></a><b>Links</b><br>stuff<hr>bye</body></html>`);
+    const header = restored.html.match(/<header>([\s\S]*?)<\/header>/)?.[1] ?? '';
+    expect(header).toContain('<h1>Home</h1>');
+    expect(header).not.toContain('<section');
+    expect(restored.html).toMatch(/<main>\s*<section id="about">/);
+  });
 });
