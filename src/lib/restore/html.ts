@@ -270,15 +270,16 @@ function namedAnchorsToSections(html: string): { html: string; count: number } {
   let count = 0;
   const replaced = html.replace(pattern, (_full, id: string) => {
     count += 1;
-    return `</section><section id="${escapeAttr(id)}">`;
+    // Only later anchors close the previous section; never strip a </section> from the source.
+    return `${count === 1 ? '' : '</section>'}<section id="${escapeAttr(id)}">`;
   });
-  if (count === 0) return { html, count: 0 };
-  return { html: replaced.replace('</section>', ''), count };
+  return { html: count === 0 ? html : replaced, count };
 }
 
 function closeOpenSectionBeforeHr(html: string): string {
-  const opens = html.match(/<section\b/gi)?.length ?? 0;
-  const closes = html.match(/<\/section>/gi)?.length ?? 0;
+  const code = html.replace(/<!--[\s\S]*?-->/g, '');
+  const opens = code.match(/<section\b/gi)?.length ?? 0;
+  const closes = code.match(/<\/section>/gi)?.length ?? 0;
   if (opens <= closes) return html;
   const hr = html.search(/<hr\b/i);
   if (hr !== -1) return `${html.slice(0, hr)}</section>${html.slice(hr)}`;

@@ -102,4 +102,15 @@ describe('restoreDeadHtml', () => {
       { numRuns: 20 },
     );
   });
+
+  it('keeps a literal </section> that appears before the first named anchor', () => {
+    const restored = restoreDeadHtml(`<html><head><title>T</title></head><body>
+<p>Old note <!-- </section> --></p>
+<a name="about"></a><b>About</b><br>Hi there<br>
+<a name="links"></a><b>Links</b><br>stuff<hr>bye</body></html>`);
+    expect(restored.html).toContain('<!-- </section> -->');
+    const header = restored.html.match(/<header>([\s\S]*?)<\/header>/)?.[1] ?? '';
+    expect(header.replace(/<!--[\s\S]*?-->/g, '')).not.toContain('</section>');
+    expect(restored.html).toMatch(/<section id="links">[\s\S]*<\/section>\s*<hr>/);
+  });
 });
