@@ -1,8 +1,6 @@
-# Proof Workbench — Tasks
-
-- [x] 1. `src/app/proof/analyze.ts`: parse, classify, verify, project receipts. Tests with real signed fixtures plus tamper, bad JSON, missing fields, oversize.
-- [x] 2. `src/components/ProofWorkbench.tsx`: file input, drop zone, paste, empty/error/valid/invalid states, `role="status"`.
+- [x] 1. Types and `verifyProof` in `src/lib/proof.ts`; unit tests for valid, tampered and malformed proofs.
+- [x] 2. `ProofWorkbench` client UI: file, drop and paste, honest failure copy, signed-in appearance optional.
 - [x] 3. `src/app/proof/page.tsx` with metadata; static-markup test for empty state, labels and honesty copy.
 - [x] 4. `SiteFooter` in `layout.tsx` linking `/proof`; test.
 - [x] 5. Add `/proof` to `scripts/a11y-audit.mts` page list; run `npm run a11y`.
-- [ ] 6. Screen-reader pass (not done). Drop-zone handlers are now exercised in Chromium by `npm run e2e` with synthesized dragover/drop events carrying a File (valid, tampered and non-JSON); a real OS drag is not tested.
+- [ ] 6. Screen-reader pass (still open: no VoiceOver/NVDA pass). Drop-zone handlers are now exercised in Chromium by `npm run e2e` with synthesized `dragover`/`drop` events carrying a `File` (valid, tampered and non-JSON); a real OS drag from Finder is not tested.

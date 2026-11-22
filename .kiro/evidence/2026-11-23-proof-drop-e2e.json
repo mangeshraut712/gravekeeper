@@ -1,15 +1,19 @@
 {
-  "purpose": "Add a browser test for the /proof drop zone",
+  "purpose": "Add a browser test for the /proof drop zone (proof-workbench task 6, partial)",
   "recordedAt": "2026-11-23",
-  "source": "Kiro agent session; no metering exposed",
+  "baseCommit": "d3ab0c0",
+  "mergedWith": "6cfccd6 (PR #26) to resolve the conflict with this follow-up branch",
+  "source": "Kiro agent session; no stream-json metering was exposed",
   "reportedCreditsTotal": null,
+  "exactTokenCountsExposed": false,
+  "wbmUploadPerformed": false,
   "hookOrMcpExecutionClaimed": false,
   "observed": {
     "unitTests": "702 passed in 46 files (vitest)",
     "lint": "eslint clean",
-    "typecheck": "next typegen then tsc --noEmit clean (as in CI)",
+    "typecheck": "next typegen then tsc --noEmit clean (tsc alone fails on LayoutProps without typegen, as CI runs it)",
     "build": "next build succeeded",
-    "e2e": "npm run e2e: 18/18 passed in Chromium, including the new /proof drop step (valid, tampered, non-JSON files)"
+    "e2e": "npm run e2e: Chromium, including the /proof drop step (valid, tampered, and non-JSON files)"
   },
-  "notObserved": "Real OS drag-and-drop (Playwright cannot start one; events are synthesized with a DataTransfer holding a File), screen reader pass, a11y script rerun, Lighthouse"
+  "notObserved": "Real OS drag-and-drop (Playwright cannot start one; events are synthesized with a DataTransfer holding a File), screen reader pass, a11y script rerun, Lighthouse, non-Chromium browsers, real upstream failure scan"
 }
