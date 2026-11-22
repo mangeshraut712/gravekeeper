@@ -209,3 +209,7 @@ What the snapshots show:
 | Download proof | Focus button, Space or Enter | `gravekeeper-proof.json` download starts (Space verified) |
 
 Escape only has a meaning during a running lookup. The accordions are native `<details>`, which have no Escape behaviour; there are no modal dialogs in the app.
+
+## `/proof` drop handler (2026-11-23)
+
+`npm run e2e` now has a step that dispatches `dragover` and `drop` events, each carrying a `DataTransfer` with a `File`, on the `/proof` drop-zone label. A downloaded proof reports "Valid: internally consistent". The same proof with one evidence character changed reports "Invalid: verification failed", and the `role="status"` region is non-empty afterwards. This runs the component's `onDragOver`/`onDrop` code in Chromium (Google Chrome, local). It is not an OS-level drag from Finder, and it says nothing about how a screen reader announces the drop. The screen-reader pass is still not done.
