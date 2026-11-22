@@ -1,0 +1,15 @@
+{
+  "purpose": "Add a browser test for the /proof drop zone",
+  "recordedAt": "2026-11-23",
+  "source": "Kiro agent session; no metering exposed",
+  "reportedCreditsTotal": null,
+  "hookOrMcpExecutionClaimed": false,
+  "observed": {
+    "unitTests": "702 passed in 46 files (vitest)",
+    "lint": "eslint clean",
+    "typecheck": "next typegen then tsc --noEmit clean (as in CI)",
+    "build": "next build succeeded",
+    "e2e": "npm run e2e: 18/18 passed in Chromium, including the new /proof drop step (valid, tampered, non-JSON files)"
+  },
+  "notObserved": "Real OS drag-and-drop (Playwright cannot start one; events are synthesized with a DataTransfer holding a File), screen reader pass, a11y script rerun, Lighthouse"
+}

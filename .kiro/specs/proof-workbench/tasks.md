@@ -5,4 +5,4 @@
 - [x] 3. `src/app/proof/page.tsx` with metadata; static-markup test for empty state, labels and honesty copy.
 - [x] 4. `SiteFooter` in `layout.tsx` linking `/proof`; test.
 - [x] 5. Add `/proof` to `scripts/a11y-audit.mts` page list; run `npm run a11y`.
-- [ ] 6. Screen-reader pass and a real drag-and-drop test in a browser (not done; keyboard path and file input exercised with Playwright only if recorded in docs/A11Y_AUDIT.md).
+- [ ] 6. Screen-reader pass (not done). Drop-zone handlers are now exercised in Chromium by `npm run e2e` with synthesized dragover/drop events carrying a File (valid, tampered and non-JSON); a real OS drag is not tested.

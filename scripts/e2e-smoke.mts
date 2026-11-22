@@ -228,6 +228,34 @@ await step("offline verifier rejects the proof after one evidence byte changes",
   assert(status === 1, `expected exit 1 for tampered proof, got ${status}: ${output}`);
 });
 
+// Playwright cannot drag a file from the OS, so this dispatches real dragover/drop events carrying a
+// DataTransfer that holds a File. It exercises the drop zone's handlers, which input-only tests skip.
+async function dropFile(page: Page, name: string, text: string) {
+  const dataTransfer = await page.evaluateHandle(
+    ([n, t]) => {
+      const dt = new DataTransfer();
+      dt.items.add(new File([t], n, { type: "application/json" }));
+      return dt;
+    },
+    [name, text],
+  );
+  const zone = page.locator("label[for='proof-file']");
+  await zone.dispatchEvent("dragover", { dataTransfer });
+  await zone.dispatchEvent("drop", { dataTransfer });
+}
+
+await step("/proof drop zone: dropping the downloaded proof verifies it; dropping the tampered file is rejected", () =>
+  withPage(browser, {}, async (page) => {
+    assert(downloaded, "no proof file was downloaded");
+    await page.goto(base + "/proof", { waitUntil: "networkidle" });
+    await dropFile(page, "gravekeeper-proof.json", await readFile(downloaded, "utf8"));
+    await page.getByRole("heading", { name: "Valid: internally consistent" }).waitFor({ timeout: 15_000 });
+    await dropFile(page, "gravekeeper-proof-tampered.json", await readFile(join(work, "gravekeeper-proof-tampered.json"), "utf8"));
+    await page.getByRole("heading", { name: "Invalid: verification failed" }).waitFor({ timeout: 15_000 });
+    await dropFile(page, "not-json.json", "{nope");
+    await page.getByRole("heading", { name: "Could not read this proof" }).waitFor({ timeout: 15_000 });
+  }));
+
 await step("results show the Epitaph timeline with a table alternative", () =>
   withPage(browser, {}, async (page) => {
     await page.route("**/api/resurrect", (route) =>
