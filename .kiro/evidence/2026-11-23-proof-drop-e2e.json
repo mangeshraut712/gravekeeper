@@ -1,0 +1,18 @@
+{
+  "purpose": "Add a browser test for the /proof drop handler (proof-workbench task 6, partial)",
+  "recordedAt": "2026-11-23",
+  "baseCommit": "d3ab0c0",
+  "source": "Kiro agent session; no stream-json metering was exposed",
+  "reportedCreditsTotal": null,
+  "exactTokenCountsExposed": false,
+  "wbmUploadPerformed": false,
+  "hookOrMcpExecutionClaimed": false,
+  "observed": {
+    "unitTests": "702 passed in 46 files (vitest)",
+    "lint": "eslint clean",
+    "typecheck": "next typegen then tsc --noEmit clean (tsc alone fails on LayoutProps without typegen, as CI runs it)",
+    "build": "next build succeeded",
+    "e2e": "npm run e2e against next start, local Google Chrome via CHROMIUM_PATH: 18/18 steps passed, including the new /proof drop step (valid, then tampered)"
+  },
+  "notObserved": "Screen reader pass, OS-level drag from Finder, non-Chromium browsers, npm run a11y (UI not changed), real upstream failure scan"
+}

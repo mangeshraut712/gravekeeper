@@ -228,6 +228,42 @@ await step("offline verifier rejects the proof after one evidence byte changes",
   assert(status === 1, `expected exit 1 for tampered proof, got ${status}: ${output}`);
 });
 
+// A real browser drop event (dragover, then drop) carrying a File in a DataTransfer, dispatched on the
+// drop-zone label. This exercises onDragOver/onDrop, which the file-input path does not.
+async function dropOnProofZone(page: Page, name: string, text: string) {
+  const zone = page.locator("label[for='proof-file']");
+  const handle = await page.evaluateHandle(
+    ([n, t]) => {
+      const dt = new DataTransfer();
+      dt.items.add(new File([t], n, { type: "application/json" }));
+      return dt;
+    },
+    [name, text],
+  );
+  await zone.dispatchEvent("dragover", { dataTransfer: handle });
+  await zone.dispatchEvent("drop", { dataTransfer: handle });
+}
+
+await step("/proof: dropping a downloaded proof reports Valid; dropping a tampered one reports Invalid", async () => {
+  assert(downloaded, "no proof file was downloaded");
+  const good = await readFile(downloaded, "utf8");
+  const proof = JSON.parse(good);
+  const metaIndex = proof.receipts.findIndex((r: { kind: string }) => r.kind === "github-meta");
+  const body = proof.evidence[metaIndex].body as { description: string };
+  body.description = (body.description[0] === "S" ? "s" : "S") + body.description.slice(1);
+  await withPage(browser, {}, async (page) => {
+    await page.goto(base + "/proof", { waitUntil: "networkidle" });
+    await dropOnProofZone(page, "gravekeeper-proof.json", good);
+    await page.getByText("Valid: internally consistent").waitFor({ timeout: 15_000 });
+    await dropOnProofZone(page, "tampered.json", JSON.stringify(proof));
+    await page.getByText("Invalid: verification failed").waitFor({ timeout: 15_000 });
+    assert(
+      (await page.locator("p[role=status]").innerText()).length > 0,
+      "the live region stayed empty after a drop",
+    );
+  });
+});
+
 await step("results show the Epitaph timeline with a table alternative", () =>
   withPage(browser, {}, async (page) => {
     await page.route("**/api/resurrect", (route) =>
