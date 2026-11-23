@@ -1,12 +1,18 @@
 # Judge guide
 
-A map from each judging criterion to evidence in this repository, plus the submission requirements with their real status. Everything here describes `main` through PR #20 (`f588a04`: PRs #7 dependency autopsy, #9 proof workbench, #10 performance and share previews, #11 epitaph timeline, #12 revival kit export, #13 review-finding fixes, #14 judge guide, #15 results-panel scans and demo storyboard, #16 panel contrast sampling and storyboard stills, #17 CDX snapshot fallback, #18 CI Lighthouse and accessibility checks, #19 Next.js 16.4.6 cache-leak update, #20 recorded demo video release). The revival kit was present in the production JavaScript at https://gravekeeper-drab.vercel.app when checked on 2026-11-11, and all routes plus `POST /api/resurrect` were re-verified live on 2026-11-18.
+A map from each judging criterion to evidence in this repository, plus the current submission status. The historical technical evidence below covers `main` through PR #20 (`f588a04`: PRs #7 dependency autopsy, #9 proof workbench, #10 performance and share previews, #11 epitaph timeline, #12 revival kit export, #13 review-finding fixes, #14 judge guide, #15 results-panel scans and demo storyboard, #16 panel contrast sampling and storyboard stills, #17 CDX snapshot fallback, #18 CI Lighthouse and accessibility checks, #19 Next.js 16.4.6 cache-leak update, #20 recorded demo video release). The revival kit was present in the production JavaScript at https://gravekeeper-drab.vercel.app when checked on 2026-11-11, and all routes plus `POST /api/resurrect` were re-verified live on 2026-11-18.
 
-Fastest path: the 60-second walkthrough at the top of [README.md](../README.md#try-it-in-60-seconds), on https://gravekeeper-drab.vercel.app.
+## Start here
+
+1. [Watch the 2:37 captioned demo](https://youtu.be/MoHIWtVwOww) to see the lookup, revival plan and proof verification.
+2. [Try the bundled restoration](https://gravekeeper-drab.vercel.app/restoration). It compares the pinned original with a Unicode-aware rewrite on the same 12 fixtures (4 passing before, 12 after). It does not depend on a live GitHub or Wayback lookup.
+3. [Try a live lookup](https://gravekeeper-drab.vercel.app) with the [60-second walkthrough](../README.md#try-it-in-60-seconds). If an upstream source times out or is rate-limited, the app labels the partial result. The bundled restoration is still available.
+
+For the development process, start with [How Kiro was used](KIRO_WORKFLOW.md): it separates spec-first work, steering loaded in actual sessions, and hooks observed firing from configuration alone.
 
 ## Submission requirements
 
-Re-checked on 2026-11-18 (UTC).
+Application and repository checks below are from November 18. The video link and submission status were updated November 23, 2026.
 
 | Requirement | Status | How it was checked |
 |---|---|---|
@@ -14,10 +20,10 @@ Re-checked on 2026-11-18 (UTC).
 | Open-source license detected | Done: MIT | `gh repo view` reports `licenseInfo.key: mit`; [LICENSE](../LICENSE) |
 | `/.kiro` at the repo root and not ignored | Done | `git check-ignore .kiro` matches nothing; the GitHub contents API lists `agents`, `evidence`, `hooks`, `settings`, `specs`, `steering` under `.kiro` on `main` |
 | Working application URL | Done | https://gravekeeper-drab.vercel.app: `/`, `/proof`, `/restoration`, `/lantern-hill`, `/opengraph-image`, `/robots.txt` and `/sitemap.xml` returned HTTP 200 on 2026-11-18. A live `POST /api/resurrect` for `facebookarchive/flux` returned 7 signed receipts with a complete timeline, dependency autopsy and revival spec |
-| Demo video under 3 minutes on YouTube | **Pending** | Recorded on 2026-11-18 (2:37, live app, captions): [gravekeeper-demo.mp4](https://github.com/mangeshraut712/gravekeeper/releases/download/demo-video-2026-11-18/gravekeeper-demo.mp4). Not on YouTube yet. Scripts are in [DEMO_SCRIPT.md](DEMO_SCRIPT.md). YouTube URL: ______ |
-| Category | Resurrection | Planned in the draft [submission/DEVPOST.md](submission/DEVPOST.md). Nothing has been submitted |
+| Demo video under 3 minutes on YouTube | Done | [Gravekeeper: Resurrection demo](https://youtu.be/MoHIWtVwOww) (2:37, captioned). [Demo script](DEMO_SCRIPT.md). |
+| Category | Resurrection | The project shows how to inspect and revive abandoned software. |
 | Kiro usage write-up | Draft | [submission/WRITEUP.md](submission/WRITEUP.md), [KIRO_WORKFLOW.md](KIRO_WORKFLOW.md), [KIRO_USAGE.md](../KIRO_USAGE.md) |
-| Devpost submission | **Not submitted** | The owner submits; this repository never does |
+| Devpost submission | Submitted | Devpost confirmed receipt on November 23, 2026. This does not imply judge acceptance or placement. |
 | Best Student Project | Not entered | |
 
 ## Potential Impact
@@ -59,12 +65,12 @@ Re-checked on 2026-11-18 (UTC).
 ## Presentation
 
 - [README.md](../README.md): pitch, 60-second path, feature table with limits, Mermaid architecture diagram, setup in three commands (clone, `npm ci`, `npm run dev`).
-- [DEMO_SCRIPT.md](DEMO_SCRIPT.md): timed scripts. The longer cut is recorded ([release](https://github.com/mangeshraut712/gravekeeper/releases/tag/demo-video-2026-11-18)); YouTube upload pending.
+- [Public captioned demo](https://youtu.be/MoHIWtVwOww) · [timed scripts](DEMO_SCRIPT.md).
 - Share previews: 1200×630 Open Graph and Twitter images; `/opengraph-image` returned `image/png` on production.
 - **How Kiro built it.** Specs for [resurrect](../.kiro/specs/resurrect), [dependency-autopsy](../.kiro/specs/dependency-autopsy), [epitaph-timeline](../.kiro/specs/epitaph-timeline) and [revival-kit](../.kiro/specs/revival-kit) were committed before their code (`863f8c1`, `e8b6285`, `d44a06d`, `f52061d`). [proof-workbench](../.kiro/specs/proof-workbench) landed in the same commit as its code. The other records are [KIRO_WORKFLOW.md](KIRO_WORKFLOW.md) (observed versus configured, per file), [KIRO_USAGE.md](../KIRO_USAGE.md) (session log separating Kiro work from hand work) and [.kiro/evidence](../.kiro/evidence) (metadata-only records).
 
 ## What is not done
 
-- YouTube upload of the recorded demo video ([gravekeeper-demo.mp4](https://github.com/mangeshraut712/gravekeeper/releases/download/demo-video-2026-11-18/gravekeeper-demo.mp4)), plus optional blog post and social post: URLs are still blank in the drafts.
+- Optional blog and social bonus materials are not claimed here.
 - Screen-reader pass; contrast sampling of the panels with live data or in Firefox and WebKit; an OS-level drag test on `/proof`; a scan of a real upstream failure.
 - Field performance measurement of the deployed site.
