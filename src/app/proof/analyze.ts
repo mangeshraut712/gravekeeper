@@ -86,10 +86,10 @@ export async function analyzeProofText(text: string): Promise<ProofReport> {
       !Array.isArray(record.evidence)
     )
       return fail("missing-fields", "A gravekeeper-proof-v1 file needs publicKey, receipts and evidence.");
-    const ok = await verifyProof(
-      record as unknown as ResurrectResponse,
-      typeof record.resource === "string" ? record.resource : undefined,
-    );
+    // Same rule as scripts/verify-proof.ts: the resource must be present and match receipt 0.
+    const ok =
+      typeof record.resource === "string" &&
+      (await verifyProof(record as unknown as ResurrectResponse, record.resource));
     return {
       status: ok ? "valid" : "invalid",
       format: "gravekeeper-proof-v1",

@@ -114,6 +114,15 @@ describe('restoreDeadHtml', () => {
     expect(restored.html).toMatch(/<section id="links">[\s\S]*<\/section>\s*<hr>/);
   });
 
+  it('does not double-escape entities in nav labels or the copyright footer', () => {
+    const restored = restoreDeadHtml(`<html><head><title>T</title></head><body>
+<table border="0"><tr><td><a href="#about">About</a> | <a href="#links">Links &amp; Friends</a></td></tr></table>
+<a name="about"></a><b>About</b><br>Hi there<hr>Copyright 1999 Tom &amp; Jerry</body></html>`);
+    expect(restored.html).toContain('<a href="#links">Links &amp; Friends</a>');
+    expect(restored.html).toContain('<p>Copyright 1999 Tom &amp; Jerry</p>');
+    expect(restored.html).not.toContain('&amp;amp;');
+  });
+
   it('keeps a section that comes before the nav table out of the header', () => {
     const restored = restoreDeadHtml(`<html><head><title>T</title></head><body><font size=7>Home</font><br>
 <a name="about"></a><b>About</b><br>Hi there<br>

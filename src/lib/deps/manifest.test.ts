@@ -135,6 +135,21 @@ describe("parseRequirementsTxt", () => {
     expect(data.skippedLines).toBe(5);
   });
 
+  it("keeps requirements that carry pip --hash options (pip-compile --generate-hashes)", () => {
+    const text = [
+      "requests==2.31.0 \\",
+      "    --hash=sha256:aaaa \\",
+      "    --hash=sha256:bbbb",
+      "idna==3.4 --hash=sha256:cccc",
+    ].join("\n");
+    const data = ok(parseRequirementsTxt(text));
+    expect(data.packages).toEqual([
+      { name: "requests", spec: "==2.31.0", group: "requirements" },
+      { name: "idna", spec: "==3.4", group: "requirements" },
+    ]);
+    expect(data.skippedLines).toBe(0);
+  });
+
   it("accepts CRLF line endings", () => {
     expect(ok(parseRequirementsTxt("a==1\r\nb==2\r\n")).packages).toHaveLength(2);
   });

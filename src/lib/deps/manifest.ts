@@ -93,6 +93,12 @@ function stripComment(raw: string): string {
   return match ? raw.slice(0, match.index) : raw;
 }
 
+/** Drop pip per-requirement options after a requirement, e.g. `pkg==1.0 --hash=sha256:…`. */
+function stripRequirementOptions(line: string): string {
+  const at = line.search(/\s--/);
+  return at === -1 ? line : line.slice(0, at).trimEnd();
+}
+
 /** PEP 503 normalised project name. */
 export function normalizePypiName(name: string): string {
   return name.toLowerCase().replace(/[-_.]+/g, "-");
@@ -150,7 +156,7 @@ export function parseRequirementsTxt(text: string): Result<ParsedManifest> {
       skipped.n++;
       continue;
     }
-    const line = stripComment(raw).trim();
+    const line = stripRequirementOptions(stripComment(raw).trim());
     if (!line) continue;
     const requirement = line.startsWith("-") ? null : parseRequirement(line);
     if (!requirement || !withinLimits(requirement.name, requirement.spec)) {

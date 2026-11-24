@@ -60,6 +60,14 @@ describe("analyzeProofText", () => {
     expect((await analyzeProofText(edited)).status).toBe("invalid");
   });
 
+  it("rejects a lookup proof whose resource was removed, like the offline verifier", async () => {
+    const { text } = await lookupProof();
+    const { resource, ...rest } = JSON.parse(text);
+    expect(resource).toBe("https://example.com/");
+    expect((await analyzeProofText(JSON.stringify(rest))).status).toBe("invalid");
+    expect((await analyzeProofText(JSON.stringify({ ...rest, resource: 42 }))).status).toBe("invalid");
+  });
+
   it("accepts a valid Lantern Hill receipt export", async () => {
     const report = await analyzeProofText(JSON.stringify(await lanternProof()));
     expect(report.status).toBe("valid");
