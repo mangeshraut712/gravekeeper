@@ -152,11 +152,13 @@ export function parseRequirementsTxt(text: string): Result<ParsedManifest> {
   const skipped = { n: 0 };
   const byName = new Map<string, number>();
   for (const raw of logical) {
-    if (raw.length > MAX_REQUIREMENT_LINE) {
+    // Both helpers scan once without backtracking, so measure the requirement itself:
+    // pip-compile --generate-hashes can join dozens of --hash options onto one pin.
+    const line = stripRequirementOptions(stripComment(raw).trim());
+    if (line.length > MAX_REQUIREMENT_LINE) {
       skipped.n++;
       continue;
     }
-    const line = stripRequirementOptions(stripComment(raw).trim());
     if (!line) continue;
     const requirement = line.startsWith("-") ? null : parseRequirement(line);
     if (!requirement || !withinLimits(requirement.name, requirement.spec)) {

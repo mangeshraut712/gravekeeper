@@ -2,6 +2,7 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
   MAX_PACKAGES,
+  MAX_REQUIREMENT_LINE,
   normalizePypiName,
   parseManifest,
   parsePackageJson,
@@ -147,6 +148,15 @@ describe("parseRequirementsTxt", () => {
       { name: "requests", spec: "==2.31.0", group: "requirements" },
       { name: "idna", spec: "==3.4", group: "requirements" },
     ]);
+    expect(data.skippedLines).toBe(0);
+  });
+
+  it("keeps a pin whose joined --hash options pass the line limit", () => {
+    const hashes = Array.from({ length: 20 }, (_, i) => `    --hash=sha256:${String(i).padStart(64, "0")}`);
+    const text = ["numpy==2.1.0 \\", ...hashes.map((h, i) => (i < hashes.length - 1 ? `${h} \\` : h))].join("\n");
+    expect(text.length).toBeGreaterThan(MAX_REQUIREMENT_LINE);
+    const data = ok(parseRequirementsTxt(text));
+    expect(data.packages).toEqual([{ name: "numpy", spec: "==2.1.0", group: "requirements" }]);
     expect(data.skippedLines).toBe(0);
   });
 
