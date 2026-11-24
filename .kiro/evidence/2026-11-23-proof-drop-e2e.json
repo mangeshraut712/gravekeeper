@@ -1,7 +1,8 @@
 {
-  "purpose": "Add a browser test for the /proof drop handler (proof-workbench task 6, partial)",
+  "purpose": "Add a browser test for the /proof drop zone (proof-workbench task 6, partial)",
   "recordedAt": "2026-11-23",
   "baseCommit": "d3ab0c0",
+  "mergedWith": "6cfccd6 (PR #26) to resolve the conflict with this follow-up branch",
   "source": "Kiro agent session; no stream-json metering was exposed",
   "reportedCreditsTotal": null,
   "exactTokenCountsExposed": false,
@@ -12,7 +13,7 @@
     "lint": "eslint clean",
     "typecheck": "next typegen then tsc --noEmit clean (tsc alone fails on LayoutProps without typegen, as CI runs it)",
     "build": "next build succeeded",
-    "e2e": "npm run e2e against next start, local Google Chrome via CHROMIUM_PATH: 18/18 steps passed, including the new /proof drop step (valid, then tampered)"
+    "e2e": "npm run e2e: Chromium, including the /proof drop step (valid, tampered, and non-JSON files)"
   },
-  "notObserved": "Screen reader pass, OS-level drag from Finder, non-Chromium browsers, npm run a11y (UI not changed), real upstream failure scan"
+  "notObserved": "Real OS drag-and-drop (Playwright cannot start one; events are synthesized with a DataTransfer holding a File), screen reader pass, a11y script rerun, Lighthouse, non-Chromium browsers, real upstream failure scan"
 }
