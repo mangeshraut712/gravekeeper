@@ -256,7 +256,7 @@ function renderCell(inner: string): string {
     const items = hashLinks
       .map((match) => {
         const href = escapeAttr(match[1] ?? '');
-        const label = (match[2] ?? '').replace(/<[^>]+>/g, '').trim();
+        const label = decodeBasic((match[2] ?? '').replace(/<[^>]+>/g, '').trim());
         return `<li><a href="${href}">${escapeHtml(label)}</a></li>`;
       })
       .join('');
@@ -358,7 +358,7 @@ function takeFooter(
     };
   }
   const prefix = html.slice(0, copyAt).replace(/(?:\s|<hr\s*\/?\s*>)+$/i, '');
-  const copyText = html.slice(copyAt).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const copyText = decodeBasic(html.slice(copyAt).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
   return {
     main: prefix,
     footer: `<footer>\n<p>${escapeHtml(copyText)}</p>\n<p>${escapeHtml(note)}</p>\n</footer>`,
