@@ -29,7 +29,7 @@ Limits, stated plainly:
 
 ## Built with
 
-Next.js 16.4.4 (App Router, Turbopack), React 19.3.0 with React Compiler, TypeScript 5, Tailwind CSS v4, Web Crypto (Ed25519, SHA-256), Vitest 5, fast-check, ESLint 9, Playwright with @axe-core/playwright for accessibility scans, GitHub REST API, Internet Archive Wayback availability and CDX APIs, npm and PyPI registry APIs, GitHub Actions CI, Vercel (Hobby). Developed with Kiro CLI.
+Next.js 16.4.6 (App Router, Turbopack), React 19.3.0 with React Compiler, TypeScript 5, Tailwind CSS v4, Web Crypto (Ed25519, SHA-256), Vitest 5, fast-check, ESLint 9, Playwright with @axe-core/playwright for accessibility scans, GitHub REST API, Internet Archive Wayback availability and CDX APIs, npm and PyPI registry APIs, GitHub Actions CI, Vercel (Hobby). Developed with Kiro CLI.
 
 ## How Kiro was used (short)
 
