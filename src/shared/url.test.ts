@@ -17,6 +17,14 @@ describe("normalizePublicUrl", () => {
     expect(normalizePublicUrl("https://example.com./path")).toBe("https://example.com/path");
   });
 
+  it("is idempotent, so the form and the API sign the same URL", () => {
+    for (const input of ["https://Example.com./a#x", "https://example.com:443/b", "http://example.org"]) {
+      const once = normalizePublicUrl(input);
+      expect(once).not.toBeNull();
+      expect(normalizePublicUrl(once as string)).toBe(once);
+    }
+  });
+
   it.each([
     ["credentials", "https://user:pass@example.com/"],
     ["explicit port", "https://example.com:8443/"],
@@ -27,6 +35,7 @@ describe("normalizePublicUrl", () => {
     ["IPv6 literal", "http://[::1]/"],
     ["single-label host", "http://fileserver/"],
     ["trailing-dot localhost", "http://localhost./"],
+    ["two trailing dots", "https://example.com../path"],
     [".localhost suffix", "http://a.localhost/"],
     [".local suffix", "http://printer.local/"],
     [".internal suffix", "http://db.internal/"],

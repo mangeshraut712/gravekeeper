@@ -13,6 +13,9 @@ export function normalizePublicUrl(input: string): string | null {
       return null;
     const host = url.hostname.toLowerCase().replace(/\.$/, "");
     if (
+      // Only one DNS root dot is optional; "example.com.." would normalize to a
+      // different URL on a second pass, so client and server copies would diverge.
+      host.endsWith(".") ||
       !host.includes(".") ||
       host.includes(":") ||
       /^\d+(\.\d+){3}$/.test(host) ||
