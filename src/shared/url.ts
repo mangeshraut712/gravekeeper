@@ -19,6 +19,9 @@ export function normalizePublicUrl(input: string): string | null {
       /\.(localhost|local|internal|test|invalid)$/.test(host)
     )
       return null;
+    // Return the host the checks above validated: the DNS root dot is stripped so
+    // one host maps to one canonical resource URL (permalinks, receipts, CDX queries).
+    url.hostname = host;
     url.hash = "";
     // A literal * is accepted by URL parsing but is a CDX prefix wildcard, not one page.
     if (url.href.includes("*")) return null;
