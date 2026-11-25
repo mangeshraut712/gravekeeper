@@ -13,12 +13,18 @@ export function normalizePublicUrl(input: string): string | null {
       return null;
     const host = url.hostname.toLowerCase().replace(/\.$/, "");
     if (
+      // Only one DNS root dot is optional; "example.com.." would normalize to a
+      // different URL on a second pass, so client and server copies would diverge.
+      host.endsWith(".") ||
       !host.includes(".") ||
       host.includes(":") ||
       /^\d+(\.\d+){3}$/.test(host) ||
       /\.(localhost|local|internal|test|invalid)$/.test(host)
     )
       return null;
+    // Return the host the checks above validated: the DNS root dot is stripped so
+    // one host maps to one canonical resource URL (permalinks, receipts, CDX queries).
+    url.hostname = host;
     url.hash = "";
     // A literal * is accepted by URL parsing but is a CDX prefix wildcard, not one page.
     if (url.href.includes("*")) return null;
