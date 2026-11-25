@@ -12,13 +12,13 @@ const SEP = String.raw`(?:\s|\\\r?\n)+`;
 const WORD = String.raw`(?:"[^"\n]*"|'[^'\n]*'|\S+)`;
 // Global git options before the subcommand: -C/-c take a word; long options that take
 // a separate value (--git-dir dir); other short or long flags (-P, --no-pager, --x=y).
-const GIT_OPTION = String.raw`(?:-[Cc]${SEP}${WORD}|--(?:git-dir|work-tree|namespace|config-env|exec-path|super-prefix)${SEP}${WORD}|--[\w-]+(?:=\S+)?|-[A-Za-z])`;
+const GIT_OPTION = String.raw`(?:-[Cc](?:${SEP}${WORD}|\S+)|--(?:git-dir|work-tree|namespace|config-env|exec-path|super-prefix)${SEP}${WORD}|--[\w-]+(?:=\S+)?|-[A-Za-z])`;
 // git, optionally by path and optionally quoted, then global options, then push.
 const GIT_PUSH = new RegExp(
   String.raw`(^|[^\w.-])["']?(?:\S*\/)?git["']?(?:${SEP}${GIT_OPTION})*${SEP}["']?push\b`,
 );
 // gh, optionally by path, then flags with an optional value, then `pr create`.
-const GH_PR_CREATE = /(^|[^\w.-])(?:\S*\/)?gh(?:\s+-{1,2}[\w-]+(?:[=\s]\S+)?)*\s+pr\s+create\b/;
+const GH_PR_CREATE = /(^|[^\w.-])(?:\S*\/)?gh(?:\s+(?:-{1,2}[\w-]+(?:[=\s]\S+)?|-[A-Za-z]\S+))*\s+pr\s+create\b/;
 
 /** @param {string} command */
 export function isReleaseCommand(command) {

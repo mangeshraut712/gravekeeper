@@ -28,6 +28,10 @@ describe("isReleaseCommand", () => {
     ["git --git-dir <path> push", "git --git-dir .git push"],
     ["git --work-tree <dir> push", "git --work-tree dir push"],
     ["git -C quoted dir with space", 'git -C "my dir" push'],
+    // Attached option values are valid git/gh syntax and are still pushes / PR creations.
+    ["git -C<dir> push", "git -C../repo push"],
+    ["git -c<key>=<value> push", "git -cuser.name=ops push origin main"],
+    ["gh -R<owner/repo> pr create", "gh -Rowner/repo pr create --fill"],
     ["quoted git", '"git" push'],
     ["quoted push", "git 'push' origin"],
     ["line continuation", "git \\\npush origin main"],
